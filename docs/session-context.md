@@ -9,6 +9,7 @@ Actualizado: 2026-11-23
 - Separado de `~/Proyectos/Personales/ufc-fight-analytics` (consumirá `data/processed/*.parquet`).
 
 ## Decisiones (2026-11-23)
+- **Regla de trabajo (Piero):** toda decisión de diseño (formas, colores, iconos, tipografía, disposición) se le pregunta antes de aplicarla; solo se aplica directamente lo pedido de forma explícita y los arreglos de bugs.
 - Stack: Astro 7 + TypeScript + ECharts 6, web estática en Cloudflare Pages.
 - Licencias: jerzyszocik CC0, mdabbert CC BY 4.0 → **variante A** (snapshot `data/raw/enrichment.parquet` versionado, cuotas en los JSON, atribución a Matt Dabbert en pie y README). Licencias leídas de la página de Kaggle vía búsqueda web (Kaggle no se deja leer sin JS); conviene confirmarlas a ojo una vez.
 - Cruce con ±1 día: 98,0 %. Homónimos separados por URL de UFCStats (solo Bruno Silva → `bruno-silva` mosca, `bruno-silva-2` medio). Perfil con 8 métricas a 0 = sin datos.

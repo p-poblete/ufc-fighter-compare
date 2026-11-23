@@ -128,7 +128,7 @@ export function record(f: Fighter, tone: Tone): string {
     "",
     `<div class="rec__top">
        <p class="display">${f.record.wins}-${f.record.losses}-${f.record.draws}</p>
-       ${st ? `<p class="streak streak--${st[0]}"><b>${st}</b><span>streak</span></p>` : ""}
+       ${st ? `<p class="streak"><b class="metal metal--${st[0]}">${st}</b><span>${st[0] === "W" ? "win" : "losing"} streak</span></p>` : ""}
      </div>
      <p class="muted">Professional record · UFC since 2010 ${u.W}-${u.L}-${u.D}${u.NC ? ` (${u.NC} NC)` : ""}</p>
      ${strip}`,
@@ -137,7 +137,7 @@ export function record(f: Fighter, tone: Tone): string {
 }
 
 /** corner.finishes (M2): how the wins and the losses ended. */
-export function finishes(f: Fighter): string {
+export function finishes(f: Fighter, tone: Tone): string {
   const bar = (by: Record<Method, number>, label: string) => {
     const total = METHODS.reduce((s, [k]) => s + by[k], 0);
     const stack = total
@@ -145,8 +145,8 @@ export function finishes(f: Fighter): string {
       : `<div class="stack stack--empty"></div>`;
     return `<div class="mix"><p class="mix__label">${label} <span>${total}</span></p>${stack}</div>`;
   };
-  const legend = `<p class="legend">${METHODS.slice(0, 3).map(([, l], i) => `<span><i class="m${i}"></i>${l}</span>`).join("")}</p>`;
-  return mod("corner.finishes", "How the fights end", bar(f.wins_by, "Wins") + bar(f.losses_by, "Losses") + legend, { aside: aside("UFC since 2010") });
+  const legend = `<p class="legend">${METHODS.slice(0, 3).map(([, l], i) => `<span><i class="m${i}"></i>${l}</span>`).join("")}<span class="legend__note">UFC since 2010</span></p>`;
+  return mod("corner.finishes", "", bar(f.wins_by, "Wins") + bar(f.losses_by, "Losses") + legend, { tone, label: "How the fights end" });
 }
 
 /** corner.history: every UFC fight; the whole row opens fight.dialog. */
@@ -166,38 +166,39 @@ export function history(f: Fighter, show = 6, tone: Tone = "solo"): string {
 }
 
 export function ownColumn(f: Fighter | null, tone: Tone, warning: string | null = null, other: Fighter | null = null): string {
-  return identity(f, tone, warning, !other) + (f ? record(f, tone) + finishes(f) + history(f, 6, tone) : "");
+  // Mirrored columns: both histories show as many rows as the shorter one (max 6); the rest folds away.
+  const rows = other ? Math.max(1, Math.min(6, f?.fights.length ?? 0, other.fights.length)) : 6;
+  return identity(f, tone, warning, !other) + (f ? record(f, tone) + finishes(f, tone) + history(f, rows, tone) : "");
 }
 
 // ---------- duel.* (both fighters, centre) ----------
 type Row = { label: string; a: string; b: string; ea?: boolean; eb?: boolean };
 
-/** duel.matchup: who arrives better, then the tale of the tape with the gap written. */
+/** duel.matchup: who arrives better (gold dot on the leader), then the tape with up/down arrows and the gap written. */
 export function matchup(a: Fighter, b: Fighter, today?: Date): string {
-  const edge = (x: number | null, y: number | null) => ({ ea: x != null && y != null && x > y, eb: x != null && y != null && y > x });
+  const dot = '<i class="edge-dot" role="img" aria-label="Edge" title="Edge"></i>';
+  const up = '<svg class="arrow arrow--up" viewBox="0 0 12 12" role="img" aria-label="higher"><path d="M6 2l4.5 7h-9z"/></svg>';
+  const down = '<svg class="arrow arrow--down" viewBox="0 0 12 12" role="img" aria-label="lower"><path d="M6 10L1.5 3h9z"/></svg>';
   const gap = (x: number | null, y: number | null, unit: string) =>
     x != null && y != null && Math.abs(x - y) >= 0.5 ? `<small>${Math.round(Math.abs(x - y) * 10) / 10} ${unit} apart</small>` : "";
-  const wa = winRate(a), wb = winRate(b), fa = finishRate(a), fb = finishRate(b);
-  const ag = age(a, today), bg = age(b, today);
-  const cm = (x: number | null, extra: (x: number) => string) => (x == null ? DASH : `${Math.round(x)} cm <small>${extra(x)}</small>`);
-  const top: Row[] = [
-    { label: "Win rate", a: pctText(wa), b: pctText(wb), ...edge(wa, wb) },
-    { label: "Finish rate in the UFC", a: pctText(fa), b: pctText(fb), ...edge(fa, fb) },
-  ];
-  const tape: Row[] = [
-    { label: `Age${gap(ag, bg, "years")}`, a: ag == null ? DASH : `${ag}`, b: bg == null ? DASH : `${bg}` },
-    { label: `Height${gap(a.height_cm, b.height_cm, "cm")}`, a: cm(a.height_cm, feetInches), b: cm(b.height_cm, feetInches) },
-    { label: `Reach${gap(a.reach_cm, b.reach_cm, "cm")}`, a: cm(a.reach_cm, (x) => `${Math.round(x / 2.54)}″`), b: cm(b.reach_cm, (x) => `${Math.round(x / 2.54)}″`) },
-    { label: `Weight${gap(a.weight_lbs, b.weight_lbs, "lb")}`, a: a.weight_lbs == null ? DASH : `${a.weight_lbs} lb`, b: b.weight_lbs == null ? DASH : `${b.weight_lbs} lb` },
-    { label: "Stance", a: a.stance ? esc(a.stance) : DASH, b: b.stance ? esc(b.stance) : DASH },
-  ];
-  const mark = '<span class="edge">Edge</span>';
-  const line = (r: Row, cls: string) =>
-    `<div class="mu__row ${cls}"><span class="mu__v a">${r.ea ? mark : ""}${r.a}</span><span class="mu__l">${r.label}</span><span class="mu__v b">${r.b}${r.eb ? mark : ""}</span></div>`;
-  return mod("duel.matchup", "", top.map((r) => line(r, "mu__row--big")).join("") + `<div class="mu__tape">${tape.map((r) => line(r, "")).join("")}</div>`, {
-    cls: "mu",
-    label: "Figures and tale of the tape",
-  });
+  const line = (label: string, va: string, vb: string, ma = "", mb = "") =>
+    `<div class="mu__row"><span class="mu__v a">${ma}${va}</span><span class="mu__l">${label}</span><span class="mu__v b">${vb}${mb}</span></div>`;
+  const edgeRow = (label: string, x: number | null, y: number | null) =>
+    line(label, pctText(x), pctText(y), x != null && y != null && x > y ? dot : "", x != null && y != null && y > x ? dot : "");
+  const tapeRow = (label: string, x: number | null, y: number | null, fmt: (v: number) => string, unit: string) => {
+    const both = x != null && y != null && Math.abs(x - y) >= 0.5;
+    return line(`${label}${gap(x, y, unit)}`, x == null ? DASH : fmt(x), y == null ? DASH : fmt(y), both ? (x! > y! ? up : down) : "", both ? (y! > x! ? up : down) : "");
+  };
+  const cm = (extra: (v: number) => string) => (v: number) => `${Math.round(v)} cm <small>${extra(v)}</small>`;
+  const body =
+    edgeRow("Win rate", winRate(a), winRate(b)) +
+    edgeRow("Finish rate in the UFC", finishRate(a), finishRate(b)) +
+    tapeRow("Age", age(a, today), age(b, today), (v) => `${v}`, "years") +
+    tapeRow("Height", a.height_cm, b.height_cm, cm(feetInches), "cm") +
+    tapeRow("Reach", a.reach_cm, b.reach_cm, cm((v) => `${Math.round(v / 2.54)}″`), "cm") +
+    tapeRow("Weight", a.weight_lbs, b.weight_lbs, (v) => `${v} lb`, "lb") +
+    line("Stance", a.stance ? esc(a.stance) : DASH, b.stance ? esc(b.stance) : DASH);
+  return mod("duel.matchup", "", body, { cls: "mu", label: "Figures and tale of the tape" });
 }
 
 const RAW: Record<Metric, (x: number) => string> = {
@@ -228,7 +229,7 @@ export function style(a: Fighter | null, b: Fighter | null): string {
     "Style",
     `<div class="chart chart--radar" data-chart="radar" role="img" aria-label="Radar of the eight style percentiles"></div>
      <div class="spec">${cells}</div>
-     <p class="foot">Large figure: percentile ${popLabel(pop, a ?? b)}, 100 is best (strikes absorbed inverted). Small figure: career value.</p>`,
+     <p class="desc">Large figure: percentile ${popLabel(pop, a ?? b)}, 100 is best (strikes absorbed inverted). Small figure: career value. Point at the radar or a metric to compare it.</p>`,
     { cls: solo ? "style style--solo" : "style", aside: `${layers}${aside(popLabel(pop, a ?? b))}` },
   );
 }
@@ -265,7 +266,7 @@ export function fightRows(solo = false): string {
       "Performance by fight",
       `<div class="seg" role="group" aria-label="Metric">${metrics}</div>
        <div class="chart chart--wide" data-chart="perf" role="img" aria-label="Per-fight performance over time"></div>
-       <p class="foot">Filled point: win. Ring: loss. Diamond: draw or no contest. Point a fight for details.</p>`,
+       <p class="desc">Each point is a fight: filled = win, ring = loss, diamond = draw or no contest. Dashed lines: each fighter's average in the span. Click a point, or point at a fight in the history, to see it.</p>`,
       { cls: "row", aside: rangeControl() },
     ) +
     mod(
@@ -275,7 +276,7 @@ export function fightRows(solo = false): string {
          <div class="chart chart--wide" data-chart="roi" role="img" aria-label="Net return of a 100 bet on each fight, by odds type"></div>
          <div class="ret__side" data-slot="roi-table"></div>
        </div>
-       <p class="foot">Backing ${solo ? "the fighter" : "each fighter"} with 100 at the decimal odds of every priced fight. Right of the dashed line is profit. * fewer than 5 fights.</p>`,
+       <p class="desc">Net result of backing ${solo ? "the fighter" : "each fighter"} with 100 at the decimal odds of every priced fight. Dashed lines: average return per fight. * fewer than 5 fights.</p>`,
       { cls: "row", aside: rangeControl() },
     ) +
     mod(

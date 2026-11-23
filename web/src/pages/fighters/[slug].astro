@@ -29,7 +29,7 @@ const desc = `${f.name}: ${f.record.wins}-${f.record.losses}-${f.record.draws}${
         <div><p class="display">{pctText(winRate(f))}</p><p class="muted">Win rate</p></div>
         <div><p class="display">{pctText(finishRate(f))}</p><p class="muted">Finish rate in the UFC</p></div>
       </section>
-      <Fragment set:html={finishes(f) + history(f, 8, "solo")} />
+      <Fragment set:html={finishes(f, "solo") + history(f, 8, "solo")} />
     </aside>
     <div class="col col--mid">
       <Fragment set:html={style(f, null) + fightRows(true)} />
@@ -43,7 +43,7 @@ const desc = `${f.name}: ${f.record.wins}-${f.record.losses}-${f.record.draws}${
     const root = document.getElementById("profile")!;
     loadFighter(root.dataset.slug!).then(async (f) => {
       const { drawCharts } = await import("../../lib/charts");
-      drawCharts(root.querySelector(".col--mid")!, [{ f, color: "#ff9f43" }]);
+      drawCharts(root.querySelector(".col--mid")!, [{ f, color: "#ff9f43" }], ["solo"]);
     });
   </script>
 </Base>

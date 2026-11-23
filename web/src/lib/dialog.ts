@@ -13,11 +13,19 @@ export function setupFightDialog(): void {
     if (t === dlg || t.closest("[data-close]")) dlg.close(); // backdrop or close button
   });
 
-  document.addEventListener("click", async (ev) => {
+  document.addEventListener("click", (ev) => {
     const btn = (ev.target as HTMLElement).closest<HTMLElement>("[data-fight]");
-    if (!btn) return;
-    const f = await loadFighter(btn.dataset.slug!);
-    const x = f.fights[Number(btn.dataset.fight)];
+    if (btn) void open(btn.dataset.slug!, Number(btn.dataset.fight), btn.dataset.tone ?? "solo");
+  });
+  // Chart points ask for the same dialog.
+  document.addEventListener("fight:open", (ev) => {
+    const d = (ev as CustomEvent<{ slug: string; i: number; tone?: string }>).detail;
+    void open(d.slug, d.i, d.tone ?? "solo");
+  });
+
+  async function open(slug: string, i: number, tone: string) {
+    const f = await loadFighter(slug);
+    const x = f.fights[i];
     if (!x) return;
     let opp = null;
     try {
@@ -26,9 +34,9 @@ export function setupFightDialog(): void {
     } catch {
       /* the opponent's side stays as dashes */
     }
-    dlg.dataset.tone = btn.dataset.tone ?? "solo";
+    dlg.dataset.tone = tone;
     dlg.innerHTML = fightDetail(f, x, opp);
     dlg.showModal();
     dlg.querySelector<HTMLElement>("[data-close]")?.focus();
-  });
+  }
 }
