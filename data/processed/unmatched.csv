@@ -1,0 +1,463 @@
+date,fighter_1,fighter_2,reason
+2010-01-11,Thiago Tavares,Nik Lentz,no_enrichment_match
+2010-10-16,Cheick Kongo,Travis Browne,no_enrichment_match
+2010-12-11,Jesse Bongfeldt,Rafael Natal,no_enrichment_match
+2011-01-01,Brandon Vera,Thiago Silva,no_enrichment_match
+2011-01-01,Frankie Edgar,Gray Maynard,no_enrichment_match
+2011-02-26,BJ Penn,Jon Fitch,no_enrichment_match
+2011-06-26,Nik Lentz,Charles Oliveira,no_enrichment_match
+2011-11-12,Mackens Semerzier,Robert Peralta,no_enrichment_match
+2012-03-02,Demetrious Johnson,Ian McCall,no_enrichment_match
+2012-06-23,Felipe Arantes,Milton Vieira,no_enrichment_match
+2012-07-21,Chris Clements,Matthew Riddle,no_enrichment_match
+2012-07-21,Roland Delorme,Francisco Rivera,no_enrichment_match
+2012-08-04,Phil Davis,Wagner Prado,no_enrichment_match
+2012-08-11,Jake Shields,Ed Herman,no_enrichment_match
+2012-11-10,Thiago Silva,Stanislav Nedkov,no_enrichment_match
+2012-12-14,Igor Pokrajac,Joey Beltran,no_enrichment_match
+2013-01-19,Iuri Alcantara,Pedro Nobre,no_enrichment_match
+2013-02-16,Che Mills,Matthew Riddle,no_enrichment_match
+2013-03-02,Alex Caceres,Kyung Ho Kang,no_enrichment_match
+2013-04-27,Jim Miller,Pat Healy,no_enrichment_match
+2013-08-28,Roger Bowling,Abel Trujillo,no_enrichment_match
+2013-10-19,Sarah Kaufman,Jessica Eye,no_enrichment_match
+2013-10-26,Ross Pearson,Melvin Guillard,no_enrichment_match
+2013-11-06,Yves Edwards,Yancy Medeiros,no_enrichment_match
+2013-12-06,Mark Hunt,Antonio Silva,no_enrichment_match
+2013-12-28,Dennis Siver,Manvel Gamburyan,no_enrichment_match
+2014-01-25,Chico Camus,Yaotzin Meza,no_enrichment_match
+2014-03-08,Phil Harris,Louis Gaudinot,no_enrichment_match
+2014-03-23,Leonardo Santos,Norman Parke,no_enrichment_match
+2014-04-11,Rani Yahya,Johnny Bedford,no_enrichment_match
+2014-07-05,Kevin Casey,Bubba Bush,no_enrichment_match
+2014-07-06,Robert Drysdale,Keith Berish,no_enrichment_match
+2014-07-26,Mike de la Torre,Brian Ortega,no_enrichment_match
+2014-10-04,Pedro Munhoz,Jerrod Sanders,no_enrichment_match
+2014-12-12,KJ Noons,Daron Cruickshank,no_enrichment_match
+2015-01-03,Hector Lombard,Joshua Burkman,no_enrichment_match
+2015-01-31,Anderson Silva,Nick Diaz,no_enrichment_match
+2015-02-28,Roman Salazar,Norifumi Yamamoto,no_enrichment_match
+2015-03-21,Leandro Silva,Drew Dober,no_enrichment_match
+2015-05-30,Rony Jason,Damon Jackson,no_enrichment_match
+2015-09-26,Mizuto Hirota,Teruto Ishihara,no_enrichment_match
+2015-10-24,Nicolas Dalby,Darren Till,no_enrichment_match
+2015-12-10,Antonio Carlos Junior,Kevin Casey,no_enrichment_match
+2015-12-19,Cole Miller,Jim Alers,no_enrichment_match
+2016-01-30,Damon Jackson,Levan Makashvili,no_enrichment_match
+2016-05-14,Sergio Moraes,Luan Chagas,no_enrichment_match
+2016-06-04,Kevin Casey,Elvis Mutapcic,no_enrichment_match
+2016-07-09,Brock Lesnar,Mark Hunt,no_enrichment_match
+2016-07-30,Michael Graves,Bojan Velickovic,no_enrichment_match
+2016-09-03,Jarjis Danho,Christian Colombo,no_enrichment_match
+2016-09-17,Alejandro Perez,Albert Morales,no_enrichment_match
+2016-11-12,Tyron Woodley,Stephen Thompson,no_enrichment_match
+2016-11-19,Francimar Barroso,Darren Stewart,no_enrichment_match
+2016-12-30,Alex Oliveira,Tim Means,no_enrichment_match
+2017-02-04,Adam Milstead,Curtis Blaydes,no_enrichment_match
+2017-02-04,Alex Morono,Niko Price,no_enrichment_match
+2017-03-11,Bethe Correia,Marion Reneau,no_enrichment_match
+2017-03-11,Vitor Belfort,Kelvin Gastelum,no_enrichment_match
+2017-04-08,Jenel Lausa,Magomed Bibulatov,no_enrichment_match
+2017-05-13,Eddie Alvarez,Dustin Poirier,no_enrichment_match
+2017-07-29,Daniel Cormier,Jon Jones,no_enrichment_match
+2017-10-07,Beneil Dariush,Evan Dunham,no_enrichment_match
+2017-10-07,John Moraga,Magomed Bibulatov,no_enrichment_match
+2017-10-07,Lando Vannata,King Green,no_enrichment_match
+2017-12-01,DeAnna Bennett,Melinda Fabian,no_enrichment_match
+2017-12-30,Khalil Rountree Jr.,Michal Oleksiejczuk,no_enrichment_match
+2017-12-30,Marvin Vettori,Omari Akhmedov,no_enrichment_match
+2018-06-09,CM Punk,Mike Jackson,no_enrichment_match
+2018-09-22,Randa Markos,Marina Rodriguez,no_enrichment_match
+2018-11-03,Matt Frevola,Lando Vannata,no_enrichment_match
+2018-11-10,Chas Skelly,Bobby Moffett,no_enrichment_match
+2018-12-29,Andrei Arlovski,Walt Harris,no_enrichment_match
+2019-02-02,Magomed Bibulatov,Rogerio Bontorin,no_enrichment_match
+2019-07-13,Mike Rodriguez,John Allan,no_enrichment_match
+2019-09-07,Zubaira Tukhugov,Lerone Murphy,no_enrichment_match
+2019-09-14,Todd Duffee,Jeff Hughes,no_enrichment_match
+2019-09-21,Brandon Moreno,Askar Askarov,no_enrichment_match
+2019-09-21,Yair Rodriguez,Jeremy Stephens,no_enrichment_match
+2019-10-05,Khalid Taha,Bruno Silva,no_enrichment_match
+2019-10-18,Greg Hardy,Ben Sosoli,no_enrichment_match
+2019-11-16,Mauricio Rua,Paul Craig,no_enrichment_match
+2019-12-07,Cody Stamann,Song Yadong,no_enrichment_match
+2019-12-07,Marina Rodriguez,Cynthia Calvillo,no_enrichment_match
+2020-02-08,Domingo Pilarte,Journey Newson,no_enrichment_match
+2020-03-14,Rani Yahya,Enrique Barzola,no_enrichment_match
+2020-05-30,Jamahal Hill,Klidson Abreu,no_enrichment_match
+2020-06-20,Marc-Andre Barriault,Oskar Piechota,no_enrichment_match
+2020-07-25,Nicolas Dalby,Jesse Ronson,no_enrichment_match
+2020-08-01,Chris Gutierrez,Cody Durden,no_enrichment_match
+2020-08-15,Kai Kamaka III,Tony Kelley,no_enrichment_match
+2020-08-22,Timur Valiev,Trevin Jones,no_enrichment_match
+2020-09-12,Roosevelt Roberts,Kevin Croom,no_enrichment_match
+2020-09-19,Donald Cerrone,Niko Price,no_enrichment_match
+2020-10-03,Charles Jourdain,Josh Culibao,no_enrichment_match
+2020-10-24,Da Woon Jung,Sam Alvey,no_enrichment_match
+2020-11-28,Jonathan Pearce,Kai Kamaka III,no_enrichment_match
+2020-12-12,Deiveson Figueiredo,Brandon Moreno,no_enrichment_match
+2021-02-27,Montana De La Rosa,Mayra Bueno Silva,no_enrichment_match
+2021-03-13,Eryk Anders,Darren Stewart,no_enrichment_match
+2021-03-13,Leon Edwards,Belal Muhammad,no_enrichment_match
+2021-05-01,Ion Cutelaba,Dustin Jacoby,no_enrichment_match
+2021-05-01,Kai Kamaka III,TJ Brown,no_enrichment_match
+2021-05-15,Matt Schnell,Rogerio Bontorin,no_enrichment_match
+2021-06-05,Alan Patrick,Mason Jones,no_enrichment_match
+2021-06-26,Andre Fili,Daniel Pineda,no_enrichment_match
+2021-07-17,Alan Baudot,Rodrigo Nascimento,no_enrichment_match
+2021-07-31,Danny Chavez,Kai Kamaka III,no_enrichment_match
+2021-09-18,Gustavo Lopez,Alatengheili,no_enrichment_match
+2021-10-02,Kevin Holland,Kyle Daukaus,no_enrichment_match
+2021-10-23,Grant Dawson,Ricky Glenn,no_enrichment_match
+2022-07-02,Pedro Munhoz,Sean O'Malley,no_enrichment_match
+2022-07-30,Don'Tale Mayes,Hamdy Abdelwahab,no_enrichment_match
+2022-08-13,Youssef Zalal,Da'Mon Blackshear,no_enrichment_match
+2022-08-20,Sean Woodson,Luis Saldana,no_enrichment_match
+2022-12-10,Jan Blachowicz,Magomed Ankalaev,no_enrichment_match
+2023-02-04,Dooho Choi,Kyle Nelson,no_enrichment_match
+2023-02-11,Jimmy Crute,Alonzo Menifield,no_enrichment_match
+2023-03-18,Jai Herbert,Ludovit Klein,no_enrichment_match
+2023-04-22,King Green,Jared Gordon,no_enrichment_match
+2023-06-10,Nassourdine Imavov,Chris Curtis,no_enrichment_match
+2023-06-17,Dan Argueta,Ronnie Lawrence,no_enrichment_match
+2023-06-24,Austen Lane,Justin Tafa,no_enrichment_match
+2023-07-15,Holly Holm,Mayra Bueno Silva,no_enrichment_match
+2023-09-16,Alexa Grasso,Valentina Shevchenko,no_enrichment_match
+2023-09-16,Edgar Chairez,Daniel Lacerda,no_enrichment_match
+2023-09-23,Dan Argueta,Miles Johns,no_enrichment_match
+2023-09-23,Tamires Vidal,Montse Rendon,no_enrichment_match
+2023-10-21,Javid Basharat,Victor Henry,no_enrichment_match
+2023-10-21,Magomed Ankalaev,Johnny Walker,no_enrichment_match
+2023-11-04,Rinat Fakhretdinov,Elizeu Zaleski dos Santos,no_enrichment_match
+2023-11-11,Nazim Sadykhov,Viacheslav Borshchev,no_enrichment_match
+2023-11-18,Trey Ogden,Nikolas Motta,no_enrichment_match
+2023-12-02,Zach Reese,Cody Brundage,no_enrichment_match
+2024-02-03,Aliaskhab Khizriev,Makhmud Muradov,no_enrichment_match
+2024-02-10,Daniel Marcos,Aoriqileng,no_enrichment_match
+2024-03-16,Bryan Battle,Ange Loosa,no_enrichment_match
+2024-03-23,Montse Rendon,Daria Zhelezniakova,no_enrichment_match
+2024-06-08,Julian Marquez,Zach Reese,no_enrichment_match
+2024-07-13,Abdul Razak Alhassan,Cody Brundage,no_enrichment_match
+2024-08-24,Zach Reese,Jose Daniel Medina,no_enrichment_match
+2025-01-18,Zach Reese,Azamat Bekoev,no_enrichment_match
+2025-02-08,Jimmy Crute,Rodolfo Bellato,no_enrichment_match
+2025-04-12,Yair Rodriguez,Patricio Pitbull,no_enrichment_match
+2025-05-31,Bolaji Oki,Michael Aswell Jr.,no_enrichment_match
+2025-05-31,Zach Reese,Dusko Todorovic,no_enrichment_match
+2025-06-14,Paul Craig,Rodolfo Bellato,no_enrichment_match
+2025-07-19,Dan Ige,Patricio Pitbull,no_enrichment_match
+2025-09-13,Zach Reese,Sedriques Dumas,no_enrichment_match
+2026-05-30,Alex Perez,Sumudaerji,after_enrichment
+2026-05-30,Angela Hill,Xiong Jingnan,after_enrichment
+2026-05-30,Aoriqileng,Cody Haddon,after_enrichment
+2026-05-30,Ding Meng,Jose Souza,after_enrichment
+2026-05-30,Jake Matthews,Carlston Harris,after_enrichment
+2026-05-30,Kai Asakura,Cameron Smotherman,after_enrichment
+2026-05-30,Loma Lookboonmee,Jaqueline Amorim,after_enrichment
+2026-05-30,Rei Tsuruya,Luis Gurule,after_enrichment
+2026-05-30,Sergei Pavlovich,Tallison Teixeira,after_enrichment
+2026-05-30,Song Yadong,Deiveson Figueiredo,after_enrichment
+2026-05-30,YiSak Lee,Luis Felipe Dias,after_enrichment
+2026-05-30,Zhang Mingyang,Alonzo Menifield,after_enrichment
+2026-05-30,Zhu Kangjie,Rodrigo Vera,after_enrichment
+2026-06-06,Belal Muhammad,Gabriel Bonfim,after_enrichment
+2026-06-06,Brendan Allen,Edmen Shahbazyan,after_enrichment
+2026-06-06,Bruno Silva,Edgar Chairez,after_enrichment
+2026-06-06,Bryce Mitchell,Santiago Luna,after_enrichment
+2026-06-06,Fares Ziam,Tom Nolan,after_enrichment
+2026-06-06,Iwo Baraniewski,Junior Tafa,after_enrichment
+2026-06-06,Jeisla Chaves,Yuneisy Duben,after_enrichment
+2026-06-06,Jordan Leavitt,Joanderson Brito,after_enrichment
+2026-06-06,Ketlen Souza,Ariane Carnelossi,after_enrichment
+2026-06-06,Marcus McGhee,John Yannis,after_enrichment
+2026-06-06,Matt Schnell,Alessandro Costa,after_enrichment
+2026-06-06,Priscila Cachoeira,Chelsea Chandler,after_enrichment
+2026-06-14,Alex Pereira,Ciryl Gane,after_enrichment
+2026-06-14,Bo Nickal,Kyle Daukaus,after_enrichment
+2026-06-14,Diego Lopes,Steve Garcia,after_enrichment
+2026-06-14,Ilia Topuria,Justin Gaethje,after_enrichment
+2026-06-14,Josh Hokit,Derrick Lewis,after_enrichment
+2026-06-14,Mauricio Ruffy,Michael Chandler,after_enrichment
+2026-06-14,Sean O'Malley,Aiemann Zahabi,after_enrichment
+2026-06-20,Allan Nascimento,Mitch Raposo,after_enrichment
+2026-06-20,Andre Lima,Kevin Borjas,after_enrichment
+2026-06-20,Bia Mesquita,Melissa Mullins,after_enrichment
+2026-06-20,Gaston Bolanos,Michael Aswell Jr.,after_enrichment
+2026-06-20,Hyder Amil,Christian Rodriguez,after_enrichment
+2026-06-20,Ion Cutelaba,Navajo Stirling,after_enrichment
+2026-06-20,Karol Rosa,Luana Santos,after_enrichment
+2026-06-20,Leon Shahbazyan,Levan Chokheli,after_enrichment
+2026-06-20,Manel Kape,Kyoji Horiguchi,after_enrichment
+2026-06-20,Melsik Baghdasaryan,Murtazali Magomedov,after_enrichment
+2026-06-20,Shane Collins,Otari Tanzilovi,after_enrichment
+2026-06-20,Vinicius Oliveira,Andre Fili,after_enrichment
+2026-06-27,Abdul Rakhman Yakhyaev,Julius Walker,after_enrichment
+2026-06-27,Abus Magomedov,Michal Oleksiejczuk,after_enrichment
+2026-06-27,Asu Almabayev,Charles Johnson,after_enrichment
+2026-06-27,Bekzat Almakhan,Jean Matsumoto,after_enrichment
+2026-06-27,Daniil Donchenko,Theodor Berggren,after_enrichment
+2026-06-27,Farman Hasanov,Eric Nolan,after_enrichment
+2026-06-27,Ikram Aliskerov,Brunno Ferreira,after_enrichment
+2026-06-27,Kaan Ofli,Javier Reyes,after_enrichment
+2026-06-27,Nazim Sadykhov,Matheus Camilo,after_enrichment
+2026-06-27,Nursulton Ruziboev,Andrey Pulyaev,after_enrichment
+2026-06-27,Rafael Fiziev,Manuel Torres,after_enrichment
+2026-06-27,Shara Magomedov,Michel Pereira,after_enrichment
+2026-06-27,Tahir Abdullayev,Jefferson Nascimento,after_enrichment
+2026-07-11,Alessandro Costa,Cody Durden,after_enrichment
+2026-07-11,Benoit Saint Denis,Paddy Pimblett,after_enrichment
+2026-07-11,Brandon Royval,Lone'er Kavanagh,after_enrichment
+2026-07-11,Cody Garbrandt,Adrian Yanez,after_enrichment
+2026-07-11,Conor McGregor,Max Holloway,after_enrichment
+2026-07-11,Cory Sandhagen,Mario Bautista,after_enrichment
+2026-07-11,Damian Pinas,Cesar Almeida,after_enrichment
+2026-07-11,Farid Basharat,John Garza,after_enrichment
+2026-07-11,Gable Steveson,Elisha Ellison,after_enrichment
+2026-07-11,King Green,Terrance McKinney,after_enrichment
+2026-07-11,Luke Riley,Kai Kamaka III,after_enrichment
+2026-07-11,Nikita Krylov,Robert Whittaker,after_enrichment
+2026-07-11,Ryan Gandra,Zach Reese,after_enrichment
+2026-07-11,Tracy Cortez,Wang Cong,after_enrichment
+2026-07-18,Alden Coria,Stewart Nicoll,after_enrichment
+2026-07-18,Anna Melisano,Dione Barbosa,after_enrichment
+2026-07-18,Austin Bashi,Jose Delgado,after_enrichment
+2026-07-18,Chase Hooper,Mitch Ramirez,after_enrichment
+2026-07-18,Dricus Du Plessis,Kamaru Usman,after_enrichment
+2026-07-18,Ezra Elliott,Damien Anderson,after_enrichment
+2026-07-18,Jared Cannonier,Christian Leroy Duncan,after_enrichment
+2026-07-18,Jean-Paul Lebosnoyani,Seokhyeon Ko,after_enrichment
+2026-07-18,Levi Rodrigues Jr.,Felipe Franco,after_enrichment
+2026-07-18,RJ Harris,Alvin Hines,after_enrichment
+2026-07-18,Tabatha Ricci,Fatima Kline,after_enrichment
+2026-07-18,Tommy McMillen,Alberto Montes,after_enrichment
+2026-07-25,Abubakar Vagaev,Saygid Izagakhmaev,after_enrichment
+2026-07-25,Cody Gibson,Abdul Hussein,after_enrichment
+2026-07-25,Dustin Jacoby,Muhammad Saidov,after_enrichment
+2026-07-25,Ismael Bonfim,Axel Sola,after_enrichment
+2026-07-25,Magomed Ankalaev,Bogdan Guskov,after_enrichment
+2026-07-25,Magomed Tuchalov,Brendson Ribeiro,after_enrichment
+2026-07-25,Magomed Zaynukov,Damian Rzepecki,after_enrichment
+2026-07-25,Nurullo Aliev,Mike Davis,after_enrichment
+2026-07-25,Rizvan Kuniev,Tyrell Fortune,after_enrichment
+2026-07-25,Santiago Ponzinibbio,Sam Patterson,after_enrichment
+2026-07-25,Steve Erceg,Ramazan Temirov,after_enrichment
+2026-07-25,Valter Walker,Thomas Petersen,after_enrichment
+2026-08-01,Aleksandar Rakic,Marcin Tybura,after_enrichment
+2026-08-01,Borislav Nikolic,Mark Vologdin,after_enrichment
+2026-08-01,Dennis Buzukja,Bogdan Grad,after_enrichment
+2026-08-01,Dusko Todorovic,Robert Valentin,after_enrichment
+2026-08-01,Jan Blachowicz,Navajo Stirling,after_enrichment
+2026-08-01,Jovan Leka,Alexander Poppeck,after_enrichment
+2026-08-01,Ludovit Klein,Tofiq Musayev,after_enrichment
+2026-08-01,Marina Spasic,Stephanie Luciano,after_enrichment
+2026-08-01,Mateusz Rebecki,Kyle Prepolec,after_enrichment
+2026-08-01,Milos Janicic,Noah Gugnon,after_enrichment
+2026-08-01,Nina Milosevic,Hailey Cowan,after_enrichment
+2026-08-01,Oban Elliott,Michael Oliveira,after_enrichment
+2026-08-01,Uros Medic,Daniel Rodriguez,after_enrichment
+2026-08-01,Vlasto Cepo,Gilbert Urbina,after_enrichment
+2026-08-08,Amanda Lemos,Alexia Thainara,after_enrichment
+2026-08-08,Billy Ray Goff,Ty Miller,after_enrichment
+2026-08-08,Darren Elkins,Yadier del Valle,after_enrichment
+2026-08-08,Diego Ferreira,Billy Quarantillo,after_enrichment
+2026-08-08,Diyar Nurgozhay,Bruno Lopes,after_enrichment
+2026-08-08,Gigi Canuto,Carol Foro,after_enrichment
+2026-08-08,Juliana Miller,Ravena Oliveira,after_enrichment
+2026-08-08,Louie Sutherland,Jose Montanha,after_enrichment
+2026-08-08,Manoel Sousa,Richie Miranda,after_enrichment
+2026-08-08,Mateusz Gamrot,Quillan Salkilld,after_enrichment
+2026-08-08,Miles Johns,Gianni Vazquez,after_enrichment
+2026-08-08,Steven Asplund,Guilherme Pat,after_enrichment
+2026-08-15,Charles Johnson,Eduardo Chapolin,after_enrichment
+2026-08-15,Chidi Njokuani,Joel Alvarez,after_enrichment
+2026-08-15,Donte Johnson,Eric McConico,after_enrichment
+2026-08-15,Edson Barboza,Esteban Ribovics,after_enrichment
+2026-08-15,Islam Makhachev,Ian Machado Garry,after_enrichment
+2026-08-15,Jalin Turner,Kaue Fernandes,after_enrichment
+2026-08-15,Jeremiah Wells,Myktybek Orolbai,after_enrichment
+2026-08-15,Mackenzie Dern,Gillian Robertson,after_enrichment
+2026-08-15,Mansur Abdul-Malik,Dustin Stoltzfus,after_enrichment
+2026-08-15,Neil Magny,Ramiz Brahimaj,after_enrichment
+2026-08-15,Rafael Tobias,Lucas Fernando,after_enrichment
+2026-08-15,Vicente Luque,Tresean Gore,after_enrichment
+2026-08-22,Anthony Hernandez,Gregory Rodrigues,after_enrichment
+2026-08-22,Anthony Wint,Terrance Chatman,after_enrichment
+2026-08-22,Carli Judice,Jeisla Chaves,after_enrichment
+2026-08-22,Chris Padilla,Nasrat Haqparast,after_enrichment
+2026-08-22,Gauge Young,Stan Dorsainvil,after_enrichment
+2026-08-22,Jamall Emmers,Lerryan Douglas,after_enrichment
+2026-08-22,Kennedy Nzechukwu,Shamil Gaziev,after_enrichment
+2026-08-22,MarQuel Mederos,Mason Jones,after_enrichment
+2026-08-22,Marcio Barbosa,Ryan Kuse,after_enrichment
+2026-08-22,Reinier de Ridder,Roman Dolidze,after_enrichment
+2026-08-22,Serghei Spivac,Vitor Petrino,after_enrichment
+2026-08-22,Shanelle Dyer,Elise Reed,after_enrichment
+2026-08-22,Wes Schultz,Jackson McVey,after_enrichment
+2026-08-29,Alex Perez,Sumudaerji,after_enrichment
+2026-08-29,Aoriqileng,Kai Asakura,after_enrichment
+2026-08-29,Bilal Hasan,Nilson Rojas,after_enrichment
+2026-08-29,Ding Meng,Cam Nelson,after_enrichment
+2026-08-29,Jack Jenkins,Sean Woodson,after_enrichment
+2026-08-29,Lawrence Lui,Hector Santiago,after_enrichment
+2026-08-29,Liu Ce,Levi Rodrigues Jr.,after_enrichment
+2026-08-29,Namsrai Batbayar,Andre Lima,after_enrichment
+2026-08-29,Rei Tsuruya,Kevin Borjas,after_enrichment
+2026-08-29,Umar Nurmagomedov,Song Yadong,after_enrichment
+2026-08-29,Xiao Long,Francesco Nuzzi,after_enrichment
+2026-08-29,Xiong Jingnan,Julia Polastri,after_enrichment
+2026-08-29,Yan Xiaonan,Denise Gomes,after_enrichment
+2026-09-05,Dan Hooker,Salahdine Parnasse,after_enrichment
+2026-09-05,Daniil Donchenko,Punahele Soriano,after_enrichment
+2026-09-05,Delphine Benouaich,Sofia Montenegro,after_enrichment
+2026-09-05,Fares Ziam,Axel Sola,after_enrichment
+2026-09-05,Kurtis Campbell,Trevor Peek,after_enrichment
+2026-09-05,Losene Keita,Muhammad Naimov,after_enrichment
+2026-09-05,Mario Pinto,Ryan Spann,after_enrichment
+2026-09-05,Matthieu Duclos,Luis Felipe Dias,after_enrichment
+2026-09-05,Michael Aljarouj,Fabia Sintes,after_enrichment
+2026-09-05,Michael Page,Nursulton Ruziboev,after_enrichment
+2026-09-05,Morgan Charriere,Felipe Lima,after_enrichment
+2026-09-05,Nathaniel Wood,Pavel Andrusca,after_enrichment
+2026-09-05,Nora Cornolle,Klaudia Sygula,after_enrichment
+2026-09-05,Oumar Sy,Modestas Bukauskas,after_enrichment
+2026-09-12,Brandon Moreno,Joseph Morales,after_enrichment
+2026-09-12,David Martinez,Dan Ige,after_enrichment
+2026-09-12,Drakkar Klose,Tommy Gantt,after_enrichment
+2026-09-12,Ignacio Bahamondes,Muslim Salikhov,after_enrichment
+2026-09-12,JJ Aldrich,Regina Tarin,after_enrichment
+2026-09-12,Jean Silva,Jose Delgado,after_enrichment
+2026-09-12,Manon Fiorot,Alexa Grasso,after_enrichment
+2026-09-12,Rafa Garcia,Rongzhu,after_enrichment
+2026-09-12,Sean King III,Jessie Rosas,after_enrichment
+2026-09-12,Tim Elliott,Edgar Chairez,after_enrichment
+2026-09-12,Tommy McMillen,Marwan Rahiki,after_enrichment
+2026-09-12,Waldo Cortes Acosta,Curtis Blaydes,after_enrichment
+2026-09-12,Yousri Belgaroui,Djorden Santos,after_enrichment
+2026-09-19,Alonzo Menifield,Iwo Baraniewski,after_enrichment
+2026-09-19,Arman Tsarukyan,Mauricio Ruffy,after_enrichment
+2026-09-19,Casey O'Neill,Eduarda Moura,after_enrichment
+2026-09-19,Edmen Shahbazyan,Brunno Ferreira,after_enrichment
+2026-09-19,Gable Steveson,Sean Sharaf,after_enrichment
+2026-09-19,Giga Chikadze,Joanderson Brito,after_enrichment
+2026-09-19,Joshua Van,Alexandre Pantoja,after_enrichment
+2026-09-19,Marlon Vera,Charles Jourdain,after_enrichment
+2026-09-19,Michael Aswell Jr.,JooSang Yoo,after_enrichment
+2026-09-19,Patricio Pitbull,Dooho Choi,after_enrichment
+2026-09-19,Ryan Gandra,Ozzy Diaz,after_enrichment
+2026-09-19,Tai Tuivasa,Robelis Despaigne,after_enrichment
+2026-09-26,Brady Hiestand,Rinya Nakamura,after_enrichment
+2026-09-26,Elves Brener,Josiah Harrell,after_enrichment
+2026-09-26,John Castaneda,Alatengheili,after_enrichment
+2026-09-26,Luis Hernandez,Sedriques Dumas,after_enrichment
+2026-09-26,Mahammadali Osmanli,Ilimbek Akylbek,after_enrichment
+2026-09-26,Melissa Amaya,Tina Black,after_enrichment
+2026-09-26,Montel Jackson,Ricky Simon,after_enrichment
+2026-09-26,Norma Dumont,Ailin Perez,after_enrichment
+2026-09-26,Raul Rosas Jr.,Raoni Barcelos,after_enrichment
+2026-09-26,Rodolfo Bellato,Christian Edwards,after_enrichment
+2026-09-26,Rodolfo Vieira,Robert Bryczek,after_enrichment
+2026-09-26,Vanessa Demopoulos,Yazmin Jauregui,after_enrichment
+2026-10-03,Anthony Wint,Lucas Armand,after_enrichment
+2026-10-03,Ateba Gautier,Roman Kopylov,after_enrichment
+2026-10-03,Court McGee,Eric Nolan,after_enrichment
+2026-10-03,Damian Pinas,Andrey Pulyaev,after_enrichment
+2026-10-03,Deiveson Figueiredo,Payton Talbott,after_enrichment
+2026-10-03,Imanol Rodriguez,Alden Coria,after_enrichment
+2026-10-03,Jacobe Smith,Bruce Whitehead,after_enrichment
+2026-10-03,Johnny Walker,Mick Parkin,after_enrichment
+2026-10-03,King Green,Esteban Ribovics,after_enrichment
+2026-10-03,Marcus McGhee,Anthony Romero,after_enrichment
+2026-10-03,Marvin Vettori,Ismail Naurdiev,after_enrichment
+2026-10-03,Natalia Silva,Wang Cong,after_enrichment
+2026-10-03,Rafael Dos Anjos,Alexander Hernandez,after_enrichment
+2026-10-03,Roberto Soldic,Khaos Williams,after_enrichment
+2026-10-10,Alice Pereira,Daria Zhelezniakova,after_enrichment
+2026-10-10,Allen Frye Jr.,RJ Harris,after_enrichment
+2026-10-10,Andre Fili,Kai Kamaka III,after_enrichment
+2026-10-10,Brendan Allen,Christian Leroy Duncan,after_enrichment
+2026-10-10,Ernesta Kareckaite,Melissa Gatto,after_enrichment
+2026-10-10,Felipe Franco,Brendson Ribeiro,after_enrichment
+2026-10-10,Francisco Prado,Ismael Bonfim,after_enrichment
+2026-10-10,Julius Walker,Gerald Meerschaert,after_enrichment
+2026-10-10,Loopy Godinez,Ketlen Souza,after_enrichment
+2026-10-10,Malcolm Wellmaker,Otari Tanzilovi,after_enrichment
+2026-10-10,Matheus Camilo,Jai Herbert,after_enrichment
+2026-10-10,Niko Price,Leon Shahbazyan,after_enrichment
+2026-10-17,Chad Anheliger,Steven Koslow,after_enrichment
+2026-10-17,Cody Chovancek,SuYoung You,after_enrichment
+2026-10-17,Erin Blanchfield,Jasmine Jasudavicius,after_enrichment
+2026-10-17,Javad Mahjoub,Joel Faglier,after_enrichment
+2026-10-17,Joaquin Buckley,Mike Malott,after_enrichment
+2026-10-17,Julien Leblanc,Nick Galanti,after_enrichment
+2026-10-17,Katlyn Cerminara,Mackenzie Stiller,after_enrichment
+2026-10-17,Kyle Nelson,Cristian Perez,after_enrichment
+2026-10-17,Louis Jourdain,Timmy Cuamba,after_enrichment
+2026-10-17,Mandel Nallo,Nate Landwehr,after_enrichment
+2026-10-17,Marc-Andre Barriault,Kyle Daukaus,after_enrichment
+2026-10-17,Melissa Croden,Chelsea Chandler,after_enrichment
+2026-10-17,Tanner Boser,Jhonata Diniz,after_enrichment
+2026-10-24,Aaron Pico,Losene Keita,after_enrichment
+2026-10-24,Abubakar Vagaev,Jacob Malkoun,after_enrichment
+2026-10-24,Abus Magomedov,Cam Rowston,after_enrichment
+2026-10-24,Alexander Volkanovski,Movsar Evloev,after_enrichment
+2026-10-24,Alexander Volkov,Rizvan Kuniev,after_enrichment
+2026-10-24,Azamat Murzakanov,Dominick Reyes,after_enrichment
+2026-10-24,Bolaji Oki,Daniel Santos,after_enrichment
+2026-10-24,Colby Thicknesse,Asaf Chopurov,after_enrichment
+2026-10-24,Grant Dawson,Nurullo Aliev,after_enrichment
+2026-10-24,Iasmin Lucindo,Nicolle Caliari,after_enrichment
+2026-10-24,Kody Steele,Noah Gugnon,after_enrichment
+2026-10-24,Lone'er Kavanagh,Ramazan Temirov,after_enrichment
+2026-10-24,Nikita Krylov,Abdul Rakhman Yakhyaev,after_enrichment
+2026-10-24,Petr Yan,Merab Dvalishvili,after_enrichment
+2026-10-31,Francis Marshall,Dakota Hope,after_enrichment
+2026-10-31,Jean-Paul Lebosnoyani,Farman Hasanov,after_enrichment
+2026-10-31,Julian Erosa,JeongYeong Lee,after_enrichment
+2026-10-31,Lucia Szabova,Tainara Lisboa,after_enrichment
+2026-10-31,Nick Klein,Joe Kropschot,after_enrichment
+2026-10-31,Ode Osbourne,Cody Durden,after_enrichment
+2026-10-31,Randy Brown,Jacobe Smith,after_enrichment
+2026-10-31,Renato Moicano,Tom Nolan,after_enrichment
+2026-10-31,Rodrigo Sezinando,Theodor Berggren,after_enrichment
+2026-10-31,Talita Alencar,Piera Rodriguez,after_enrichment
+2026-10-31,Yana Santos,Luana Santos,after_enrichment
+2026-10-31,Zach Reese,Mickey Gall,after_enrichment
+2026-11-07,Austin Bashi,Carlos Calderon,after_enrichment
+2026-11-07,Billy Elekana,Lucas Fernando,after_enrichment
+2026-11-07,Davey Grant,Elijah Smith,after_enrichment
+2026-11-07,Gabriel Lorenco,Thomas Petersen,after_enrichment
+2026-11-07,Jonny Parsons,Jose Souza,after_enrichment
+2026-11-07,Jose Delano,Murtazali Magomedov,after_enrichment
+2026-11-07,Karine Silva,Gabriella Fernandes,after_enrichment
+2026-11-07,Keiichiro Nakamura,Ollie Schmid,after_enrichment
+2026-11-07,Mantas Kondratavicius,Andre Petroski,after_enrichment
+2026-11-07,Mitch Raposo,Marcos Degli,after_enrichment
+2026-11-07,Priscila Cachoeira,Nina Milosevic,after_enrichment
+2026-11-07,Seokhyeon Ko,Wellington Turman,after_enrichment
+2026-11-07,Tatiana Suarez,Virna Jandiroba,after_enrichment
+2026-11-07,Waldo Cortes Acosta,Johnny Walker,after_enrichment
+2026-11-14,Alatengheili,Juan Diaz,after_enrichment
+2026-11-14,Bilal Hasan,Luis Gurule,after_enrichment
+2026-11-14,Caio Borralho,Yousri Belgaroui,after_enrichment
+2026-11-14,Ciryl Gane,Josh Hokit,after_enrichment
+2026-11-14,Donte Johnson,Cesar Almeida,after_enrichment
+2026-11-14,Drew Dober,Chris Duncan,after_enrichment
+2026-11-14,Evan Elder,Samuel Sanches,after_enrichment
+2026-11-14,Jared Gordon,Melquizael Costa,after_enrichment
+2026-11-14,Jim Miller,Terrance McKinney,after_enrichment
+2026-11-14,Kayla Harrison,Amanda Nunes,after_enrichment
+2026-11-14,Macy Chiasson,Bia Mesquita,after_enrichment
+2026-11-14,Stephen Thompson,Charles Radtke,after_enrichment
+2026-11-14,Uros Medic,Kevin Holland,after_enrichment
+2026-11-21,Aleksandre Topuria,Santiago Luna,after_enrichment
+2026-11-21,Aljamain Sterling,Kevin Vallejos,after_enrichment
+2026-11-21,Amir Albazi,Alessandro Costa,after_enrichment
+2026-11-21,Dan Hooker,Brian Ortega,after_enrichment
+2026-11-21,Diyar Nurgozhay,Alik Lorenz,after_enrichment
+2026-11-21,Jake Matthews,Tahir Abdullayev,after_enrichment
+2026-11-21,Jared Cannonier,Ikram Aliskerov,after_enrichment
+2026-11-21,Jiri Prochazka,Navajo Stirling,after_enrichment
+2026-11-21,Kyoji Horiguchi,Asu Almabayev,after_enrichment
+2026-11-21,Nikolas Motta,Dom Mar Fan,after_enrichment
+2026-11-21,Shamil Gaziev,Tallison Teixeira,after_enrichment
+2026-11-21,Shoaib Yousaf,John Mitchell,after_enrichment

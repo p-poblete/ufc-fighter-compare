@@ -63,8 +63,8 @@ Incluye:
 
 ## 4. Criterios de aceptación
 
-- [ ] CA1 · Dado el pipeline, cuando ejecuto `python -m pipeline.build`, entonces se generan `data/processed/fights.parquet`, `data/processed/fighters.parquet`, `data/processed/slugs.csv`, `web/public/data/index.json`, `web/public/data/meta.json` y un `web/public/data/fighters/<slug>.json` por entrada del índice, y las validaciones del contrato (sección 6.3) pasan.
-- [ ] CA2 · Dado `index.json`, cuando lo inspecciono, entonces contiene a todos los peleadores con al menos una pelea en la UFC desde 2010 y ningún `slug` se repite.
+- [x] CA1 · Dado el pipeline, cuando ejecuto `python -m pipeline.build`, entonces se generan `data/processed/fights.parquet`, `data/processed/fighters.parquet`, `data/processed/slugs.csv`, `web/public/data/index.json`, `web/public/data/meta.json` y un `web/public/data/fighters/<slug>.json` por entrada del índice, y las validaciones del contrato (sección 6.3) pasan.
+- [x] CA2 · Dado `index.json`, cuando lo inspecciono, entonces contiene a todos los peleadores con al menos una pelea en la UFC desde 2010 y ningún `slug` se repite.
 - [ ] CA3 · Dada la web, cuando escribo «jose aldo» o «JOSÉ ALDO» en el buscador, entonces aparece José Aldo entre las 5 primeras sugerencias.
 - [ ] CA4 · Dados dos peleadores seleccionados, cuando copio la URL y la abro en otra pestaña, entonces veo la misma comparación.
 - [ ] CA5 · Dadas las URL `?a=<inexistente>`, `?a=<válido>` (sin `b`), `?a=x&b=x` y `?a=<inexistente>&b=<inexistente>`, cuando las abro, entonces se cumplen las reglas de estado en la URL de la sección 3, sin errores en la consola.
@@ -77,7 +77,7 @@ Incluye:
 - [ ] CA11 · Dado el workflow semanal, cuando se ejecuta y `fights.parquet` cambia, entonces hace commit de los datos regenerados y Cloudflare Pages vuelve a publicar; si no cambia, no hace commit; si las validaciones fallan, no hace commit y el workflow queda en rojo.
 - [ ] CA12 · Dado el README, cuando lo abro en GitHub, entonces tiene captura, enlace a la demo, fuentes y licencias, método (cruce de fuentes, cuotas sin margen, percentiles), limitaciones y cómo ejecutarlo en local.
 - [ ] CA13 · Dadas las dependencias, entonces `pipeline/requirements.txt` fija versiones exactas (`==`) y `web/package-lock.json` está versionado.
-- [ ] CA14 · Dadas las métricas, entonces existen tests de `pytest` para el récord, las vías de victoria y derrota, el ROI, el tipo de cuota, la probabilidad implícita sin margen y el arquetipo.
+- [x] CA14 · Dadas las métricas, entonces existen tests de `pytest` para el récord, las vías de victoria y derrota, el ROI, el tipo de cuota, la probabilidad implícita sin margen y el arquetipo.
 
 ## 5. Cortes verticales
 
@@ -136,21 +136,23 @@ Funciones de `app.py` que se portan a `metrics.py` (lógica, no código Streamli
 | Fuente | Qué aporta | Cobertura (2026-11-23) | Licencia |
 |---|---|---|---|
 | [UFC-Almanac](https://github.com/Sam-Armstrong/UFC-Almanac) `data/FightResults.csv`, `FightStats.csv`, `FighterData.csv` (raw de GitHub) | Base: peleas, estadísticas por pelea y perfil de carrera (UFCStats) | 2010-01-02 → 2026-11-14; 7.738 peleas, 2.682 peleadores; actualizada cada semana | MIT |
-| Kaggle `jerzyszocik/ufc-fight-forecast-complete-gold-modeling-dataset` (`full_data_silver_plus.parquet`) | Enriquecimiento: división, género, cuotas decimales (`f_*_odds_legacy`), apodo, fecha de nacimiento | 1994-03-11 → 2026-05-16; cuotas en el 77 % | Por confirmar (puerta de entrada del corte 1) |
-| Kaggle `mdabbert/ultimate-ufc-dataset` (`ufc-master.csv`) | Reserva de cuotas donde jerzyszocik no tenga ninguna de las dos | 2010 → 2026-03-28 | Por confirmar (puerta de entrada del corte 1) |
+| Kaggle `jerzyszocik/ufc-fight-forecast-complete-gold-modeling-dataset` (`full_data_silver_plus.parquet`) | Enriquecimiento: división, género, cuotas decimales (`f_*_odds_legacy`), apodo, fecha de nacimiento | 1994-03-11 → 2026-05-16; cuotas en el 77 % | CC0 1.0 (página de Kaggle, 2026-11-23) |
+| Kaggle `mdabbert/ultimate-ufc-dataset` (`ufc-master.csv`) | Reserva de cuotas donde jerzyszocik no tenga ninguna de las dos | 2010 → 2026-03-28 | CC BY 4.0 (página de Kaggle, 2026-11-23) |
 
 - **Puerta de licencias (primer paso del corte 1):** leer la licencia de los dos datasets de Kaggle en su página.
   - **Variante A** (permite redistribuir con atribución): todo como está escrito y atribución en el pie de página y el README.
   - **Variante B** (no lo permite o no está clara): `data/raw/enrichment.parquet` no se versiona (va a `data/raw/cache/`, ignorado), los parquet públicos y los JSON no llevan `odds_decimal`, `opp_odds_decimal` ni `implied_prob_fair`, el historial no tiene columna de cuota y la vista de cuotas muestra solo agregados por peleador (ROI y `n` por tipo, victorias reales frente a esperadas). El workflow semanal descarga el enriquecimiento de Kaggle en cada ejecución.
   - La variante elegida se anota en esta sección antes de escribir código.
+  - **Elegida: variante A** (2026-11-23). jerzyszocik es CC0 y mdabbert CC BY 4.0: se versiona `data/raw/enrichment.parquet` (≈ 390 KB) y los JSON llevan cuotas. Atribución obligatoria a mdabbert (Matt Dabbert, CC BY 4.0) en el pie y el README; las tres fuentes están en `meta.json.sources`.
 - **Cuotas:** americanas → decimales: `1 + A/100` si `A > 0`; `1 + 100/|A|` si `A < 0`. `odds_decimal` y `opp_odds_decimal` de una pelea salen siempre de la misma fuente: jerzyszocik si tiene las dos; si no, mdabbert si tiene las dos; si no, la que tenga la del peleador. `odds_source` registra cuál. `implied_prob_fair = (1/odds) / (1/odds + 1/opp_odds)`, solo con las dos cuotas.
 
-- Cruce Almanac ↔ jerzyszocik por `(fecha, nombre normalizado)`: 97,8 % de coincidencias medidas sobre 7.436 peleas hasta 2026-05-16. Normalización: NFKD → ASCII, minúsculas, sin puntuación, espacios colapsados. Las peleas sin coincidencia se registran en `data/processed/unmatched.csv` para revisión; no se descartan.
+- Cruce Almanac ↔ jerzyszocik por `(fecha, nombre normalizado)` con tolerancia de ±1 día: 98,0 % de coincidencias sobre 7.436 peleas hasta 2026-05-16 (las no emparejadas son casi todas empates y sin resultado, que jerzyszocik no incluye). Normalización: NFKD → ASCII, minúsculas, guiones como espacio, sin el resto de puntuación, espacios colapsados.
+- Homónimos (corte 1: solo Bruno Silva): se separan por la URL de UFCStats del enriquecimiento; las peleas sin URL van a la identidad con la pelea emparejada más cercana en el tiempo, y las filas repetidas de `FighterData` a la identidad cuya división se acerca más a su peso. Las peleas sin coincidencia se registran en `data/processed/unmatched.csv` para revisión; no se descartan.
 - Peleas posteriores al enriquecimiento (302 a fecha de hoy) y no emparejadas: `weight_class` = la última división conocida del peleador antes de esa pelea; si no hay, se infiere del **peso actual del peleador** (`FighterData.Weight`, no el de la pelea) con los límites oficiales, y `weight_class_inferred = true`; `gender` = el último conocido o `null`; cuotas `null`.
 - UFCStats no se scrapea directamente: tiene un reto anti-bots con JavaScript.
 - Codificaciones de Almanac:
   - Comprobado: `FightResults.Date` es `DD/M/YYYY`. `FightStats.Time` es el tiempo total transcurrido en segundos (144 en un KO del primer asalto; 900 en una decisión a 3 asaltos; 1500 a 5).
-  - Por verificar en el corte 1 con 5 ejemplos cada una: `Result` 1 = gana Fighter 1, 2 = gana Fighter 2, 3 = empate, 4 = sin resultado. En `FighterData`: `Height` en cm, `Reach` en pulgadas (se convierte a cm), `Weight` en libras y `Stance` 1/2/3 (se mapea contra peleadores conocidos).
+  - Verificado en el corte 1: `Result` 1 = gana Fighter 1, 2 = gana Fighter 2, 3 = empate, 4 = sin resultado (Evans–Silva, Jones–Vera, Edgar–Maynard 2011, «Overturned»). En `FighterData`: `Height` en cm, `Reach` en pulgadas (se convierte a cm), `Weight` en libras (peso actual) y `Stance` 1 = Orthodox, 2 = Southpaw, 3 = Switch (McGregor y Poirier 2, Adesanya 3). Un perfil con las 8 métricas de carrera a 0 se trata como sin datos (`null`).
 - Asalto y tiempo del asalto (todas las peleas de la UFC desde 2010 tienen asaltos de 5 min): `round = ceil(fight_time_s / 300)` y `round_time_s = fight_time_s − 300 × (round − 1)`. Si existe `finish_round`/`finish_time` de jerzyszocik y discrepa, se registra en `unmatched.csv` y manda Almanac.
 - Rivales sin fila en `FighterData`: se crea su fila en `fighters.parquet` con nombre, slug y lo que se derive de `fights` (división, peleas); el resto de columnas, `null`. Así todo rival existe en el índice.
 

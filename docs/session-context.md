@@ -3,15 +3,20 @@
 Actualizado: 2026-11-23
 
 ## Estado
-- Repo público https://github.com/p-poblete/ufc-fighter-compare (main sincronizado). Spec v0.2 aprobada en `docs/spec.md`. Falta añadir `LICENSE` (MIT) en el corte 1.
-- Separado de `~/Proyectos/Personales/ufc-fight-analytics` (de ahí se portan las funciones de comparación de `src/app.py`).
+- Repo público https://github.com/p-poblete/ufc-fighter-compare. Spec v0.2 aprobada en `docs/spec.md`.
+- **Corte 1 (datos) terminado (2026-11-23).** `python -m pipeline.build` genera `data/processed/{fights,fighters}.parquet`, `slugs.csv`, `unmatched.csv` y `web/public/data/{index,meta}.json` + `fighters/<slug>.json`. Datos a 2026-11-21: 7.750 peleas, 2.304 peleadores; `index.json` 65 KB comprimido; ficha máx. 17 KB. Build determinista (mismos hashes en dos ejecuciones). `LICENSE` MIT añadida.
+- Módulos: `pipeline/{sources,data,metrics,export,validate,build,refresh_enrichment,paths}.py`; tests en `pipeline/tests/` (87); `pyproject.toml` configura pytest y ruff (B905 ignorado).
+- Separado de `~/Proyectos/Personales/ufc-fight-analytics` (consumirá `data/processed/*.parquet`).
 
 ## Decisiones (2026-11-23)
-- Stack: Astro 7 + TypeScript + ECharts 6, web estática en Cloudflare Pages (no Streamlit: personalización insuficiente).
-- Datos híbridos: base UFC-Almanac (GitHub, MIT, semanal, 2010→hoy) + enriquecimiento (división, género, cuotas) de Kaggle jerzyszocik (hasta 2026-05-16) y mdabbert de reserva. Cruce por fecha + nombre normalizado: 97,8 %. UFCStats directo descartado (reto anti-bots JS).
-- El pipeline vive en este repo y genera el dataset limpio (`data/processed/*.parquet`); el repo de análisis lo consumirá.
-- Interfaz, código y README en inglés. Plazo: 2 semanas, ~10 h. Métrica: demo pública estable.
-- Al publicar: borrar la app antigua de Streamlit Cloud (repo ufc-fight-analytics).
+- Stack: Astro 7 + TypeScript + ECharts 6, web estática en Cloudflare Pages.
+- Licencias: jerzyszocik CC0, mdabbert CC BY 4.0 → **variante A** (snapshot `data/raw/enrichment.parquet` versionado, cuotas en los JSON, atribución a Matt Dabbert en pie y README). Licencias leídas de la página de Kaggle vía búsqueda web (Kaggle no se deja leer sin JS); conviene confirmarlas a ojo una vez.
+- Cruce con ±1 día: 98,0 %. Homónimos separados por URL de UFCStats (solo Bruno Silva → `bruno-silva` mosca, `bruno-silva-2` medio). Perfil con 8 métricas a 0 = sin datos.
+- Percentil = rango medio (por debajo + ½ empates) / N × 100; SApM guardado ya invertido (`percentiles.inverted`). `duration.decision_pct` sobre W/L/D (sin NC).
+- Interfaz, código y README en inglés. Al publicar: borrar la app antigua de Streamlit Cloud.
+
+## Verificaciones
+- `.venv/bin/pytest` → 87 passed; `ruff check` y `ruff format --check` limpios; `pipeline.build` en línea y `--offline` OK.
 
 ## Siguiente paso
-Spec v0.2 aprobada. Corte 1 (empieza por la puerta de licencias de Kaggle).
+Corte 2 (esqueleto publicado): antes, decidir con Piero dirección visual (`design-taste-frontend`) y par destacado de `web/src/config.ts`. Nota: en la fuente, Aldo–Zahabi (2025) figura como Featherweight y por eso Aldo queda en esa división.

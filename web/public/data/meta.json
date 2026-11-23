@@ -1,0 +1,25 @@
+{
+  "data_through": "2026-11-21",
+  "sources": [
+    {
+      "name": "UFC-Almanac",
+      "url": "https://github.com/Sam-Armstrong/UFC-Almanac",
+      "license": "MIT",
+      "provides": "fights, per-fight stats and career profiles (UFCStats)"
+    },
+    {
+      "name": "UFC Data: Stats & Rankings & Betting Odds (jerzyszocik)",
+      "url": "https://www.kaggle.com/datasets/jerzyszocik/ufc-fight-forecast-complete-gold-modeling-dataset",
+      "license": "CC0 1.0",
+      "provides": "division, gender, odds, nickname, date of birth"
+    },
+    {
+      "name": "Ultimate UFC Dataset (mdabbert)",
+      "url": "https://www.kaggle.com/datasets/mdabbert/ultimate-ufc-dataset",
+      "license": "CC BY 4.0",
+      "provides": "fallback odds"
+    }
+  ],
+  "fights": 7750,
+  "fighters": 2304
+}
