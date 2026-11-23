@@ -36,6 +36,7 @@ Actualizado: 2026-11-23
 - Barra superior = navegación (Compare, Fighters, Method, Source) + herramientas elegidas por Piero: búsqueda Ctrl+K (`lib/tools.ts`, paleta con Enter=rojo, Shift+Enter=azul, Ctrl+Enter=perfil), recientes (localStorage), compartir (nativo en móvil o copiar), exportar imagen (`lib/card.ts`, PNG 1200×630), menú View con unidades métrico/imperial y base de percentiles (`lib/settings.ts`). Swap se mantiene como herramienta en la portada.
 - Selector de peleador con filtro arriba de cada columna; forma de 10 = índice clicable; historial completo plegado; alturas al contenido y espejo por pares en JS (`mirror()` en app.ts); relieve en W/L, racha y chips; detalle del radar tras icono.
 - Páginas nuevas: `/fighters/` (directorio filtrable, prerenderizado) y `/method/`.
+- Material de bloques: vidrio (A) elegido por Piero. Historial abierto con scroll que llena la columna; detalle del radar a la derecha del radar; selector con filtros género + división.
 - Pendiente de confirmar por Piero (decisiones tomadas sin consulta): iconos de herramientas, agrupar unidades+base en «View», leyenda de métodos solo en el lado rojo, maquetación de la imagen exportada, columnas del directorio, textos de Method.
 
 ## Siguiente paso

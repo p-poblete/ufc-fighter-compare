@@ -521,3 +521,15 @@ body[data-glow="none"]::before { background: none; }
   .style__body:has(.spec:not([hidden])) { grid-template-columns: minmax(0, 1fr); }
   .hist { flex: none; height: 360px; }
 }
+
+/* Block material: glass (Piero, 2026-11-23). Light veil, background blur, lit top edge. */
+.panel {
+  background: rgb(255 255 255 / 0.035);
+  backdrop-filter: blur(16px) saturate(1.3);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12), inset 0 0 0 1px rgb(255 255 255 / 0.05);
+}
+.panel:hover { background: rgb(255 255 255 / 0.05); }
+.col > .pick { backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3); }
+.id { background: linear-gradient(to right, color-mix(in srgb, var(--c) 14%, transparent), rgb(255 255 255 / 0.03) 70%); }
+.col--b .id { background: linear-gradient(to left, color-mix(in srgb, var(--c) 14%, transparent), rgb(255 255 255 / 0.03) 70%); }
