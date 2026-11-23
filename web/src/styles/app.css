@@ -533,3 +533,47 @@ body[data-glow="none"]::before { background: none; }
 .col > .pick { backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3); }
 .id { background: linear-gradient(to right, color-mix(in srgb, var(--c) 14%, transparent), rgb(255 255 255 / 0.03) 70%); }
 .col--b .id { background: linear-gradient(to left, color-mix(in srgb, var(--c) 14%, transparent), rgb(255 255 255 / 0.03) 70%); }
+
+/* ---------- v0.5.2 ---------- */
+/* Picker: one line — gender, division, search field with the magnifier that searches with those filters. */
+.col > .pick { flex-direction: row; align-items: center; gap: 6px; padding: 6px; height: 46px; }
+.pick select { height: 32px; padding: 0 6px; border: 0; border-radius: 8px; background: rgb(255 255 255 / 0.07); color: var(--muted); font: 600 12px var(--ui); max-width: none; flex: none; }
+.pick .pick__gender { width: 64px; }
+.pick .pick__filter { width: 118px; flex: none; }
+.pick .combo { flex: 1; min-width: 0; display: flex; align-items: center; gap: 2px; padding-left: 8px; border-radius: 8px; background: rgb(255 255 255 / 0.04); }
+.pick .combo__input { height: 32px; font-size: 14px; }
+.pick .combo__input::placeholder { color: var(--faint); }
+.pick__go { width: 32px; height: 32px; flex: none; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; }
+.pick__go svg { width: 17px; height: 17px; }
+.pick__go:hover { background: var(--text); color: var(--ground); }
+.pick .combo__list { left: -190px; right: 0; }
+.pick__filters, .pick__icon { display: none; }
+
+/* Record squares (GitHub style): colour = result, intensity = finish vs decision; UFC fights ringed. */
+.squares { display: flex; flex-wrap: wrap; gap: 3px; }
+.squares li { display: contents; }
+.sq { width: 13px; height: 13px; border-radius: 3px; border: 0; padding: 0; display: block; }
+.sq--W { background: #1f7a4f; }
+.sq--L { background: #9b3437; }
+.sq--D, .sq--NC { background: #4b4f59; }
+.sq--W.sq--fin { background: #34c78c; }
+.sq--L.sq--fin { background: #ff5a5f; }
+.sq--W.sq--dec { background: #23935f; }
+.sq--L.sq--dec { background: #b8474a; }
+.sq--ufc { box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.85); cursor: pointer; transition: transform 120ms var(--ease); }
+.sq--ufc:hover { transform: scale(1.35); }
+.sq--ufc:focus-visible { outline-offset: 1px; }
+
+/* Archetype icon chip */
+.chip--icon { width: 30px; height: 30px; padding: 0; display: inline-grid; place-items: center; border-radius: 9px; }
+.chip--icon svg { width: 20px; height: 20px; }
+
+/* Radar keeps its space when the metric sheet opens beside it. */
+.style__body { height: clamp(380px, 34vw, 500px); }
+.style__body .chart--radar, .style__body:has(.spec:not([hidden])) .chart--radar { height: 100%; }
+.style__body .spec { max-height: 100%; overflow-y: auto; }
+@media (max-width: 760px) {
+  .style__body { height: auto; }
+  .style__body .chart--radar { height: 360px; }
+  .pick .pick__filter { width: 96px; }
+}

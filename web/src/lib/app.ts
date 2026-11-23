@@ -137,7 +137,7 @@ function setupPicker(side: Side, items: Searchable[], choose: (side: Side, slug:
   const optionId = (i: number) => `opt-${side}-${i}`;
 
   function open(): void {
-    const gender = (root.querySelector<HTMLElement>('[data-gender][aria-pressed="true"]')?.dataset.gender ?? "") as "" | "M" | "F";
+    const gender = (root.querySelector<HTMLSelectElement>(".pick__gender")!.value ?? "") as "" | "M" | "F";
     results = search(items, input.value, { gender, division: filter.value });
     active = results.length ? 0 : -1;
     list.innerHTML = results.length
@@ -151,7 +151,7 @@ function setupPicker(side: Side, items: Searchable[], choose: (side: Side, slug:
           )
           .join("")
       : `<li class="opt--none" role="presentation">No fighter matches “${esc(input.value)}”${
-          filter.value || root.querySelector('[data-gender][aria-pressed="true"]:not([data-gender=""])') ? " with these filters" : ""
+          filter.value || root.querySelector<HTMLSelectElement>(".pick__gender")!.value ? " with these filters" : ""
         }</li>`;
     list.hidden = false;
     input.setAttribute("aria-expanded", "true");
@@ -211,13 +211,15 @@ function setupPicker(side: Side, items: Searchable[], choose: (side: Side, slug:
     const li = (ev.target as HTMLElement).closest<HTMLLIElement>("[role=option]");
     if (li) pick(Number(li.id.split("-").pop()));
   });
-  root.querySelectorAll<HTMLButtonElement>("[data-gender]").forEach((btn) =>
-    btn.addEventListener("click", () => {
-      root.querySelectorAll("[data-gender]").forEach((x) => x.setAttribute("aria-pressed", String(x === btn)));
-      input.focus();
-      open();
-    }),
-  );
+  // The filters narrow the suggestions; the magnifier lists the fighters that match them.
+  root.querySelector(".pick__gender")!.addEventListener("change", () => {
+    input.focus();
+    open();
+  });
+  root.querySelector(".pick__go")!.addEventListener("click", () => {
+    input.focus();
+    open();
+  });
   filter.addEventListener("change", () => {
     input.focus();
     open();

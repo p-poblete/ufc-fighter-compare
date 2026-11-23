@@ -143,10 +143,11 @@ function radar(el: HTMLElement, entries: Entry[], layer: string) {
       textStyle: font,
       radar: {
         indicator: METRICS.map(([m]) => ({ name: SHORT[m], max: 100 })),
-        radius: "70%",
+        // Narrow (metric sheet open, phones): a smaller radar leaves room for the axis names.
+        radius: el.clientWidth < 480 ? "46%" : "70%",
         center: ["50%", "52%"],
         splitNumber: 4,
-        axisName: { ...font, fontSize: 12, color: MUTED },
+        axisName: { ...font, fontSize: el.clientWidth < 480 ? 11 : 12, color: MUTED },
         splitLine: { lineStyle: { color: LINE } },
         splitArea: { show: false },
         axisLine: { lineStyle: { color: LINE } },
@@ -435,7 +436,16 @@ export function drawCharts(root: ParentNode, entries: Entry[], tones: string[] =
     draw();
     wire(panel, "data-range", draw);
     if (kind === "perf") wire(panel, "data-metric", draw);
-    if (kind === "radar") wire(panel, "data-layer", draw);
+    if (kind === "radar") {
+      wire(panel, "data-layer", draw);
+      let w = el.clientWidth;
+      new ResizeObserver(() => {
+        if (Math.abs(el.clientWidth - w) > 40) {
+          w = el.clientWidth;
+          draw();
+        }
+      }).observe(el);
+    }
     if (!observed.has(el)) {
       observed.add(el);
       resizer.observe(el);

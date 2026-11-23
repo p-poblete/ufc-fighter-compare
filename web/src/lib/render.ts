@@ -83,7 +83,16 @@ function mod(name: string, heading: string, body: string, opts: { aside?: string
 }
 const noData = (why: string) => `<p class="nodata">No data · ${esc(why)}</p>`;
 const aside = (t: string) => `<span class="panel__aside">${t}</span>`;
-export const archetypeChip = (x: string | null) => (x ? `<span class="chip chip--${x.toLowerCase()}">${esc(x)}</span>` : "");
+// Archetype as a posture silhouette: Striker throwing a straight punch, Grappler shooting a takedown, Balanced in guard.
+const POSTURE: Record<string, string> = {
+  Striker: '<circle cx="8" cy="4" r="2.2"/><path d="M8 7l-1.5 6 -2 5M8 7l1 6 3 5M8 8.5l9-1.5M8 9.5l-3 2.5"/>',
+  Grappler: '<circle cx="15.5" cy="7" r="2.2"/><path d="M14 9l-7 3.5 -3 5.5M7 12.5l1.5 5.5M13 10l2 4M11 11l-1 4"/>',
+  Balanced: '<circle cx="10" cy="4" r="2.2"/><path d="M10 7v6l-3 5M10 13l3 5M10 8.5l-3 1.5 1.5-3M10 8.5l3 1.5-1.5-3"/>',
+};
+export const archetypeChip = (x: string | null) =>
+  x && POSTURE[x]
+    ? `<span class="chip chip--${x.toLowerCase()} chip--icon" role="img" aria-label="${esc(x)}" title="${esc(x)}"><svg viewBox="0 0 20 20" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${POSTURE[x]}</g></svg></span>`
+    : "";
 
 // ---------- corner.* (one fighter, against their edge) ----------
 /** corner.identity. Physical facts only when no duel.matchup shows them (profile, or one corner empty). */
@@ -124,19 +133,27 @@ export function identity(f: Fighter | null, tone: Tone, warning: string | null =
   );
 }
 
-/** corner.record: record and streak; the last 10 results are the index of fights (each opens fight.dialog). */
+/** corner.record: record and streak, then every professional fight as a painted square (GitHub style).
+ *  Colour = result, intensity = how it ended (KO/sub strong, decision light). UFC fights since 2010 run
+ *  oldest to newest with their own border and open fight.dialog; the rest of the career has no order. */
 export function record(f: Fighter, tone: Tone): string {
-  const last = f.fights.slice(0, 10);
   const u = f.ufc_record;
   const st = streak(f);
-  const strip = last.length
-    ? `<ol class="form" aria-label="Last ${last.length} UFC fights, newest first">${last
-        .map(
-          (x, i) =>
-            `<li><button type="button" class="relief r-${x.result}" data-fight="${i}" data-slug="${f.slug}" data-tone="${tone}" aria-haspopup="dialog" title="${esc(`${dateLong(x.date)} · ${RESULT[x.result]} vs ${x.opponent} · ${x.method_detail}`)}">${x.result}</button></li>`,
-        )
-        .join("")}</ol>`
-    : noData("no UFC fights since 2010");
+  const outside = {
+    W: Math.max(0, f.record.wins - u.W),
+    L: Math.max(0, f.record.losses - u.L),
+    D: Math.max(0, f.record.draws - u.D),
+  };
+  const plain = (r: "W" | "L" | "D", n: number) =>
+    Array.from({ length: n }, () => `<li class="sq sq--${r}" title="${RESULT[r]} outside the UFC or before 2010"></li>`).join("");
+  const ufc = [...f.fights]
+    .map((x, i) => ({ x, i }))
+    .reverse()
+    .map(
+      ({ x, i }) =>
+        `<li><button type="button" class="sq sq--${x.result} sq--${x.method === "DEC" ? "dec" : x.method === "OTHER" ? "oth" : "fin"} sq--ufc" data-fight="${i}" data-slug="${f.slug}" data-tone="${tone}" aria-haspopup="dialog" aria-label="${esc(`${RESULT[x.result]} vs ${x.opponent}, ${dateLong(x.date)}`)}" title="${esc(`${dateLong(x.date)} · ${RESULT[x.result]} vs ${x.opponent} · ${x.method_detail}`)}"></button></li>`,
+    )
+    .join("");
   return mod(
     "corner.record",
     "",
@@ -144,9 +161,8 @@ export function record(f: Fighter, tone: Tone): string {
        <p class="display">${f.record.wins}-${f.record.losses}-${f.record.draws}</p>
        ${st ? `<p class="streak"><b class="relief r-${st[0]}">${st}</b><span>${st[0] === "W" ? "win" : "losing"} streak</span></p>` : ""}
      </div>
-     ${strip}
-     <p class="rec__spec">Professional record. Squares: last ${last.length} UFC fights, newest first. UFC since 2010: ${u.W}-${u.L}-${u.D}${u.NC ? ` (${u.NC} NC)` : ""}.</p>`,
-    { cls: "rec", tone, label: "Record and form" },
+     <ol class="squares" aria-label="Professional fights: earlier career, then UFC fights since 2010 from oldest to newest">${plain("W", outside.W)}${plain("L", outside.L)}${plain("D", outside.D)}${ufc}</ol>`,
+    { cls: "rec", tone, label: "Record" },
   );
 }
 
@@ -178,7 +194,7 @@ export function history(f: Fighter, tone: Tone = "solo"): string {
 }
 
 export function ownColumn(f: Fighter | null, tone: Tone, warning: string | null = null, other: Fighter | null = null): string {
-  return identity(f, tone, warning, !other) + (f ? record(f, tone) + finishes(f, tone, tone !== "b") + history(f, tone) : "");
+  return identity(f, tone, warning, !other) + (f ? record(f, tone) + finishes(f, tone) + history(f, tone) : "");
 }
 
 // ---------- duel.* (both fighters, centre) ----------
