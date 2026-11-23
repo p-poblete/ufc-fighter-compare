@@ -66,6 +66,25 @@ Sustituyen lo que contradigan de la lista anterior.
 - **Perfil por peleador**: página estática `/fighters/<slug>/` por cada entrada del índice, con los componentes de un solo peleador (ficha, cifras, forma, métodos, radar frente a su división, percentiles, rendimiento, retorno, duración e historial completo) y un enlace para compararlo. Los nombres del comparador enlazan a su perfil.
 - **Fotos**: pendiente de decidir (Wikimedia Commons cubre aproximadamente 1 de cada 4 peleadores); mientras, monograma.
 
+### 3.2 Módulos (v0.4, 2026-11-23)
+
+Cada bloque es un módulo con nombre interno (`data-module`), una pregunta que responde y sus datos. Ningún dato se muestra en dos módulos de la misma vista. Se abandona el monocromatismo: color por esquina (rojo/azul) y color semántico por tipo de combate (ámbar = golpeo/KO, esmeralda = lucha/sumisión, lavanda = decisión/equilibrado), que también colorea los arquetipos.
+
+| Módulo | Pregunta | Contenido |
+|---|---|---|
+| `corner.identity` | ¿Quién es? | Nombre (enlace al perfil), apodo, división, arquetipo, esquina. Datos físicos solo si no hay `duel.matchup` en la vista (perfil o un solo lado). |
+| `corner.record` | ¿Cómo le va? | Récord profesional, récord UFC, racha actual, forma de las últimas 10. |
+| `corner.finishes` | ¿Cómo terminan sus peleas? | Reparto por método de victorias y derrotas (M2). |
+| `corner.history` | ¿Contra quién ha peleado? | Lista de peleas UFC; cada fila entera abre `fight.dialog`. |
+| `duel.matchup` | ¿Quién llega mejor? | Tasa de victorias y de finalización con «Edge»; tale of the tape (edad, altura, alcance, peso, guardia) con la diferencia escrita. |
+| `duel.style` | ¿Cómo pelea cada uno? | Radar grande con selector de capa (los dos, A, B) y ficha técnica de 8 métricas (percentil y valor real). |
+| `fights.performance` | ¿Cómo ha rendido pelea a pelea? | Dispersión por fecha con selector de métrica y de periodo. Fila completa. |
+| `fights.returns` | ¿Ha dado dinero apostarle? | Dispersión de retorno por pelea, ROI por tipo de cuota de los dos y victorias reales frente a esperadas, todo según el periodo. Fila completa. Sustituye a la columna de apuestas. |
+| `fights.length` | ¿Cuánto duran sus peleas? | Histograma de minutos, media y % a decisión según el periodo. Fila completa. |
+| `fight.dialog` | ¿Qué pasó en esa pelea? | Diálogo con fecha, división, método, asalto y tiempo, cuotas y probabilidad justa, retorno de 100 y estadísticas de los dos peleadores; enlaces a la comparación y al perfil del rival. |
+
+Se retiran de la comparación: el bloque central de récord y métodos en espejo (R1 + M3, repetía `corner.record` y `corner.finishes`), la duración media y el ROI de las cifras (viven en `fights.length` y `fights.returns`) y el título visible «A vs B» (queda como h1 para lectores de pantalla).
+
 ### Fuera de alcance
 
 - PCA, t-SNE, UMAP, clústeres, correlaciones con cuotas, gráficos globales por división (son del repositorio de análisis `ufc-fight-analytics`).

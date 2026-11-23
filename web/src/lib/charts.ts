@@ -57,23 +57,37 @@ const SHORT: Record<string, string> = {
   td_avg: "Takedowns", td_acc: "TD accuracy", td_def: "TD defence", sub_avg: "Submissions",
 };
 
-function radar(el: HTMLElement, entries: Entry[]) {
+function radar(el: HTMLElement, entries: Entry[], layer: string) {
   const pop = population(entries[0]?.f ?? null, entries[1]?.f ?? null);
-  const data = entries
-    .map((e) => ({ e, p: e.f.percentiles?.[pop] }))
-    .filter((x) => x.p)
-    .map(({ e, p }) => ({
+  const shown = entries.filter((_, i) => layer === "both" || layer === (i === 0 ? "a" : "b"));
+  const series = shown
+    .filter((e) => e.f.percentiles?.[pop])
+    .map((e, i) => ({
+      type: "radar" as const,
       name: e.f.name,
-      value: METRICS.map(([m]) => Math.round(p![m])),
-      lineStyle: { color: e.color, width: 2.5 },
-      itemStyle: { color: e.color },
-      areaStyle: { color: e.color, opacity: 0.16 },
-      symbolSize: 5,
+      z: 2 + i,
+      symbolSize: 6,
+      emphasis: { focus: "self" as const, areaStyle: { opacity: 0.32 } },
+      blur: { lineStyle: { opacity: 0.25 }, areaStyle: { opacity: 0.04 } },
+      data: [
+        {
+          name: e.f.name,
+          value: METRICS.map(([m]) => Math.round(e.f.percentiles![pop]![m])),
+          lineStyle: { color: e.color, width: 2.5, type: i === 1 && shown.length > 1 ? ("dashed" as const) : ("solid" as const) },
+          itemStyle: { color: e.color },
+          areaStyle: { color: e.color, opacity: shown.length > 1 ? 0.1 : 0.22 },
+        },
+      ],
     }));
   instance(el).setOption(
     {
       textStyle: font,
-      tooltip: { ...tooltip, trigger: "item" },
+      tooltip: {
+        ...tooltip,
+        trigger: "item",
+        formatter: (p: { name: string; value: number[] }) =>
+          `<b>${esc(p.name)}</b><br>${METRICS.map(([m, l], i) => `${l}: <b>${p.value[i]}</b>`).join("<br>")}`,
+      },
       radar: {
         indicator: METRICS.map(([m]) => ({ name: SHORT[m], max: 100 })),
         radius: "70%",
@@ -84,7 +98,7 @@ function radar(el: HTMLElement, entries: Entry[]) {
         splitArea: { show: false },
         axisLine: { lineStyle: { color: LINE } },
       },
-      series: [{ type: "radar", data }],
+      series,
     },
     true,
   );
@@ -193,17 +207,28 @@ function roi(el: HTMLElement, entries: Entry[], range: Range) {
     },
     true,
   );
-  // ROI for the span, from the same fights the chart shows.
-  const note = el.closest(".panel")?.querySelector(".roi__sum") ?? Object.assign(document.createElement("p"), { className: "roi__sum" });
-  note.innerHTML = entries
-    .map((e, i) => {
-      const n = priced[i].length;
-      if (!n) return `<span>${esc(lastName(e.f.name))}: no odds in this span</span>`;
-      const pct = (priced[i].reduce((s, x) => s + stakeReturn(x, 100), 0) / (100 * n)) * 100;
-      return `<span><b style="color:${e.color}">${esc(lastName(e.f.name))}</b> ${pct > 0 ? "+" : pct < 0 ? "−" : ""}${Math.abs(Math.round(pct))}% ROI · ${n} fights${n < 5 ? " (small sample)" : ""}</span>`;
-    })
-    .join("");
-  el.before(note);
+  // Side table for the span: ROI by odds type for each fighter, and wins against the market.
+  const slot = el.closest(".panel")?.querySelector<HTMLElement>('[data-slot="roi-table"]');
+  if (slot) {
+    const cell = (fs: Fight[]) => {
+      if (!fs.length) return `<td class="num">—</td>`;
+      const pct = (fs.reduce((s, x) => s + stakeReturn(x, 100), 0) / (100 * fs.length)) * 100;
+      return `<td class="num ${pct >= 0 ? "pos" : "neg"}">${pct > 0 ? "+" : pct < 0 ? "−" : ""}${Math.abs(Math.round(pct))}%<small> ${fs.length}${fs.length < 5 ? "*" : ""}</small></td>`;
+    };
+    const head = entries.map((e) => `<th scope="col" class="num" style="color:${e.color}">${esc(lastName(e.f.name))}</th>`).join("");
+    const rows = ODDS_TYPES.map((t) => `<tr><th scope="row">${t}</th>${priced.map((fs) => cell(fs.filter((x) => oddsType(x.odds!) === t))).join("")}</tr>`).join("");
+    const total = `<tr class="tot"><th scope="row">All priced fights</th>${priced.map((fs) => cell(fs)).join("")}</tr>`;
+    const exp = entries
+      .map((e, i) => {
+        const fair = priced[i].filter((x) => x.implied_prob_fair != null && x.result !== "D" && x.result !== "NC");
+        if (!fair.length) return "";
+        const expected = fair.reduce((s, x) => s + x.implied_prob_fair!, 0);
+        const won = fair.filter((x) => x.result === "W").length;
+        return `<p><b style="color:${e.color}">${esc(lastName(e.f.name))}</b> won ${won} of ${fair.length}; the odds expected ${expected.toFixed(1)}.</p>`;
+      })
+      .join("");
+    slot.innerHTML = `<table class="mini"><thead><tr><th scope="col">ROI · fights</th>${head}</tr></thead><tbody>${rows}${total}</tbody></table><div class="ret__exp">${exp}</div>`;
+  }
 }
 
 // ---------- fight length ----------
@@ -238,17 +263,27 @@ function duration(el: HTMLElement, entries: Entry[], range: Range) {
     },
     true,
   );
-  const note = el.closest(".panel")?.querySelector(".dur__note") ?? Object.assign(document.createElement("p"), { className: "foot dur__note" });
-  note.innerHTML = entries
-    .map((e, i) => {
-      const decided = sets[i].filter((x) => x.result !== "NC");
-      if (!decided.length) return `${esc(lastName(e.f.name))}: no fights in this span`;
-      const avg = sets[i].reduce((s, x) => s + x.fight_time_s!, 0) / sets[i].length / 60;
-      const dec = (decided.filter((x) => x.method === "DEC").length / decided.length) * 100;
-      return `${esc(lastName(e.f.name))}: ${avg.toFixed(1)} min on average, ${Math.round(dec)}% to the judges`;
-    })
-    .join(" · ");
-  el.after(note);
+  const slot = el.closest(".panel")?.querySelector<HTMLElement>('[data-slot="dur-table"]');
+  if (slot) {
+    const stats = entries.map((e, i) => {
+      const fs = sets[i];
+      const decided = fs.filter((x) => x.result !== "NC");
+      return {
+        e,
+        n: fs.length,
+        avg: fs.length ? fs.reduce((s, x) => s + x.fight_time_s!, 0) / fs.length / 60 : null,
+        dec: decided.length ? (decided.filter((x) => x.method === "DEC").length / decided.length) * 100 : null,
+        r1: fs.length ? (fs.filter((x) => x.round === 1 && x.method !== "DEC").length / fs.length) * 100 : null,
+      };
+    });
+    const row = (label: string, v: (s: (typeof stats)[number]) => string) => `<tr><th scope="row">${label}</th>${stats.map((s) => `<td class="num">${v(s)}</td>`).join("")}</tr>`;
+    slot.innerHTML = `<table class="mini"><thead><tr><th scope="col"></th>${stats.map((s) => `<th scope="col" class="num" style="color:${s.e.color}">${esc(lastName(s.e.f.name))}</th>`).join("")}</tr></thead><tbody>
+      ${row("Fights", (s) => `${s.n}`)}
+      ${row("Average length", (s) => (s.avg == null ? "—" : `${s.avg.toFixed(1)} min`))}
+      ${row("Go to the judges", (s) => (s.dec == null ? "—" : `${Math.round(s.dec)}%`))}
+      ${row("Finished in round 1", (s) => (s.r1 == null ? "—" : `${Math.round(s.r1)}%`))}
+    </tbody></table>`;
+  }
 }
 
 const observed = new WeakSet<HTMLElement>();
@@ -277,7 +312,7 @@ export function drawCharts(root: ParentNode, entries: Entry[]): void {
     const panel = el.closest(".panel")!;
     const range = () => pressed(panel, "data-range", "all") as Range;
     let draw: () => void;
-    if (kind === "radar") draw = () => radar(el, entries);
+    if (kind === "radar") draw = () => radar(el, entries, pressed(panel, "data-layer", "both"));
     else if (kind === "perf") draw = () => perf(el, entries, pressed(panel, "data-metric", "slpm") as PerfMetric, range());
     else if (kind === "roi") draw = () => roi(el, entries, range());
     else if (kind === "dur") draw = () => duration(el, entries, range());
@@ -285,6 +320,7 @@ export function drawCharts(root: ParentNode, entries: Entry[]): void {
     draw();
     wire(panel, "data-range", draw);
     if (kind === "perf") wire(panel, "data-metric", draw);
+    if (kind === "radar") wire(panel, "data-layer", draw);
     if (!observed.has(el)) {
       observed.add(el);
       resizer.observe(el);

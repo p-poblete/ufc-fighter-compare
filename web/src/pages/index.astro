@@ -68,10 +68,10 @@ const corners = [
   </div>
 
   <main class="wide dash" id="app" data-featured-a={featured.a} data-featured-b={featured.b}>
-    <h1 id="title" class="dash__title">{title(a, b)}</h1>
-    <aside class="col col--a" id="col-a" aria-label="Red corner"><Fragment set:html={ownColumn(a, "a")} /></aside>
+    <h1 id="title" class="sr">{title(a, b)}</h1>
+    <aside class="col col--a" id="col-a" aria-label="Red corner"><Fragment set:html={ownColumn(a, "a", null, b)} /></aside>
     <div class="col col--mid" id="centre"><Fragment set:html={centre(a, b)} /></div>
-    <aside class="col col--b" id="col-b" aria-label="Blue corner"><Fragment set:html={ownColumn(b, "b")} /></aside>
+    <aside class="col col--b" id="col-b" aria-label="Blue corner"><Fragment set:html={ownColumn(b, "b", null, a)} /></aside>
     <div class="fightrow" id="fights"><Fragment set:html={fightCharts(a, b)} /></div>
     <p id="live" class="sr" aria-live="polite"></p>
   </main>

@@ -1,11 +1,10 @@
 ---
-// One static profile per fighter in index.json.
+// One static profile per fighter in index.json, built from the same modules as the comparison.
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import Base from "../../layouts/Base.astro";
 import type { Fighter, IndexEntry } from "../../lib/data";
-import { DASH } from "../../lib/format";
-import { betting, chartPanels, finishRate, form, history, identity, methodMix, styleBlock, winRate } from "../../lib/render";
+import { finishRate, finishes, fightRows, history, identity, pctText, record, style, winRate } from "../../lib/render";
 
 export async function getStaticPaths() {
   const index: IndexEntry[] = JSON.parse(await readFile(join(process.cwd(), "public/data/index.json"), "utf-8"));
@@ -14,15 +13,7 @@ export async function getStaticPaths() {
 
 const { slug } = Astro.params;
 const f: Fighter = JSON.parse(await readFile(join(process.cwd(), "public/data/fighters", `${slug}.json`), "utf-8"));
-const pct = (x: number | null) => (x == null ? DASH : `${Math.round(x)}%`);
-const roi = f.odds.total.roi_pct;
-const kpis = [
-  { l: "Win rate", v: pct(winRate(f)) },
-  { l: "Finish rate in the UFC", v: pct(finishRate(f)) },
-  { l: "Average fight", v: f.duration.avg_minutes == null ? DASH : `${f.duration.avg_minutes.toFixed(1)} min` },
-  { l: "Betting ROI", v: roi == null ? DASH : `${roi > 0 ? "+" : roi < 0 ? "−" : ""}${Math.abs(Math.round(roi))}%` },
-];
-const desc = `${f.name}: ${f.record.wins}-${f.record.losses}-${f.record.draws}${f.weight_class ? `, ${f.weight_class}` : ""}. Style percentiles, methods, betting record and every UFC fight since 2010.`;
+const desc = `${f.name}: ${f.record.wins}-${f.record.losses}-${f.record.draws}${f.weight_class ? `, ${f.weight_class}` : ""}. Style, finishes, betting returns and every UFC fight since 2010.`;
 ---
 
 <Base title={`${f.name} · UFC Fighter Compare`} description={desc} glow="solo">
@@ -32,21 +23,27 @@ const desc = `${f.name}: ${f.record.wins}-${f.record.losses}-${f.record.draws}${
 
   <main class="wide profile" id="profile" data-slug={f.slug}>
     <h1 class="sr">{f.name}</h1>
-    <aside class="col col--solo"><Fragment set:html={identity(f, "solo", null, false) + form(f) + methodMix(f, "solo") + betting(f)} /></aside>
-    <div class="col col--mid">
-      <section class="panel kpis" aria-label="Headline figures">
-        {kpis.map((k) => <div><p class="kpis__v">{k.v}</p><p class="kpis__l">{k.l}</p></div>)}
+    <aside class="col col--solo">
+      <Fragment set:html={identity(f, "solo", null, true) + record(f, "solo")} />
+      <section class="panel kpis" data-module="profile.rates" aria-label="Rates">
+        <div><p class="display">{pctText(winRate(f))}</p><p class="muted">Win rate</p></div>
+        <div><p class="display">{pctText(finishRate(f))}</p><p class="muted">Finish rate in the UFC</p></div>
       </section>
-      <Fragment set:html={styleBlock(f, null) + chartPanels(true) + history(f, f.fights.length)} />
+      <Fragment set:html={finishes(f) + history(f, 8, "solo")} />
+    </aside>
+    <div class="col col--mid">
+      <Fragment set:html={style(f, null) + fightRows(true)} />
     </div>
   </main>
 
   <script>
     import { loadFighter } from "../../lib/data";
+    import { setupFightDialog } from "../../lib/dialog";
+    setupFightDialog();
     const root = document.getElementById("profile")!;
     loadFighter(root.dataset.slug!).then(async (f) => {
       const { drawCharts } = await import("../../lib/charts");
-      drawCharts(root.querySelector(".col--mid")!, [{ f, color: "rgb(236 237 240)" }]);
+      drawCharts(root.querySelector(".col--mid")!, [{ f, color: "#ff9f43" }]);
     });
   </script>
 </Base>

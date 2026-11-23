@@ -4,6 +4,7 @@ import { esc } from "./format";
 import { centre, fightCharts, ownColumn, title } from "./render";
 import { prepare, search, type Searchable } from "./search";
 import { pairQuery, readPair } from "./url-state";
+import { setupFightDialog } from "./dialog";
 
 interface State {
   a: string | null;
@@ -26,6 +27,7 @@ export async function boot(): Promise<void> {
     $("#live").textContent = "Fighter list could not load. Reload the page to try again.";
     return;
   }
+  setupFightDialog();
   const bySlug = new Map(index.map((e) => [e.slug, e]));
   const items = prepare(index);
 
@@ -50,8 +52,8 @@ export async function boot(): Promise<void> {
     charts.disposeCharts(mid);
     charts.disposeCharts(row);
     $("#title").textContent = title(a, b);
-    $("#col-a").innerHTML = ownColumn(a, "a", state.warnA);
-    $("#col-b").innerHTML = ownColumn(b, "b", state.warnB);
+    $("#col-a").innerHTML = ownColumn(a, "a", state.warnA, b);
+    $("#col-b").innerHTML = ownColumn(b, "b", state.warnB, a);
     mid.innerHTML = centre(a, b);
     row.innerHTML = fightCharts(a, b);
     if (a && b) {
