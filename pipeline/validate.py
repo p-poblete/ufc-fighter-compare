@@ -101,6 +101,11 @@ def validate(
         if (fights[col].dropna() <= 1).any():
             err(f"fights.{col}: values <= 1")
 
+    # No source placeholders leak as text.
+    for col in ["nickname", "stance"]:
+        if col in fighters and fighters[col].astype("string").str.upper().isin(["NULL", "NONE", "NAN", ""]).any():
+            err(f"fighters.{col}: placeholder strings such as 'NULL'")
+
     # Volume against the versioned meta.json.
     if previous_meta and previous_meta.get("fights"):
         before, now = previous_meta["fights"], fights["fight_id"].nunique()

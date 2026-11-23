@@ -68,6 +68,14 @@ MATCH_DAY_TOLERANCE = 1
 # --- names, slugs, methods -------------------------------------------------------------
 
 
+def text_or_none(value):
+    """Source placeholders such as "NULL" or blanks become None."""
+    if not isinstance(value, str):
+        return None if pd.isna(value) else value
+    value = value.strip()
+    return None if value.upper() in {"", "NULL", "NONE", "N/A", "NAN"} else value
+
+
 def normalize_name(name: str) -> str:
     """NFKD -> ASCII, lowercase, no punctuation, collapsed spaces. 'José Aldo' -> 'jose aldo'."""
     text = unicodedata.normalize("NFKD", str(name)).encode("ascii", "ignore").decode()
@@ -262,7 +270,7 @@ def build_tables(
                 row[f"{src}_opp_odds"] = key[f"odds_{other}"] if key is not None else None
                 if src == "j":
                     row["url"] = key[f"url_{own}"] if key is not None else None
-                    row["nickname"] = key[f"nickname_{own}"] if key is not None else None
+                    row["nickname"] = text_or_none(key[f"nickname_{own}"]) if key is not None else None
                     row["dob"] = key[f"dob_{own}"] if key is not None else None
             row["matched"] = j is not None
             row["j_weight_class"] = normalize_weight_class(j["weight_class"]) if j is not None else None

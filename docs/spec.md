@@ -227,7 +227,7 @@ JSON para la web:
 
 ## 9. Preguntas abiertas
 
-- [ ] Dirección visual (referencias, paleta, tipografía) · Piero · al empezar el corte 2 (con `design-taste-frontend`).
+- [x] Dirección visual · Piero · 2026-11-23: fondo negro, bordes de los componentes en naranja (#f08c00), y los componentes propios de cada peleador llevan una sombra del color de su esquina (A rojo, B azul). Boceto en el vault: `Proyectos/UFC/UFC - Interfaz.md` y `UFC - Interfaz Descripcion.md`.
 - [ ] Par destacado por defecto en la portada · Piero · corte 2.
 - [ ] Dominio propio o `*.pages.dev` · Piero · corte 6.
 

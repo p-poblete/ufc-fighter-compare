@@ -118,3 +118,12 @@ def test_assign_slugs_collisions_and_freeze():
     again = data.assign_slugs(more, frozen).set_index("fighter_key")["slug"]
     assert again["bruno silva|2016-01-01"] == "bruno-silva"
     assert again["bruno silva|2010-05-05"] == "bruno-silva-3"
+
+
+def test_text_or_none_drops_source_placeholders():
+    from pipeline.data import text_or_none
+
+    assert text_or_none("NULL") is None
+    assert text_or_none("  ") is None
+    assert text_or_none(float("nan")) is None
+    assert text_or_none(" The Dragon ") == "The Dragon"
