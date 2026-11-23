@@ -8,3 +8,5 @@ dist/
 .env
 data/raw/cache/
 .taste-skill/
+web/src/pages/lab*.astro
+web/public/lab/
