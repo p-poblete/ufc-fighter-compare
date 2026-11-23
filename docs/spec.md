@@ -65,9 +65,9 @@ Incluye:
 
 - [x] CA1 · Dado el pipeline, cuando ejecuto `python -m pipeline.build`, entonces se generan `data/processed/fights.parquet`, `data/processed/fighters.parquet`, `data/processed/slugs.csv`, `web/public/data/index.json`, `web/public/data/meta.json` y un `web/public/data/fighters/<slug>.json` por entrada del índice, y las validaciones del contrato (sección 6.3) pasan.
 - [x] CA2 · Dado `index.json`, cuando lo inspecciono, entonces contiene a todos los peleadores con al menos una pelea en la UFC desde 2010 y ningún `slug` se repite.
-- [ ] CA3 · Dada la web, cuando escribo «jose aldo» o «JOSÉ ALDO» en el buscador, entonces aparece José Aldo entre las 5 primeras sugerencias.
-- [ ] CA4 · Dados dos peleadores seleccionados, cuando copio la URL y la abro en otra pestaña, entonces veo la misma comparación.
-- [ ] CA5 · Dadas las URL `?a=<inexistente>`, `?a=<válido>` (sin `b`), `?a=x&b=x` y `?a=<inexistente>&b=<inexistente>`, cuando las abro, entonces se cumplen las reglas de estado en la URL de la sección 3, sin errores en la consola.
+- [x] CA3 · Dada la web, cuando escribo «jose aldo» o «JOSÉ ALDO» en el buscador, entonces aparece José Aldo entre las 5 primeras sugerencias.
+- [x] CA4 · Dados dos peleadores seleccionados, cuando copio la URL y la abro en otra pestaña, entonces veo la misma comparación.
+- [x] CA5 · Dadas las URL `?a=<inexistente>`, `?a=<válido>` (sin `b`), `?a=x&b=x` y `?a=<inexistente>&b=<inexistente>`, cuando las abro, entonces se cumplen las reglas de estado en la URL de la sección 3, sin errores en la consola.
 - [ ] CA6 · Dado un peleador sin cuotas, sin estadísticas por pelea, sin perfil de carrera o sin división, cuando lo comparo, entonces la ficha muestra «—» en los campos nulos, cada vista sin datos muestra «No data» con el motivo y el resto de la página funciona.
 - [ ] CA6b · Dado cualquier enlace de rival del historial, cuando lo sigo, entonces abre una comparación válida (nunca «Fighter not found»).
 - [ ] CA7 · Dado cualquier par, cuando miro la ficha, el récord, el radar, las donas, el historial, la dispersión, la duración y las cuotas, entonces todos se ven y las cifras coinciden con los JSON (comprobado con 3 pares fijos en `pipeline/tests/`).
@@ -76,7 +76,7 @@ Incluye:
 - [ ] CA10 · Dada la demo publicada, cuando paso Lighthouse móvil, entonces LCP < 2,5 s, CLS < 0,1 y Accesibilidad ≥ 90.
 - [ ] CA11 · Dado el workflow semanal, cuando se ejecuta y `fights.parquet` cambia, entonces hace commit de los datos regenerados y Cloudflare Pages vuelve a publicar; si no cambia, no hace commit; si las validaciones fallan, no hace commit y el workflow queda en rojo.
 - [ ] CA12 · Dado el README, cuando lo abro en GitHub, entonces tiene captura, enlace a la demo, fuentes y licencias, método (cruce de fuentes, cuotas sin margen, percentiles), limitaciones y cómo ejecutarlo en local.
-- [ ] CA13 · Dadas las dependencias, entonces `pipeline/requirements.txt` fija versiones exactas (`==`) y `web/package-lock.json` está versionado.
+- [x] CA13 · Dadas las dependencias, entonces `pipeline/requirements.txt` fija versiones exactas (`==`) y `web/package-lock.json` está versionado.
 - [x] CA14 · Dadas las métricas, entonces existen tests de `pytest` para el récord, las vías de victoria y derrota, el ROI, el tipo de cuota, la probabilidad implícita sin margen y el arquetipo.
 
 ## 5. Cortes verticales
@@ -228,7 +228,7 @@ JSON para la web:
 ## 9. Preguntas abiertas
 
 - [x] Dirección visual · Piero · 2026-11-23: fondo negro, bordes de los componentes en naranja (#f08c00), y los componentes propios de cada peleador llevan una sombra del color de su esquina (A rojo, B azul). Boceto en el vault: `Proyectos/UFC/UFC - Interfaz.md` y `UFC - Interfaz Descripcion.md`.
-- [ ] Par destacado por defecto en la portada · Piero · corte 2.
+- [x] Par destacado por defecto en la portada · Piero · 2026-11-23: Islam Makhachev vs Ilia Topuria (`islam-makhachev`, `ilia-topuria`).
 - [ ] Dominio propio o `*.pages.dev` · Piero · corte 6.
 
 ## 10. Revisiones (pez dorado)

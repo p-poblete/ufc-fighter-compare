@@ -1,0 +1,147 @@
+---
+import "@fontsource-variable/inter";
+import "../styles/app.css";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import { featured, repoUrl } from "../config";
+import type { Fighter, IndexEntry, Meta } from "../lib/data";
+import { dateLong } from "../lib/format";
+import { card, finding, recordBars, tape, title } from "../lib/render";
+
+const read = async <T,>(path: string): Promise<T> =>
+  JSON.parse(await readFile(join(process.cwd(), "public/data", path), "utf-8"));
+
+const index = await read<IndexEntry[]>("index.json");
+const meta = await read<Meta>("meta.json");
+const slugs = new Set(index.map((e) => e.slug));
+for (const slug of [featured.a, featured.b]) {
+  if (!slugs.has(slug)) throw new Error(`config.ts: featured slug "${slug}" is not in index.json`);
+}
+const a = await read<Fighter>(`fighters/${featured.a}.json`);
+const b = await read<Fighter>(`fighters/${featured.b}.json`);
+
+const ORDER = [
+  "Strawweight", "Flyweight", "Bantamweight", "Featherweight", "Lightweight",
+  "Welterweight", "Middleweight", "Light Heavyweight", "Heavyweight", "Catch Weight",
+];
+const divisions = [...new Set(index.map((e) => e.weight_class).filter((d): d is string => !!d))].sort(
+  (x, y) => (ORDER.indexOf(x) + 1 || 99) - (ORDER.indexOf(y) + 1 || 99) || x.localeCompare(y),
+);
+const sides = [
+  { side: "a", corner: "Red corner", f: a },
+  { side: "b", corner: "Blue corner", f: b },
+] as const;
+const pageTitle = `${title(a, b)} · UFC Fighter Compare`;
+const description = "Compare two UFC fighters side by side: tale of the tape, record, style and betting history.";
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#000000" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href="/data/index.json" as="fetch" crossorigin="anonymous" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="column topbar__in">
+        <a class="brand" href="/" aria-label="UFC Fighter Compare, featured pair">
+          <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true">
+            <rect x="1" y="1" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" />
+            <path d="M8 8v16M24 8v16" stroke="currentColor" stroke-width="4" />
+          </svg>
+          <span>Fighter Compare</span>
+        </a>
+        <nav aria-label="Project">
+          <a href={repoUrl}>Source</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="column" id="app" data-featured-a={featured.a} data-featured-b={featured.b}>
+      <div class="titlerow">
+        <h1 id="title">{title(a, b)}</h1>
+        <p id="finding" class="finding">{finding(a, b)}</p>
+      </div>
+
+      <div class="corners">
+        {sides.map(({ side, corner, f }) => (
+          <section class="fighter" data-side={side} aria-labelledby={`label-${side}`}>
+            <p class="corner" id={`label-${side}`}>{corner}</p>
+            <div class="fighter__card" id={`card-${side}`}><Fragment set:html={card(f, side)} /></div>
+            <div class="picker">
+              <label for={`q-${side}`} class="sr">{corner}: search a fighter</label>
+              <div class="combo">
+                <input
+                  id={`q-${side}`}
+                  class="combo__input"
+                  type="search"
+                  role="combobox"
+                  aria-autocomplete="list"
+                  aria-expanded="false"
+                  aria-controls={`lb-${side}`}
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="Search another fighter"
+                />
+                <ul id={`lb-${side}`} class="combo__list" role="listbox" aria-label={`${corner} suggestions`} hidden></ul>
+              </div>
+              <div class="filters">
+                <select class="filter-gender" aria-label={`${corner}: filter by gender`}>
+                  <option value="">All fighters</option>
+                  <option value="M">Men</option>
+                  <option value="F">Women</option>
+                </select>
+                <select class="filter-division" aria-label={`${corner}: filter by division`}>
+                  <option value="">All divisions</option>
+                  {divisions.map((d) => <option value={d}>{d}</option>)}
+                </select>
+              </div>
+            </div>
+          </section>
+        ))}
+        <button id="swap" class="swap" type="button" aria-label="Swap corners">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h12l-4-4M17 17H5l4 4" fill="none" stroke="currentColor" stroke-width="2" /></svg>
+          <span>Swap</span>
+        </button>
+      </div>
+
+      <div class="panels">
+        <section class="panel" aria-labelledby="h-tape">
+          <h2 id="h-tape" class="panel__title">Tale of the tape</h2>
+          <div id="tape"><Fragment set:html={tape(a, b)} /></div>
+        </section>
+        <section class="panel" aria-labelledby="h-record">
+          <h2 id="h-record" class="panel__title">Record</h2>
+          <div id="record"><Fragment set:html={recordBars(a, b)} /></div>
+        </section>
+      </div>
+      <p id="live" class="sr" aria-live="polite"></p>
+    </main>
+
+    <footer class="column footer">
+      <p>
+        Data through <time datetime={meta.data_through}>{dateLong(meta.data_through)}</time> ·
+        {meta.fights.toLocaleString("en-US")} fights since 2010 · {meta.fighters.toLocaleString("en-US")} fighters.
+      </p>
+      <p>
+        Sources:{" "}
+        {meta.sources.map((s, i) => (
+          <>
+            <a href={s.url}>{s.name}</a> ({s.license}){i < meta.sources.length - 1 ? "; " : "."}
+          </>
+        ))}{" "}
+        Odds fallback by Matt Dabbert, CC BY 4.0. Code under MIT on <a href={repoUrl}>GitHub</a>. Not affiliated with the UFC.
+      </p>
+    </footer>
+
+    <script>
+      import { boot } from "../lib/app";
+      boot();
+    </script>
+  </body>
+</html>

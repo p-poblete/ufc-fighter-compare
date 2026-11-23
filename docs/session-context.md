@@ -16,8 +16,14 @@ Actualizado: 2026-11-23
 - Dirección visual (Piero): fondo negro, bordes naranja #f08c00, sombra del color de la esquina (A rojo, B azul) en los componentes de cada peleador. Boceto en vault `Proyectos/UFC/UFC - Interfaz*.md`.
 - Interfaz, código y README en inglés. Al publicar: borrar la app antigua de Streamlit Cloud.
 
+- Par destacado: Makhachev vs Topuria. Apodos "NULL" de la fuente → `null` (`data.text_or_none`) y validación que lo impide.
+- Web (corte 2): Astro 7.4.13 + TS, CSS propio (`web/src/styles/app.css`), Inter Variable autoalojada. Estilo base «true-black-flat» del skill con la paleta de Piero encima (bordes naranja y sombras de esquina permitidos a propósito: `--allow heavy-shadow,heavy-borders`). Un panel por esquina (identidad + buscador + filtros), botón Swap, «Tale of the tape» en espejo y récord en barras CSS (carrera y UFC). Lógica pura en `web/src/lib/{render,search,url-state,format}.ts`; el par destacado se prerenderiza y el cliente (`lib/app.ts`) re-renderiza según `?a=&b=`. ECharts entra en el corte 3.
+- npm: registry.npmjs.org caído el 23-nov; instalado desde registry.npmmirror.com y `package-lock.json` reescrito a registry.npmjs.org (npm ci limpio + build comprobados).
+
 ## Verificaciones
-- `.venv/bin/pytest` → 87 passed; `ruff check` y `ruff format --check` limpios; `pipeline.build` en línea y `--offline` OK.
+- `.venv/bin/pytest` → 88 passed; `ruff check`/`format --check` limpios; `pipeline.build --offline` OK.
+- Web: `tsc --noEmit` y `npm run build` OK; `npm ci` limpio desde el lockfile OK. Inspector del skill (`--app`) 0 FAIL a 1440/768/390 (WARN `numeric-align` defendido: el tale of the tape va en espejo). Prueba e2e con Chromium (script temporal, no versionado): CA3 («jose aldo»/«JOSÉ ALDO»), CA4 (URL reabierta + swap, sin errores de consola), CA5 (4 casos) y 360 px sin scroll horizontal → 10/10.
 
 ## Siguiente paso
-Corte 2 (esqueleto publicado): antes, decidir con Piero dirección visual (`design-taste-frontend`) y par destacado de `web/src/config.ts`. Nota: en la fuente, Aldo–Zahabi (2025) figura como Featherweight y por eso Aldo queda en esa división.
+1. Piero: `git push` y conectar el repo en Cloudflare Pages (raíz `web`, build `npm ci && npm run build`, salida `dist`, Node 24 por `.node-version`). Con eso se cierra el corte 2.
+2. Corte 3: radar de percentiles (ECharts), arquetipo y donas de victoria/derrota.
