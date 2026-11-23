@@ -3,7 +3,7 @@
 Actualizado: 2026-11-23
 
 ## Estado
-- Repo local creado (`git init`, sin commits ni remoto todavía). Spec v0.1 en `docs/spec.md`, pendiente de revisión pez dorado.
+- Repo público https://github.com/p-poblete/ufc-fighter-compare (main sincronizado). Spec v0.2 aprobada en `docs/spec.md`. Falta añadir `LICENSE` (MIT) en el corte 1.
 - Separado de `~/Proyectos/Personales/ufc-fight-analytics` (de ahí se portan las funciones de comparación de `src/app.py`).
 
 ## Decisiones (2026-11-23)
