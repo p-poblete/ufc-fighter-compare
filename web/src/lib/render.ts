@@ -163,20 +163,18 @@ export function finishes(f: Fighter, tone: Tone, legend = true): string {
   return mod("corner.finishes", "", bar(f.wins_by, "Wins by method") + bar(f.losses_by, "Losses by method") + key, { tone, label: "How the fights end" });
 }
 
-/** corner.history: every UFC fight behind one disclosure (the form squares are the quick index). */
-export function history(f: Fighter, tone: Tone = "solo", open = false): string {
+/** corner.history: every UFC fight, open, in a scrolling list that fills the rest of the column. */
+export function history(f: Fighter, tone: Tone = "solo"): string {
   if (!f.fights.length) return "";
   const row = (x: Fight, i: number) => `<li><button type="button" class="fight" data-fight="${i}" data-slug="${f.slug}" data-tone="${tone}" aria-haspopup="dialog">
       <span class="res relief r-${x.result}" aria-label="${RESULT[x.result]}">${x.result}</span>
       <span class="fight__main"><b>${esc(x.opponent)}</b><span>${esc(x.method_detail)}${x.round && x.method !== "DEC" ? ` · R${x.round} ${clock(x.round_time_s)}` : ""}</span></span>
       <time class="fight__date" datetime="${x.date}">${x.date.slice(0, 4)}</time>
     </button></li>`;
-  return mod(
-    "corner.history",
-    "",
-    `<details class="more"${open ? " open" : ""}><summary>All ${f.fights.length} UFC fights since 2010</summary><ol class="fights">${f.fights.map(row).join("")}</ol></details>`,
-    { label: "Fight history" },
-  );
+  return mod("corner.history", "", `<p class="hist__head">${f.fights.length} UFC fights since 2010</p><ol class="fights" tabindex="0" aria-label="Fight history">${f.fights.map(row).join("")}</ol>`, {
+    cls: "hist",
+    label: "Fight history",
+  });
 }
 
 export function ownColumn(f: Fighter | null, tone: Tone, warning: string | null = null, other: Fighter | null = null): string {
@@ -240,9 +238,9 @@ export function style(a: Fighter | null, b: Fighter | null): string {
   return mod(
     "duel.style",
     "Style",
-    `<div class="chart chart--radar" data-chart="radar" role="img" aria-label="Radar of the eight style percentiles"></div>
+    `<div class="style__body"><div class="chart chart--radar" data-chart="radar" role="img" aria-label="Radar of the eight style percentiles"></div>
      <div class="spec" id="spec-${solo ? "s" : "ab"}" hidden>${cells}
-       <p class="desc">Large figure: percentile ${popLabel(pop, a ?? b, b)}, 100 is best (strikes absorbed inverted). Small figure: career value.</p></div>`,
+       <p class="desc">Large figure: percentile ${popLabel(pop, a ?? b, b)}, 100 is best (strikes absorbed inverted). Small figure: career value.</p></div></div>`,
     {
       cls: solo ? "style style--solo" : "style",
       aside: `${layers}${aside(popLabel(pop, a ?? b, b))}<button type="button" class="icon-btn" data-toggle="spec-${solo ? "s" : "ab"}" aria-expanded="false" aria-controls="spec-${solo ? "s" : "ab"}" title="Show the 8 metrics"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5h12M4 10h12M4 15h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="sr">Show the 8 metrics</span></button>`,

@@ -487,3 +487,37 @@ section[id] { scroll-margin-top: 84px; }
 .chip--grappler { --m: #1f9e6b; }
 .chip--balanced { --m: #7d63d8; }
 body[data-glow="none"]::before { background: none; }
+
+/* ---------- v0.5.1 ---------- */
+/* Gaps between every block of a column; the columns stretch to the centre so the history can fill them. */
+.dash { align-items: stretch; }
+.col--mid { align-content: start; }
+.col--a, .col--b, .col--solo { display: flex; flex-direction: column; gap: var(--gap); }
+.col__body { display: flex; flex-direction: column; gap: var(--gap); flex: 1; min-height: 0; }
+.col--solo { align-self: stretch; }
+
+/* corner.history: open, fills the remaining height, scrolls inside */
+.hist { flex: 1 1 0; min-height: 260px; display: flex; flex-direction: column; gap: 8px; }
+.hist__head { color: var(--faint); font-size: 12px; font-weight: 650; }
+.hist .fights { flex: 1 1 0; min-height: 0; overflow-y: auto; padding-right: 6px; margin-right: -6px; scrollbar-width: thin; scrollbar-color: rgb(255 255 255 / 0.25) transparent; }
+.hist .fights:focus-visible { outline-offset: 2px; }
+.fight { margin-inline: 0; width: 100%; padding-inline: 8px; }
+
+/* duel.style: the metric sheet opens to the right of the radar, two columns sharing the width */
+.style__body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: center; }
+.style__body:has(.spec:not([hidden])) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.style__body:has(.spec:not([hidden])) .chart--radar { height: clamp(340px, 28vw, 420px); }
+.style__body .spec { grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: center; }
+.style__body .spec .desc { grid-column: 1 / -1; }
+
+/* corner picker with filters */
+.col > .pick { height: auto; flex-direction: column; align-items: stretch; gap: 8px; padding: 8px 10px; }
+.pick .combo { display: flex; align-items: center; gap: 8px; }
+.pick__icon { width: 18px; height: 18px; color: var(--faint); flex: none; }
+.pick__filters { display: flex; gap: 6px; align-items: center; }
+.pick__filters .seg button { height: 26px; padding: 0 9px; font-size: 11px; }
+.pick__filters .pick__filter { flex: 1; max-width: none; height: 30px; }
+@media (max-width: 760px) {
+  .style__body:has(.spec:not([hidden])) { grid-template-columns: minmax(0, 1fr); }
+  .hist { flex: none; height: 360px; }
+}

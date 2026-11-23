@@ -63,10 +63,6 @@ export async function boot(): Promise<void> {
       charts.drawCharts(mid, [{ f: a, color: RED }, { f: b, color: BLUE }]);
       charts.drawCharts(row, [{ f: a, color: RED }, { f: b, color: BLUE }]);
     }
-    for (const side of ["a", "b"] as Side[]) {
-      const f = side === "a" ? a : b;
-      $<HTMLInputElement>(`#q-${side}`).placeholder = f ? `Change ${f.name}` : `Pick the ${side === "a" ? "red" : "blue"} corner`;
-    }
     document.title = `${title(a, b)} · UFC Fighter Compare`;
     current = [a, b];
     if (a && b) pushRecent({ a: a.slug, b: b.slug, an: a.name, bn: b.name });
@@ -141,9 +137,8 @@ function setupPicker(side: Side, items: Searchable[], choose: (side: Side, slug:
   const optionId = (i: number) => `opt-${side}-${i}`;
 
   function open(): void {
-    const v = filter.value;
-    const filters = v.startsWith("g:") ? { gender: v.slice(2) as "M" | "F" } : { division: v };
-    results = search(items, input.value, filters);
+    const gender = (root.querySelector<HTMLElement>('[data-gender][aria-pressed="true"]')?.dataset.gender ?? "") as "" | "M" | "F";
+    results = search(items, input.value, { gender, division: filter.value });
     active = results.length ? 0 : -1;
     list.innerHTML = results.length
       ? results
@@ -156,7 +151,7 @@ function setupPicker(side: Side, items: Searchable[], choose: (side: Side, slug:
           )
           .join("")
       : `<li class="opt--none" role="presentation">No fighter matches “${esc(input.value)}”${
-          filter.value ? " in this filter" : ""
+          filter.value || root.querySelector('[data-gender][aria-pressed="true"]:not([data-gender=""])') ? " with these filters" : ""
         }</li>`;
     list.hidden = false;
     input.setAttribute("aria-expanded", "true");
@@ -216,6 +211,13 @@ function setupPicker(side: Side, items: Searchable[], choose: (side: Side, slug:
     const li = (ev.target as HTMLElement).closest<HTMLLIElement>("[role=option]");
     if (li) pick(Number(li.id.split("-").pop()));
   });
+  root.querySelectorAll<HTMLButtonElement>("[data-gender]").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      root.querySelectorAll("[data-gender]").forEach((x) => x.setAttribute("aria-pressed", String(x === btn)));
+      input.focus();
+      open();
+    }),
+  );
   filter.addEventListener("change", () => {
     input.focus();
     open();

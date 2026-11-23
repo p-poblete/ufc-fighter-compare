@@ -303,7 +303,7 @@ function roi(el: HTMLElement, entries: Entry[], range: Range, tones: string[]) {
       },
       series: [
         ...series,
-        { type: "scatter", data: [], silent: true, markLine: { silent: true, symbol: "none", lineStyle: { color: MUTED, type: "solid", width: 1 }, label: { show: true, formatter: "break-even", color: FAINT, fontSize: 11, position: "start", rotate: 0 }, data: [{ xAxis: 0 }] } },
+        { type: "scatter", data: [], silent: true, markLine: { silent: true, symbol: "none", lineStyle: { color: MUTED, type: "solid", width: 1 }, label: { show: true, formatter: "break-even", color: FAINT, fontSize: 11, position: "end", rotate: 0, distance: 18 }, data: [{ xAxis: 0 }] } },
       ],
     },
     true,

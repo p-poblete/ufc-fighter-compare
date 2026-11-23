@@ -41,6 +41,7 @@ const corners = [
       <aside class={`col col--${side}`} aria-label={label}>
       <div class="pick" data-side={side}>
         <div class="combo">
+          <svg class="pick__icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M9 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12zm4.5-1.5L17 17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
           <label for={`q-${side}`} class="sr">{label}: search a fighter</label>
           <input
             id={`q-${side}`}
@@ -52,17 +53,22 @@ const corners = [
             aria-controls={`lb-${side}`}
             autocomplete="off"
             spellcheck="false"
-            placeholder={`Change the ${side === "a" ? "red" : "blue"} corner`}
+            placeholder="Search a fighter"
           />
           <ul id={`lb-${side}`} class="combo__list" role="listbox" aria-label={`${label} suggestions`} hidden></ul>
         </div>
-        <select class="pick__filter" aria-label={`${label}: filter suggestions`}>
-          <option value="">All</option>
-          <option value="g:M">Men</option>
-          <option value="g:F">Women</option>
-          <optgroup label="Men's divisions">{men.map((d) => <option value={d}>{d}</option>)}</optgroup>
-          <optgroup label="Women's divisions">{women.map((d) => <option value={d}>{d.replace("Women's ", "")}</option>)}</optgroup>
-        </select>
+        <div class="pick__filters">
+          <div class="seg" role="group" aria-label={`${label}: gender`}>
+            <button type="button" data-gender="" aria-pressed="true">All</button>
+            <button type="button" data-gender="M" aria-pressed="false">Men</button>
+            <button type="button" data-gender="F" aria-pressed="false">Women</button>
+          </div>
+          <select class="pick__filter" aria-label={`${label}: division`}>
+            <option value="">All divisions</option>
+            <optgroup label="Men">{men.map((d) => <option value={d}>{d}</option>)}</optgroup>
+            <optgroup label="Women">{women.map((d) => <option value={d}>{d.replace("Women's ", "")}</option>)}</optgroup>
+          </select>
+        </div>
       </div>
         <div class="col__body" id={`col-${side}`}><Fragment set:html={ownColumn(f, side, null, side === "a" ? b : a)} /></div>
       </aside>
