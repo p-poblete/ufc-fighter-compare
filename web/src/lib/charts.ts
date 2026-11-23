@@ -1,4 +1,5 @@
 // Client-only ECharts views: radar (P1), performance by fight, return per fight, fight length.
+// The three fight charts take a time span (all, 5 or 3 years, last 10 fights) from their panel's control.
 import { BarChart, RadarChart, ScatterChart } from "echarts/charts";
 import { GridComponent, MarkLineComponent, RadarComponent, TooltipComponent } from "echarts/components";
 import * as echarts from "echarts/core";
@@ -13,11 +14,12 @@ export interface Entry {
   f: Fighter;
   color: string;
 }
+type Range = "all" | "5y" | "3y" | "10";
 
 const INK = "#f4f5f6";
 const MUTED = "#a3a6ad";
-const FAINT = "#73767e";
-const LINE = "#2a2d33";
+const FAINT = "#868a92";
+const LINE = "rgb(255 255 255 / 0.09)";
 const font = { fontFamily: "Inter Variable, Inter, system-ui, sans-serif", color: MUTED, fontSize: 12 };
 const tooltip = {
   backgroundColor: "#1c1e22",
@@ -30,7 +32,7 @@ const axis = {
   axisLine: { lineStyle: { color: LINE } },
   axisTick: { show: false },
   axisLabel: { ...font, color: FAINT },
-  splitLine: { lineStyle: { color: "#1c1e22" } },
+  splitLine: { lineStyle: { color: "rgb(255 255 255 / 0.05)" } },
 };
 const symbolFor = (r: Fight["result"]) => (r === "W" ? "circle" : r === "L" ? "emptyCircle" : "diamond");
 const RESULT: Record<Fight["result"], string> = { W: "Win", L: "Loss", D: "Draw", NC: "No contest" };
@@ -39,23 +41,34 @@ function instance(el: HTMLElement) {
   return echarts.getInstanceByDom(el) ?? echarts.init(el, undefined, { renderer: "svg" });
 }
 
+/** Fights inside a time span; fights are stored newest first. */
+function inRange(fights: Fight[], range: Range, today = new Date()): Fight[] {
+  if (range === "10") return fights.slice(0, 10);
+  if (range === "all") return fights;
+  const cut = new Date(today);
+  cut.setFullYear(cut.getFullYear() - (range === "5y" ? 5 : 3));
+  const iso = cut.toISOString().slice(0, 10);
+  return fights.filter((x) => x.date >= iso);
+}
+
 // ---------- radar ----------
 const SHORT: Record<string, string> = {
   slpm: "Strikes/min", str_acc: "Str. accuracy", sapm: "Absorbed (inv.)", str_def: "Str. defence",
   td_avg: "Takedowns", td_acc: "TD accuracy", td_def: "TD defence", sub_avg: "Submissions",
 };
+
 function radar(el: HTMLElement, entries: Entry[]) {
   const pop = population(entries[0]?.f ?? null, entries[1]?.f ?? null);
-  const series = entries
+  const data = entries
     .map((e) => ({ e, p: e.f.percentiles?.[pop] }))
     .filter((x) => x.p)
     .map(({ e, p }) => ({
       name: e.f.name,
       value: METRICS.map(([m]) => Math.round(p![m])),
-      lineStyle: { color: e.color, width: 2 },
+      lineStyle: { color: e.color, width: 2.5 },
       itemStyle: { color: e.color },
-      areaStyle: { color: e.color, opacity: 0.14 },
-      symbolSize: 4,
+      areaStyle: { color: e.color, opacity: 0.16 },
+      symbolSize: 5,
     }));
   instance(el).setOption(
     {
@@ -63,15 +76,15 @@ function radar(el: HTMLElement, entries: Entry[]) {
       tooltip: { ...tooltip, trigger: "item" },
       radar: {
         indicator: METRICS.map(([m]) => ({ name: SHORT[m], max: 100 })),
-        radius: "56%",
+        radius: "70%",
         center: ["50%", "52%"],
         splitNumber: 4,
-        axisName: { ...font, fontSize: 11 },
+        axisName: { ...font, fontSize: 12, color: MUTED },
         splitLine: { lineStyle: { color: LINE } },
         splitArea: { show: false },
         axisLine: { lineStyle: { color: LINE } },
       },
-      series: [{ type: "radar", data: series }],
+      series: [{ type: "radar", data }],
     },
     true,
   );
@@ -94,22 +107,17 @@ const PERF: Record<PerfMetric, { label: string; unit: string; value: (x: Fight) 
   sub: { label: "Submission attempts", unit: "", value: (x) => (x.stats ? x.stats.sub_att : null) },
 };
 
-function perf(el: HTMLElement, entries: Entry[], metric: PerfMetric) {
+function perf(el: HTMLElement, entries: Entry[], metric: PerfMetric, range: Range) {
   const cfg = PERF[metric];
   const series = entries.map((e) => ({
     type: "scatter" as const,
     name: e.f.name,
     itemStyle: { color: e.color },
-    symbolSize: 9,
-    data: e.f.fights
+    symbolSize: 10,
+    data: inRange(e.f.fights, range)
       .map((x) => ({ x, v: cfg.value(x) }))
       .filter((d) => d.v != null)
-      .map(({ x, v }) => ({
-        value: [x.date, Math.round(v! * 10) / 10],
-        symbol: symbolFor(x.result),
-        fight: x,
-        fighter: e.f.name,
-      })),
+      .map(({ x, v }) => ({ value: [x.date, Math.round(v! * 10) / 10], symbol: symbolFor(x.result), fight: x, fighter: e.f.name })),
   }));
   instance(el).setOption(
     {
@@ -139,28 +147,23 @@ function oddsType(o: number): OddsType {
   if (o < 4) return "Underdog";
   return "Heavy underdog";
 }
-const stakeReturn = (x: Fight, stake: number) =>
-  x.result === "W" ? stake * (x.odds! - 1) : x.result === "L" ? -stake : 0;
+const stakeReturn = (x: Fight, stake: number) => (x.result === "W" ? stake * (x.odds! - 1) : x.result === "L" ? -stake : 0);
 
-function roi(el: HTMLElement, entries: Entry[]) {
+function roi(el: HTMLElement, entries: Entry[], range: Range) {
   const offsets = entries.length > 1 ? [-0.16, 0.16] : [0];
+  const priced = entries.map((e) => inRange(e.f.fights, range).filter((x) => x.odds));
   const series = entries.map((e, i) => ({
     type: "scatter" as const,
     name: e.f.name,
     itemStyle: { color: e.color },
-    symbolSize: 9,
-    data: e.f.fights
-      .filter((x) => x.odds)
-      .map((x) => ({
-        value: [Math.round(stakeReturn(x, 100)), ODDS_TYPES.indexOf(oddsType(x.odds!)) + offsets[i]],
-        symbol: symbolFor(x.result),
-        fight: x,
-        fighter: e.f.name,
-      })),
-    markLine:
-      i === 0
-        ? { silent: true, symbol: "none", lineStyle: { color: FAINT, type: "dashed" }, label: { show: false }, data: [{ xAxis: 0 }] }
-        : undefined,
+    symbolSize: 10,
+    data: priced[i].map((x) => ({
+      value: [Math.round(stakeReturn(x, 100)), ODDS_TYPES.indexOf(oddsType(x.odds!)) + offsets[i]],
+      symbol: symbolFor(x.result),
+      fight: x,
+      fighter: e.f.name,
+    })),
+    markLine: i === 0 ? { silent: true, symbol: "none", lineStyle: { color: FAINT, type: "dashed" }, label: { show: false }, data: [{ xAxis: 0 }] } : undefined,
   }));
   instance(el).setOption(
     {
@@ -171,8 +174,7 @@ function roi(el: HTMLElement, entries: Entry[]) {
         trigger: "item",
         formatter: (p: { data: { fight: Fight; fighter: string; value: [number, number] } }) => {
           const { fight: x, fighter, value } = p.data;
-          const r = value[0];
-          return `<b>${esc(lastName(fighter))}</b> vs ${esc(x.opponent)}<br>${dateLong(x.date)} · ${RESULT[x.result]} at ${x.odds!.toFixed(2)}<br>${oddsType(x.odds!)} · net <b>${r > 0 ? "+" : ""}${r}</b>`;
+          return `<b>${esc(lastName(fighter))}</b> vs ${esc(x.opponent)}<br>${dateLong(x.date)} · ${RESULT[x.result]} at ${x.odds!.toFixed(2)}<br>${oddsType(x.odds!)} · net <b>${value[0] > 0 ? "+" : ""}${value[0]}</b>`;
         },
       },
       xAxis: { type: "value", ...axis, axisLine: { show: false } },
@@ -191,11 +193,28 @@ function roi(el: HTMLElement, entries: Entry[]) {
     },
     true,
   );
+  // ROI for the span, from the same fights the chart shows.
+  const note = el.closest(".panel")?.querySelector(".roi__sum") ?? Object.assign(document.createElement("p"), { className: "roi__sum" });
+  note.innerHTML = entries
+    .map((e, i) => {
+      const n = priced[i].length;
+      if (!n) return `<span>${esc(lastName(e.f.name))}: no odds in this span</span>`;
+      const pct = (priced[i].reduce((s, x) => s + stakeReturn(x, 100), 0) / (100 * n)) * 100;
+      return `<span><b style="color:${e.color}">${esc(lastName(e.f.name))}</b> ${pct > 0 ? "+" : pct < 0 ? "−" : ""}${Math.abs(Math.round(pct))}% ROI · ${n} fights${n < 5 ? " (small sample)" : ""}</span>`;
+    })
+    .join("");
+  el.before(note);
 }
 
 // ---------- fight length ----------
-function duration(el: HTMLElement, entries: Entry[]) {
-  const bins = entries[0].f.duration.bins.map((b) => `${b.from}–${b.to}`);
+const BINS = [0, 5, 10, 15, 20, 25];
+
+function duration(el: HTMLElement, entries: Entry[], range: Range) {
+  const sets = entries.map((e) => inRange(e.f.fights, range).filter((x) => x.fight_time_s != null));
+  const counts = sets.map((fs) =>
+    // Right-closed bins like the pipeline: a 15:00 decision belongs to 10–15.
+    BINS.slice(0, -1).map((lo, i) => fs.filter((x) => { const m = x.fight_time_s! / 60; return (i === 0 ? m >= lo : m > lo) && m <= BINS[i + 1]; }).length),
+  );
   instance(el).setOption(
     {
       textStyle: font,
@@ -207,22 +226,27 @@ function duration(el: HTMLElement, entries: Entry[]) {
         formatter: (ps: { seriesName: string; value: number; axisValue: string }[]) =>
           `${ps[0].axisValue} min<br>${ps.map((p) => `${esc(lastName(p.seriesName))}: <b>${p.value}</b> fights`).join("<br>")}`,
       },
-      xAxis: { type: "category", data: bins, ...axis, splitLine: { show: false } },
+      xAxis: { type: "category", data: BINS.slice(0, -1).map((lo, i) => `${lo}–${BINS[i + 1]}`), ...axis, splitLine: { show: false } },
       yAxis: { type: "value", ...axis, minInterval: 1 },
-      series: entries.map((e) => ({
+      series: entries.map((e, i) => ({
         type: "bar",
         name: e.f.name,
-        data: e.f.duration.bins.map((b) => b.count),
+        data: counts[i],
         itemStyle: { color: e.color, borderRadius: [3, 3, 0, 0] },
         barMaxWidth: 22,
       })),
     },
     true,
   );
-  const note = el.parentElement?.querySelector(".dur__note") ?? document.createElement("p");
-  note.className = "foot dur__note";
+  const note = el.closest(".panel")?.querySelector(".dur__note") ?? Object.assign(document.createElement("p"), { className: "foot dur__note" });
   note.innerHTML = entries
-    .map((e) => `${esc(lastName(e.f.name))}: ${e.f.duration.decision_pct == null ? "—" : `${Math.round(e.f.duration.decision_pct)}%`} of fights go to the judges`)
+    .map((e, i) => {
+      const decided = sets[i].filter((x) => x.result !== "NC");
+      if (!decided.length) return `${esc(lastName(e.f.name))}: no fights in this span`;
+      const avg = sets[i].reduce((s, x) => s + x.fight_time_s!, 0) / sets[i].length / 60;
+      const dec = (decided.filter((x) => x.method === "DEC").length / decided.length) * 100;
+      return `${esc(lastName(e.f.name))}: ${avg.toFixed(1)} min on average, ${Math.round(dec)}% to the judges`;
+    })
     .join(" · ");
   el.after(note);
 }
@@ -232,24 +256,35 @@ const resizer = new ResizeObserver((items) => {
   for (const it of items) echarts.getInstanceByDom(it.target as HTMLElement)?.resize();
 });
 
+const pressed = (panel: Element, attr: string, fallback: string) =>
+  (panel.querySelector(`[${attr}][aria-pressed="true"]`) as HTMLElement | null)?.getAttribute(attr) ?? fallback;
+
+/** Wire a segmented control: one pressed button, redraw on change. */
+function wire(panel: Element, attr: string, redraw: () => void) {
+  panel.querySelectorAll<HTMLButtonElement>(`[${attr}]`).forEach((btn) =>
+    btn.addEventListener("click", () => {
+      panel.querySelectorAll(`[${attr}]`).forEach((x) => x.setAttribute("aria-pressed", String(x === btn)));
+      redraw();
+    }),
+  );
+}
+
 /** Draw every [data-chart] inside root. Safe to call again after the HTML is replaced. */
 export function drawCharts(root: ParentNode, entries: Entry[]): void {
   if (!entries.length) return;
   for (const el of root.querySelectorAll<HTMLElement>("[data-chart]")) {
     const kind = el.dataset.chart;
-    if (kind === "radar") radar(el, entries);
-    else if (kind === "perf") {
-      const panel = el.closest(".panel")!;
-      const draw = (m: PerfMetric) => perf(el, entries, m);
-      draw(((panel.querySelector('[aria-pressed="true"]') as HTMLElement | null)?.dataset.metric as PerfMetric) ?? "slpm");
-      panel.querySelectorAll<HTMLButtonElement>("[data-metric]").forEach((btn) =>
-        btn.addEventListener("click", () => {
-          panel.querySelectorAll("[data-metric]").forEach((x) => x.setAttribute("aria-pressed", String(x === btn)));
-          draw(btn.dataset.metric as PerfMetric);
-        }),
-      );
-    } else if (kind === "roi") roi(el, entries);
-    else if (kind === "dur") duration(el, entries);
+    const panel = el.closest(".panel")!;
+    const range = () => pressed(panel, "data-range", "all") as Range;
+    let draw: () => void;
+    if (kind === "radar") draw = () => radar(el, entries);
+    else if (kind === "perf") draw = () => perf(el, entries, pressed(panel, "data-metric", "slpm") as PerfMetric, range());
+    else if (kind === "roi") draw = () => roi(el, entries, range());
+    else if (kind === "dur") draw = () => duration(el, entries, range());
+    else continue;
+    draw();
+    wire(panel, "data-range", draw);
+    if (kind === "perf") wire(panel, "data-metric", draw);
     if (!observed.has(el)) {
       observed.add(el);
       resizer.observe(el);

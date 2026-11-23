@@ -53,8 +53,11 @@ export function title(a: Fighter | null, b: Fighter | null): string {
   return (a ?? b)?.name ?? "Compare two UFC fighters";
 }
 
-const panel = (cls: string, heading: string, body: string, aside = "") =>
-  `<section class="panel ${cls}"><header class="panel__head"><h2>${heading}</h2>${aside ? `<span class="panel__aside">${aside}</span>` : ""}</header>${body}</section>`;
+/** A panel; an empty heading leaves the header out (the content names itself) and uses `label` for assistive tech. */
+const panel = (cls: string, heading: string, body: string, aside = "", label = "") =>
+  heading
+    ? `<section class="panel ${cls}"><header class="panel__head"><h2>${heading}</h2>${aside ? `<span class="panel__aside">${aside}</span>` : ""}</header>${body}</section>`
+    : `<section class="panel ${cls}"${label ? ` aria-label="${label}"` : ""}>${body}</section>`;
 const noData = (why: string) => `<p class="nodata">No data · ${esc(why)}</p>`;
 
 // ---------- one fighter's own column ----------
@@ -83,7 +86,7 @@ export function identity(f: Fighter | null, tone: Tone, warning: string | null =
       ${corner}
       <h2 class="id__name">${name}</h2>
       ${sub ? `<p class="id__sub">${sub}</p>` : ""}
-      <p class="id__facts">${f.archetype ? `<span class="chip">${esc(f.archetype)}</span> ` : ""}${facts.join(" · ") || DASH}</p>
+      <p class="id__facts">${archetypeChip(f.archetype)}${facts.join(" · ") || DASH}</p>
     </div>
     ${warn}
   </section>`;
@@ -100,9 +103,10 @@ export function form(f: Fighter): string {
   const u = f.ufc_record;
   return panel(
     "rec",
-    "Record",
-    `<p class="bignum">${recordText(f)}</p><p class="muted">Professional. In the UFC since 2010: ${u.W}-${u.L}-${u.D}${u.NC ? `, ${u.NC} NC` : ""}</p>${strip}`,
-    "last 10 · newest first",
+    "",
+    `<p class="bignum">${recordText(f)}</p><p class="muted">Professional record. In the UFC since 2010: ${u.W}-${u.L}-${u.D}${u.NC ? `, ${u.NC} NC` : ""}</p>${strip}<p class="foot">Last ${last.length} UFC fights, newest first</p>`,
+    "",
+    "Record and form",
   );
 }
 
@@ -174,60 +178,43 @@ export function ownColumn(f: Fighter | null, tone: Tone, warning: string | null 
 }
 
 // ---------- shared centre ----------
-type Edge = { label: string; a: number | null; b: number | null; text: (x: number | null) => string; edge: boolean };
+type Row = { label: string; a: string; b: string; ea?: boolean; eb?: boolean };
 
-/** K2: four figures with a mark on the leader (none on fight length: longer is not better). */
-export function edgeStrip(a: Fighter, b: Fighter): string {
-  const rows: Edge[] = [
-    { label: "Win rate", a: winRate(a), b: winRate(b), text: pctText, edge: true },
-    { label: "Finish rate in the UFC", a: finishRate(a), b: finishRate(b), text: pctText, edge: true },
-    { label: "Average fight", a: a.duration.avg_minutes, b: b.duration.avg_minutes, text: (x) => (x == null ? DASH : `${x.toFixed(1)} min`), edge: false },
-    { label: "Betting ROI", a: a.odds.total.roi_pct, b: b.odds.total.roi_pct, text: signed, edge: true },
+/** K2 + tape in one mirrored table: figures with an edge mark, then the physical facts with the gap written. */
+export function matchup(a: Fighter, b: Fighter, today?: Date): string {
+  const edge = (x: number | null, y: number | null) => ({ ea: x != null && y != null && x > y, eb: x != null && y != null && y > x });
+  const gap = (x: number | null, y: number | null, unit: string) =>
+    x != null && y != null && Math.abs(x - y) >= 0.5 ? `<span class="gap">${Math.round(Math.abs(x - y) * 10) / 10} ${unit} apart</span>` : "";
+  const wa = winRate(a), wb = winRate(b), fa = finishRate(a), fb = finishRate(b);
+  const ra = a.odds.total.roi_pct, rb = b.odds.total.roi_pct;
+  const ag = age(a, today), bg = age(b, today);
+  const min = (x: number | null) => (x == null ? DASH : `${x.toFixed(1)} min`);
+  const cm = (x: number | null, extra: (x: number) => string) => (x == null ? DASH : `${Math.round(x)} cm <small>${extra(x)}</small>`);
+  const rows: Row[] = [
+    { label: "Win rate", a: pctText(wa), b: pctText(wb), ...edge(wa, wb) },
+    { label: "Finish rate in the UFC", a: pctText(fa), b: pctText(fb), ...edge(fa, fb) },
+    { label: "Betting ROI", a: signed(ra), b: signed(rb), ...edge(ra, rb) },
+    { label: "Average fight", a: min(a.duration.avg_minutes), b: min(b.duration.avg_minutes) },
+    { label: `Age${gap(ag, bg, "years")}`, a: ag == null ? DASH : `${ag}`, b: bg == null ? DASH : `${bg}` },
+    { label: `Height${gap(a.height_cm, b.height_cm, "cm")}`, a: cm(a.height_cm, feetInches), b: cm(b.height_cm, feetInches) },
+    { label: `Reach${gap(a.reach_cm, b.reach_cm, "cm")}`, a: cm(a.reach_cm, (x) => `${Math.round(x / 2.54)}″`), b: cm(b.reach_cm, (x) => `${Math.round(x / 2.54)}″`) },
+    { label: `Weight${gap(a.weight_lbs, b.weight_lbs, "lb")}`, a: a.weight_lbs == null ? DASH : `${a.weight_lbs} lb`, b: b.weight_lbs == null ? DASH : `${b.weight_lbs} lb` },
+    { label: "Stance", a: a.stance ? esc(a.stance) : DASH, b: b.stance ? esc(b.stance) : DASH },
+    { label: "Division", a: a.weight_class ? esc(a.weight_class) : DASH, b: b.weight_class ? esc(b.weight_class) : DASH },
   ];
   const mark = '<span class="edge">Edge</span>';
-  return `<section class="panel k2" aria-label="Headline figures">${rows
-    .map((r) => {
-      const both = r.edge && r.a != null && r.b != null;
-      return `<div class="k2__row"><span class="k2__v a">${both && r.a! > r.b! ? mark : ""}${r.text(r.a)}</span><span class="k2__l">${r.label}</span><span class="k2__v b">${r.text(r.b)}${both && r.b! > r.a! ? mark : ""}</span></div>`;
-    })
-    .join("")}</section>`;
-}
-
-type TapeRow = { label: string; a: number | null; b: number | null; fmt: (x: number) => string; unit: string; full: number };
-
-/** T2: mirrored tape; a bar grows on the side with the larger value and the gap is written. */
-export function tape(a: Fighter, b: Fighter, today?: Date): string {
-  const rows: TapeRow[] = [
-    { label: "Age", a: age(a, today), b: age(b, today), fmt: (x) => `${x}`, unit: "years", full: 15 },
-    { label: "Height", a: a.height_cm, b: b.height_cm, fmt: (x) => `${Math.round(x)} cm <small>${feetInches(x)}</small>`, unit: "cm", full: 20 },
-    { label: "Reach", a: a.reach_cm, b: b.reach_cm, fmt: (x) => `${Math.round(x)} cm <small>${Math.round(x / 2.54)}″</small>`, unit: "cm", full: 20 },
-    { label: "Weight", a: a.weight_lbs, b: b.weight_lbs, fmt: (x) => `${x} lb`, unit: "lb", full: 60 },
-  ];
-  const num = rows
-    .map((r) => {
-      const has = r.a != null && r.b != null;
-      const d = has ? r.a! - r.b! : 0;
-      const w = has && d ? Math.min(100, (Math.abs(d) / r.full) * 100) : 0; // full bar = a big gap for this attribute
-      const gap = has && Math.abs(d) >= 0.5 ? `<span class="gap">+${Math.round(Math.abs(d) * 10) / 10} ${r.unit}</span>` : "";
-      return `<div class="t2__row">
-        <span class="t2__v a">${r.a == null ? DASH : r.fmt(r.a)}</span>
-        <span class="t2__bar a"><i style="width:${d > 0 ? w : 0}%"></i></span>
-        <span class="t2__l">${r.label}${gap}</span>
-        <span class="t2__bar b"><i style="width:${d < 0 ? w : 0}%"></i></span>
-        <span class="t2__v b">${r.b == null ? DASH : r.fmt(r.b)}</span>
-      </div>`;
-    })
-    .join("");
-  const text = ([
-    ["Stance", a.stance, b.stance],
-    ["Division", a.weight_class, b.weight_class],
-  ] as const)
-    .map(
-      ([l, x, y]) =>
-        `<div class="t2__row t2__row--text"><span class="t2__v a">${x ? esc(x) : DASH}</span><span class="t2__l">${l}</span><span class="t2__v b">${y ? esc(y) : DASH}</span></div>`,
-    )
-    .join("");
-  return panel("t2", "Tale of the tape", num + text);
+  return panel(
+    "k2",
+    "",
+    rows
+      .map(
+        (r, i) =>
+          `<div class="k2__row${i === 4 ? " k2__row--split" : ""}${i >= 4 ? " k2__row--fact" : ""}"><span class="k2__v a">${r.ea ? mark : ""}${r.a}</span><span class="k2__l">${r.label}</span><span class="k2__v b">${r.b}${r.eb ? mark : ""}</span></div>`,
+      )
+      .join(""),
+    "",
+    "Figures and tale of the tape",
+  );
 }
 
 const mirrorRow = (label: string, x: number, y: number, max: number) =>
@@ -248,40 +235,59 @@ export function recordMirror(a: Fighter, b: Fighter): string {
   };
   return panel(
     "r1",
-    "Record and methods",
+    "",
     `<div class="grp"><h3>Professional record</h3>${rec.map(([l, x, y]) => mirrorRow(l, x, y, mr)).join("")}</div>
      <div class="grp"><h3>Wins by method <span>UFC since 2010</span></h3>${meth("wins_by")}</div>
      <div class="grp"><h3>Losses by method <span>UFC since 2010</span></h3>${meth("losses_by")}</div>`,
+    "",
+    "Record and methods",
   );
 }
 
-/** P3: the 8 percentiles as bars; the client draws the radar (P1) beside them. */
+const RAW: Record<Metric, (x: number) => string> = {
+  slpm: (x) => x.toFixed(2), str_acc: (x) => `${Math.round(x)}%`, sapm: (x) => x.toFixed(2), str_def: (x) => `${Math.round(x)}%`,
+  td_avg: (x) => x.toFixed(2), td_acc: (x) => `${Math.round(x)}%`, td_def: (x) => `${Math.round(x)}%`, sub_avg: (x) => x.toFixed(1),
+};
+
+/** Style: the radar (P1) large in the middle, the eight metrics under it as a spec sheet (percentile and raw value). */
 export function styleBlock(a: Fighter | null, b: Fighter | null): string {
   const pop = population(a, b);
   const pa = a?.percentiles?.[pop] ?? null;
   const pb = b?.percentiles?.[pop] ?? null;
   const solo = !b;
-  if (!pa && !pb) return panel("style", "Style", noData("fewer than 3 UFC fights or missing career stats"));
-  const cell = (p: Record<Metric, number> | null, m: Metric, side: "a" | "b") =>
-    p
-      ? `<span class="mir__bar ${side}"><i style="width:${p[m]}%"></i><b>${Math.round(p[m])}</b></span>`
-      : `<span class="mir__bar ${side} none"><b>${DASH}</b></span>`;
-  const rows = METRICS.map(([m, l]) =>
-    solo
-      ? `<div class="pbar"><span class="mir__l">${l}</span>${cell(pa, m, "b")}</div>`
-      : `<div class="mir">${cell(pa, m, "a")}<span class="mir__l">${l}</span>${cell(pb, m, "b")}</div>`,
+  if (!pa && !pb) return panel("style", "", noData("no style data: fewer than 3 UFC fights or missing career stats"), "", "Style");
+  const val = (f: Fighter | null, p: Record<Metric, number> | null, m: Metric, cls: string) =>
+    p && f?.career
+      ? `<span class="spec__v ${cls}"><b>${Math.round(p[m])}</b><small>${RAW[m](f.career[m])}</small></span>`
+      : `<span class="spec__v ${cls}"><b>${DASH}</b></span>`;
+  const cells = METRICS.map(
+    ([m, l]) =>
+      `<div class="spec__cell"><p class="spec__l">${l}</p><div class="spec__vals">${val(a, pa, m, solo ? "s" : "a")}${solo ? "" : val(b, pb, m, "b")}</div></div>`,
   ).join("");
   return panel(
     `style${solo ? " style--solo" : ""}`,
+    "",
+    `<div class="chart chart--radar" data-chart="radar" role="img" aria-label="Radar of the eight style percentiles"></div>
+     <div class="spec">${cells}</div>
+     <p class="foot">Large figure: percentile ${popLabel(pop, a ?? b)}, 100 is best (strikes absorbed inverted). Small figure: career value from UFCStats.</p>`,
+    "",
     "Style",
-    `<div class="style__grid"><div class="chart chart--radar" data-chart="radar" role="img" aria-label="Radar of the eight percentiles"></div><div class="style__bars">${rows}</div></div>
-     <p class="foot">Percentiles ${popLabel(pop, a ?? b)}, 100 is best. Strikes absorbed is inverted so that higher is better there too.</p>`,
-    popLabel(pop, a ?? b),
   );
 }
 
+const RANGES = [
+  ["all", "All"],
+  ["5y", "5 years"],
+  ["3y", "3 years"],
+  ["10", "Last 10"],
+] as const;
+const rangeControl = () =>
+  `<div class="seg seg--range" role="group" aria-label="Time span">${RANGES.map(
+    ([k, l], i) => `<button type="button" data-range="${k}" aria-pressed="${i === 0}">${l}</button>`,
+  ).join("")}</div>`;
+
 export function chartPanels(solo = false): string {
-  const buttons = [
+  const metrics = [
     ["slpm", "Strikes / min"],
     ["acc", "Accuracy"],
     ["td", "Takedowns"],
@@ -289,20 +295,17 @@ export function chartPanels(solo = false): string {
   ]
     .map(([k, l], i) => `<button type="button" data-metric="${k}" aria-pressed="${i === 0}">${l}</button>`)
     .join("");
+  const head = (title: string) => `<header class="panel__head"><h2>${title}</h2>${rangeControl()}</header>`;
   return (
-    panel(
-      "perf",
-      "Performance by fight",
-      `<div class="seg" role="group" aria-label="Metric">${buttons}</div><div class="chart" data-chart="perf" role="img" aria-label="Per-fight performance over time"></div>
-       <p class="foot">Filled point: win. Ring: loss. Diamond: draw or no contest. UFC fights since 2010.</p>`,
-    ) +
-    panel(
-      "roi",
-      "Return per fight",
-      `<div class="chart" data-chart="roi" role="img" aria-label="Net return of a 100 bet on each fight, by odds type"></div>
-       <p class="foot">Net result of backing ${solo ? "the fighter" : "each fighter"} with 100 at the decimal odds. Right of the line is profit.</p>`,
-    ) +
-    panel("dur", "Fight length", `<div class="chart chart--short" data-chart="dur" role="img" aria-label="Distribution of fight length in minutes"></div>`, "minutes · UFC since 2010")
+    `<section class="panel perf">${head("Performance by fight")}
+       <div class="seg" role="group" aria-label="Metric">${metrics}</div>
+       <div class="chart" data-chart="perf" role="img" aria-label="Per-fight performance over time"></div>
+       <p class="foot">Filled point: win. Ring: loss. Diamond: draw or no contest.</p></section>` +
+    `<section class="panel roi">${head("Return per fight")}
+       <div class="chart" data-chart="roi" role="img" aria-label="Net return of a 100 bet on each fight, by odds type"></div>
+       <p class="foot roi__note">Net result of backing ${solo ? "the fighter" : "each fighter"} with 100 at the decimal odds. Right of the line is profit.</p></section>` +
+    `<section class="panel dur">${head("Fight length")}
+       <div class="chart chart--short" data-chart="dur" role="img" aria-label="Distribution of fight length in minutes"></div></section>`
   );
 }
 
@@ -310,10 +313,13 @@ export function centre(a: Fighter | null, b: Fighter | null, today?: Date): stri
   if (!a || !b) {
     return `<section class="panel waiting"><h2>Pick both corners</h2><p class="muted">The shared charts appear with a fighter in each corner. Each fighter's own column still shows their record, methods, betting and history.</p></section>`;
   }
-  return edgeStrip(a, b) + tape(a, b, today) + styleBlock(a, b) + recordMirror(a, b);
+  return matchup(a, b, today) + styleBlock(a, b) + recordMirror(a, b);
 }
 
 /** Full-width row under the three columns: the fight-by-fight charts. */
 export function fightCharts(a: Fighter | null, b: Fighter | null): string {
   return a && b ? chartPanels() : "";
 }
+
+/** Archetype chip, coloured by style. */
+export const archetypeChip = (x: string | null) => (x ? `<span class="chip chip--${x.toLowerCase()}">${esc(x)}</span> ` : "");

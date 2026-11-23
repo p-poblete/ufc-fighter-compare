@@ -3,7 +3,7 @@
    edge, shared charts in the middle. Panels separate by a lightness step, no borders or shadows. */
 :root {
   --ground: #0b0c0e;
-  --s1: rgb(20 21 24 / 0.86);
+  --s1: rgb(255 255 255 / 0.035);
   --s1-solid: #141518;
   --s2: #1c1e22;
   --s3: #2a2d33;
@@ -290,3 +290,44 @@ ol, ul { padding: 0; list-style: none; }
 .profile .col--solo { position: sticky; top: 76px; }
 .stack[data-tone="solo"] span.t0, .stack[data-tone="solo"] span.t1 { color: var(--ground); }
 @media (max-width: 1180px) { .profile .col--solo { position: static; } }
+
+/* ---------- v0.3.1: translucent blocks, merged figures, big style block, archetype colours ---------- */
+.panel { background: var(--s1); }
+.topbar { background: rgb(11 12 14 / 0.82); }
+.pick, .swap { background: rgb(255 255 255 / 0.05); }
+.pick__filter { background: rgb(255 255 255 / 0.06); }
+.r-L, .chip, .stack--empty, .t3 { background: rgb(255 255 255 / 0.1); }
+
+.k2__row--fact .k2__v { font-size: 15px; font-weight: 600; }
+.k2__row--split { box-shadow: 0 -1px 0 rgb(255 255 255 / 0.12) !important; margin-top: 6px; padding-top: 12px; }
+.k2__row + .k2__row { box-shadow: 0 -1px 0 rgb(255 255 255 / 0.05); }
+.k2__l { display: grid; }
+.k2__v small { color: var(--faint); font-weight: 400; font-size: 12px; }
+.gap { font-size: 11px; font-weight: 500; color: var(--muted); }
+
+.chart--radar { height: clamp(360px, 34vw, 480px); }
+.spec { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.spec__cell { background: rgb(255 255 255 / 0.03); border-radius: 12px; padding: 10px 12px; display: grid; gap: 6px; }
+.spec__l { color: var(--muted); font-size: 12px; }
+.spec__vals { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.spec__v { display: grid; }
+.spec__v b { font-size: 22px; font-weight: 750; letter-spacing: -0.03em; line-height: 1.1; }
+.spec__v small { color: var(--faint); font-size: 11px; }
+.spec__v.a b { color: var(--red-ink); }
+.spec__v.b { text-align: right; }
+.spec__v.b b { color: var(--blue-ink); }
+
+.panel__head .seg--range { justify-content: flex-end; }
+.seg--range button { height: 26px; padding: 0 9px; font-size: 11px; }
+.seg button { background: rgb(255 255 255 / 0.06); }
+.roi__sum { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; }
+
+/* archetypes: amber strikers, emerald grapplers, lavender balanced */
+.chip--striker { background: rgb(245 165 36 / 0.16); color: #ffc062; }
+.chip--grappler { background: rgb(52 199 140 / 0.16); color: #5fe0aa; }
+.chip--balanced { background: rgb(167 139 250 / 0.18); color: #c4b2ff; }
+
+@media (max-width: 760px) {
+  .spec { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .panel__head { flex-wrap: wrap; }
+}
