@@ -33,10 +33,13 @@ const corners = [
 
 <Base title={`${title(a, b)} · UFC Fighter Compare`} description="Compare two UFC fighters side by side: tale of the tape, style, record, methods, betting and fight history.">
   <link slot="head" rel="preload" href="/data/index.json" as="fetch" crossorigin="anonymous" />
-  <div slot="bar" class="bar">
+  <button slot="tools" id="swap" class="tool" type="button" title="Swap corners"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7h11l-3-3M15 13H4l3 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg><span class="sr">Swap corners</span></button>
+
+  <main class="wide dash" id="app" data-featured-a={featured.a} data-featured-b={featured.b}>
+    <h1 id="title" class="sr">{title(a, b)}</h1>
     {corners.map(({ side, label, f }) => (
+      <aside class={`col col--${side}`} aria-label={label}>
       <div class="pick" data-side={side}>
-        <i class="pick__dot" aria-hidden="true"></i>
         <div class="combo">
           <label for={`q-${side}`} class="sr">{label}: search a fighter</label>
           <input
@@ -49,7 +52,7 @@ const corners = [
             aria-controls={`lb-${side}`}
             autocomplete="off"
             spellcheck="false"
-            placeholder={f.name}
+            placeholder={`Change the ${side === "a" ? "red" : "blue"} corner`}
           />
           <ul id={`lb-${side}`} class="combo__list" role="listbox" aria-label={`${label} suggestions`} hidden></ul>
         </div>
@@ -61,17 +64,10 @@ const corners = [
           <optgroup label="Women's divisions">{women.map((d) => <option value={d}>{d.replace("Women's ", "")}</option>)}</optgroup>
         </select>
       </div>
+        <div class="col__body" id={`col-${side}`}><Fragment set:html={ownColumn(f, side, null, side === "a" ? b : a)} /></div>
+      </aside>
     ))}
-    <button id="swap" class="swap" type="button" aria-label="Swap corners" title="Swap corners">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h12l-4-4M17 17H5l4 4" fill="none" stroke="currentColor" stroke-width="2" /></svg>
-    </button>
-  </div>
-
-  <main class="wide dash" id="app" data-featured-a={featured.a} data-featured-b={featured.b}>
-    <h1 id="title" class="sr">{title(a, b)}</h1>
-    <aside class="col col--a" id="col-a" aria-label="Red corner"><Fragment set:html={ownColumn(a, "a", null, b)} /></aside>
     <div class="col col--mid" id="centre"><Fragment set:html={centre(a, b)} /></div>
-    <aside class="col col--b" id="col-b" aria-label="Blue corner"><Fragment set:html={ownColumn(b, "b", null, a)} /></aside>
     <div class="fightrow" id="fights"><Fragment set:html={fightCharts(a, b)} /></div>
     <p id="live" class="sr" aria-live="polite"></p>
   </main>

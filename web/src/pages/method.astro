@@ -1,0 +1,74 @@
+---
+// Method: where the data comes from and how every figure on the site is computed.
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import Base from "../layouts/Base.astro";
+import type { Meta } from "../lib/data";
+import { dateLong } from "../lib/format";
+
+const meta: Meta = JSON.parse(await readFile(join(process.cwd(), "public/data/meta.json"), "utf-8"));
+const sections = [
+  ["sources", "Sources"],
+  ["matching", "Joining the sources"],
+  ["records", "Records and finishes"],
+  ["style", "Style percentiles and archetype"],
+  ["odds", "Odds, fair chance and ROI"],
+  ["limits", "Limitations"],
+];
+---
+
+<Base title="Method · UFC Fighter Compare" description="Where the data comes from and how records, percentiles, archetypes, fair odds and betting returns are computed." glow="none">
+  <main class="wide method">
+    <aside class="method__toc panel" aria-label="On this page">
+      <p class="menu__title">On this page</p>
+      {sections.map(([id, label]) => <a href={`#${id}`}>{label}</a>)}
+    </aside>
+    <article class="method__body">
+      <h1 class="display">Method</h1>
+      <p class="lead">Every figure on the site is rebuilt each week from public data. Data through {dateLong(meta.data_through)}: {meta.fights.toLocaleString("en-US")} UFC fights since 2010 and {meta.fighters.toLocaleString("en-US")} fighters.</p>
+
+      <section id="sources">
+        <h2>Sources</h2>
+        <ul>{meta.sources.map((s) => <li><a href={s.url}>{s.name}</a> · {s.license}. {s.provides}.</li>)}</ul>
+        <p>UFC-Almanac mirrors UFCStats: fights, per-fight statistics and career profiles. The Kaggle datasets add division, gender, decimal odds, nickname and date of birth; Matt Dabbert's dataset fills odds the first one lacks (CC BY 4.0, credited in the footer).</p>
+      </section>
+
+      <section id="matching">
+        <h2>Joining the sources</h2>
+        <p>Fights are matched on both names, after removing accents and punctuation, and on the date with one day of tolerance. 98% of fights find their partner; the rest keep their UFCStats data without division or odds and are listed for review. Two fighters with the same name are told apart by their UFCStats address.</p>
+      </section>
+
+      <section id="records">
+        <h2>Records and finishes</h2>
+        <p>The professional record (wins-losses-draws) covers the whole career, as listed by UFCStats. Everything else on the site uses UFC fights since 2010: the UFC record, the last-10 form, the streak, how fights end and the fight history. Win rate is wins over all professional fights; finish rate is KO/TKO plus submission wins over UFC wins. Fight length is counted in minutes and binned by round (a 15:00 decision belongs to round 3).</p>
+      </section>
+
+      <section id="style">
+        <h2>Style percentiles and archetype</h2>
+        <p>The eight UFCStats career metrics (strikes landed and absorbed per minute, striking accuracy and defence, takedowns per 15 minutes, takedown accuracy and defence, submission attempts per 15 minutes) become percentiles from 0 to 100: the share of fighters below, counting ties as half. Strikes absorbed is inverted so that higher is always better.</p>
+        <p>The population is fighters with at least three UFC fights since 2010 and all eight metrics. By default a pair in the same division is compared with that division, otherwise with all fighters; the view menu lets you choose.</p>
+        <p>Archetype, from division percentiles: Striker when strikes landed is at 70 or more and takedowns below 70; Grappler the other way round; Balanced otherwise.</p>
+      </section>
+
+      <section id="odds">
+        <h2>Odds, fair chance and ROI</h2>
+        <p>Odds are decimal. The fair win chance removes the bookmaker's margin: each side's 1/odds divided by the sum of both. Betting returns assume 100 on the fighter in every priced fight: a win returns 100 × (odds − 1), a loss −100, a draw or no contest 0. ROI is the total return over the total staked.</p>
+        <p>Odds types: heavy favourite below 1.50, favourite 1.50–2.00, pick'em 2.00–2.50, underdog 2.50–4.00, heavy underdog 4.00 and above. Fewer than five fights in a type is marked as a small sample.</p>
+      </section>
+
+      <section id="limits">
+        <h2>Limitations</h2>
+        <ul>
+          <li>Fights before 2010 are outside the base source, so they count only in the professional record.</li>
+          <li>Odds cover most fights but not all; each view states how many fights it uses.</li>
+          <li>UFCStats records some stoppages at the end of a round (for example 5:00), so round times are as listed.</li>
+          <li>Past returns describe what happened; they are not a betting recommendation.</li>
+        </ul>
+      </section>
+    </article>
+  </main>
+  <script>
+    import { initTools } from "../lib/tools";
+    initTools();
+  </script>
+</Base>

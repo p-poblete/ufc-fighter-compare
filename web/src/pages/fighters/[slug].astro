@@ -17,19 +17,17 @@ const desc = `${f.name}: ${f.record.wins}-${f.record.losses}-${f.record.draws}${
 ---
 
 <Base title={`${f.name} · UFC Fighter Compare`} description={desc} glow="solo">
-  <nav slot="bar" class="bar bar--solo" aria-label="Profile actions">
-    <a class="cta" href={`/?a=${f.slug}`}>Compare {f.name} with another fighter</a>
-  </nav>
 
   <main class="wide profile" id="profile" data-slug={f.slug}>
     <h1 class="sr">{f.name}</h1>
     <aside class="col col--solo">
+      <a class="cta cta--block" href={`/?a=${f.slug}`}>Compare {f.name}</a>
       <Fragment set:html={identity(f, "solo", null, true) + record(f, "solo")} />
       <section class="panel kpis" data-module="profile.rates" aria-label="Rates">
         <div><p class="display">{pctText(winRate(f))}</p><p class="muted">Win rate</p></div>
         <div><p class="display">{pctText(finishRate(f))}</p><p class="muted">Finish rate in the UFC</p></div>
       </section>
-      <Fragment set:html={finishes(f, "solo") + history(f, 8, "solo")} />
+      <Fragment set:html={finishes(f, "solo") + history(f, "solo", true)} />
     </aside>
     <div class="col col--mid">
       <Fragment set:html={style(f, null) + fightRows(true)} />
@@ -39,11 +37,15 @@ const desc = `${f.name}: ${f.record.wins}-${f.record.losses}-${f.record.draws}${
   <script>
     import { loadFighter } from "../../lib/data";
     import { setupFightDialog } from "../../lib/dialog";
+    import { initTools } from "../../lib/tools";
     setupFightDialog();
+    initTools();
     const root = document.getElementById("profile")!;
     loadFighter(root.dataset.slug!).then(async (f) => {
       const { drawCharts } = await import("../../lib/charts");
-      drawCharts(root.querySelector(".col--mid")!, [{ f, color: "#ff9f43" }], ["solo"]);
+      const draw = () => drawCharts(root.querySelector(".col--mid")!, [{ f, color: "#ff9f43" }], ["solo"]);
+      draw();
+      document.addEventListener("settings:change", draw);
     });
   </script>
 </Base>

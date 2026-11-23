@@ -32,6 +32,12 @@ Actualizado: 2026-11-23
 - Pendiente de decidir: fotos (Wikidata/Commons ~25 % de cobertura; tratamiento en escala de grises).
 - e2e (script temporal): CA3, CA4, swap, CA5 y 360 px → 10/10.
 
+## v0.5 (2026-11-23, noche)
+- Barra superior = navegación (Compare, Fighters, Method, Source) + herramientas elegidas por Piero: búsqueda Ctrl+K (`lib/tools.ts`, paleta con Enter=rojo, Shift+Enter=azul, Ctrl+Enter=perfil), recientes (localStorage), compartir (nativo en móvil o copiar), exportar imagen (`lib/card.ts`, PNG 1200×630), menú View con unidades métrico/imperial y base de percentiles (`lib/settings.ts`). Swap se mantiene como herramienta en la portada.
+- Selector de peleador con filtro arriba de cada columna; forma de 10 = índice clicable; historial completo plegado; alturas al contenido y espejo por pares en JS (`mirror()` en app.ts); relieve en W/L, racha y chips; detalle del radar tras icono.
+- Páginas nuevas: `/fighters/` (directorio filtrable, prerenderizado) y `/method/`.
+- Pendiente de confirmar por Piero (decisiones tomadas sin consulta): iconos de herramientas, agrupar unidades+base en «View», leyenda de métodos solo en el lado rojo, maquetación de la imagen exportada, columnas del directorio, textos de Method.
+
 ## Siguiente paso
 1. Piero: `git push` y conectar el repo en Cloudflare Pages (raíz `web`, build `npm ci && npm run build`, salida `dist`, Node 24 por `.node-version`). Con eso se cierra el corte 2.
 2. Corte 3: radar de percentiles (ECharts), arquetipo y donas de victoria/derrota.

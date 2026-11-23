@@ -1,0 +1,323 @@
+---
+// Component lab (not linked): variants per block, real data, monochrome + corner colours.
+import "@fontsource-variable/inter";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import { featured } from "../config";
+
+type Metric = "slpm" | "str_acc" | "sapm" | "str_def" | "td_avg" | "td_acc" | "td_def" | "sub_avg";
+type F = {
+  name: string; dob: string | null; age: number | null; height_cm: number; reach_cm: number; weight_lbs: number;
+  stance: string; weight_class: string; archetype: string;
+  record: { wins: number; losses: number; draws: number };
+  ufc_record: { W: number; L: number; D: number; NC: number };
+  wins_by: Record<string, number>; losses_by: Record<string, number>;
+  career: Record<Metric, number>;
+  percentiles: { division: Record<Metric, number>; global: Record<Metric, number> };
+  duration: { avg_minutes: number; decision_pct: number };
+  odds: { total: { roi_pct: number | null; n: number } };
+  fights: { date: string; opponent: string; result: string; method: string; round: number }[];
+};
+const read = async (slug: string): Promise<F> =>
+  JSON.parse(await readFile(join(process.cwd(), "public/data/fighters", `${slug}.json`), "utf-8"));
+const a = await read(featured.a);
+const b = await read(featured.b);
+const last = (n: string) => n.split(" ").slice(-1)[0];
+const pct = (x: number, t: number) => (t ? Math.round((x / t) * 100) : 0);
+const total = (f: F) => f.record.wins + f.record.losses + f.record.draws;
+const finish = (f: F) => pct(f.wins_by["KO/TKO"] + f.wins_by.SUB, f.ufc_record.W);
+const M = [["KO/TKO", "KO/TKO"], ["SUB", "Submission"], ["DEC", "Decision"]] as const;
+const TONE = [1, 0.6, 0.32]; // method = lightness step of the corner colour
+const C = { a: "229 72 77", b: "62 140 240" };
+const fill = (side: "a" | "b", i: number) => `rgb(${C[side]} / ${TONE[i]})`;
+
+const metrics: [Metric, string][] = [
+  ["slpm", "Strikes landed/min"], ["str_acc", "Striking accuracy"], ["sapm", "Strikes absorbed/min (inv.)"],
+  ["str_def", "Striking defence"], ["td_avg", "Takedowns/15 min"], ["td_acc", "Takedown accuracy"],
+  ["td_def", "Takedown defence"], ["sub_avg", "Submission attempts/15 min"],
+];
+const pop = a.weight_class === b.weight_class ? "division" : "global";
+const P = (f: F, m: Metric) => f.percentiles[pop][m];
+
+// Radar geometry
+const R = 110, cx = 150, cy = 140;
+const pt = (i: number, v: number) => {
+  const ang = -Math.PI / 2 + (i * 2 * Math.PI) / 8;
+  return [cx + Math.cos(ang) * R * (v / 100), cy + Math.sin(ang) * R * (v / 100)];
+};
+const poly = (f: F) => metrics.map(([m], i) => pt(i, P(f, m)).map((n) => n.toFixed(1)).join(",")).join(" ");
+
+// Donut segments
+const donut = (f: F, side: "a" | "b", key: "wins_by" | "losses_by") => {
+  const vals = M.map(([k]) => f[key][k]);
+  const sum = vals.reduce((x, y) => x + y, 0) || 1;
+  const circ = 2 * Math.PI * 38;
+  let off = 0;
+  return vals.map((v, i) => {
+    const len = (v / sum) * circ;
+    const seg = { d: `${len} ${circ - len}`, o: -off, c: fill(side, i) };
+    off += len;
+    return seg;
+  });
+};
+const form = (f: F) => f.fights.slice(0, 10);
+const kpis = [
+  { l: "Win rate", a: `${pct(a.record.wins, total(a))}%`, b: `${pct(b.record.wins, total(b))}%`, va: pct(a.record.wins, total(a)), vb: pct(b.record.wins, total(b)) },
+  { l: "Finish rate (UFC)", a: `${finish(a)}%`, b: `${finish(b)}%`, va: finish(a), vb: finish(b) },
+  { l: "Avg. fight", a: `${a.duration.avg_minutes.toFixed(1)} min`, b: `${b.duration.avg_minutes.toFixed(1)} min`, va: a.duration.avg_minutes, vb: b.duration.avg_minutes },
+  { l: "Betting ROI", a: `${(a.odds.total.roi_pct ?? 0) > 0 ? "+" : ""}${(a.odds.total.roi_pct ?? 0).toFixed(0)}%`, b: `${(b.odds.total.roi_pct ?? 0) > 0 ? "+" : ""}${(b.odds.total.roi_pct ?? 0).toFixed(0)}%`, va: a.odds.total.roi_pct ?? 0, vb: b.odds.total.roi_pct ?? 0 },
+];
+const tapeRows = [
+  { l: "Height", a: a.height_cm, b: b.height_cm, u: "cm" },
+  { l: "Reach", a: a.reach_cm, b: b.reach_cm, u: "cm" },
+  { l: "Weight", a: a.weight_lbs, b: b.weight_lbs, u: "lb" },
+  { l: "Age", a: 35, b: 29, u: "" },
+];
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lab · components</title>
+    <style is:global>
+      :root { --g: #0b0c0e; --s1: #141518; --s2: #1c1e22; --s3: #2a2d33; --t: #f4f5f6; --mu: #a3a6ad; --fa: #73767e;
+        --red: rgb(229 72 77); --blue: rgb(62 140 240); --font: "Inter Variable", system-ui, sans-serif; color-scheme: dark; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--g); color: var(--t); font: 400 14px/1.45 var(--font); font-variant-numeric: tabular-nums; }
+      h1, h2, h3, p { margin: 0; }
+      .col { width: min(100% - 32px, 1280px); margin: 0 auto; }
+      header.col { padding: 40px 0 8px; }
+      header h1 { font-size: 26px; letter-spacing: -0.02em; }
+      header p { color: var(--mu); margin-top: 6px; max-width: 80ch; }
+      .block { margin-top: 44px; }
+      .block > h2 { font-size: 18px; letter-spacing: -0.01em; }
+      .block > p { color: var(--mu); margin: 4px 0 14px; max-width: 90ch; }
+      .opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+      .opt { background: var(--s1); border-radius: 16px; padding: 18px; display: grid; gap: 14px; align-content: start; }
+      .opt h3 { font-size: 14px; display: flex; gap: 8px; align-items: baseline; }
+      .opt h3 code { font: 700 12px var(--font); background: var(--t); color: var(--g); padding: 2px 7px; border-radius: 6px; }
+      .opt .why { color: var(--fa); font-size: 12px; }
+      .a { color: #ff7b7f; } .b { color: #7cb4ff; }
+      .mir { display: grid; grid-template-columns: 1fr 96px 1fr; align-items: center; gap: 0; padding: 4px 0; }
+      .mir .l { text-align: center; color: var(--mu); font-size: 12px; }
+      .bx { display: flex; align-items: center; gap: 6px; }
+      .bx.ra { flex-direction: row-reverse; }
+      .bx i { height: 12px; border-radius: 3px; min-width: 2px; }
+      .bx b { font-size: 13px; min-width: 2ch; }
+      .stack { display: flex; height: 26px; border-radius: 6px; overflow: hidden; gap: 2px; }
+      .stack span { display: grid; place-items: center; font-size: 11px; font-weight: 600; color: #fff; min-width: 0; overflow: hidden; }
+      .lg { display: flex; gap: 12px; color: var(--mu); font-size: 12px; flex-wrap: wrap; }
+      .lg i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+      .form { display: flex; gap: 4px; }
+      .form span { width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; font-size: 11px; font-weight: 700; }
+      .W { background: var(--t); color: var(--g); } .L { background: var(--s3); color: var(--mu); } .D, .NC { background: transparent; box-shadow: inset 0 0 0 1px var(--s3); color: var(--mu); }
+      .kp { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .kp div { background: var(--s2); border-radius: 12px; padding: 12px; }
+      .kp .n { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; display: flex; justify-content: space-between; }
+      .kp .k { color: var(--fa); font-size: 12px; }
+      .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      svg text { font-family: var(--font); }
+      .dot-row { display: grid; grid-template-columns: 150px 1fr; align-items: center; gap: 10px; padding: 3px 0; }
+      .dot-row span { color: var(--mu); font-size: 12px; }
+      .track { position: relative; height: 16px; }
+      .track::before { content: ""; position: absolute; inset: 7px 0; height: 2px; background: var(--s3); border-radius: 2px; }
+      .track .seg { position: absolute; top: 7px; height: 2px; background: var(--mu); }
+      .track i { position: absolute; top: 2px; width: 12px; height: 12px; border-radius: 50%; margin-left: -6px; }
+      .waf { display: flex; flex-wrap: wrap; gap: 3px; }
+      .waf i { width: 14px; height: 14px; border-radius: 3px; }
+      .big { display: flex; justify-content: space-between; align-items: end; }
+      .big .n { font-size: 40px; font-weight: 750; letter-spacing: -0.035em; line-height: 1; }
+      .edge { font-size: 11px; color: var(--g); background: var(--t); border-radius: 4px; padding: 1px 5px; margin-inline: 6px; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <header class="col">
+      <h1>Component options · {a.name} vs {b.name}</h1>
+      <p>One block per section of the dashboard. Pick one code per block (or say “none”). Base is grey; red and blue only say which corner. Inside a corner, the method is a lightness step of its colour. Radar and style use {pop === "division" ? "division" : "all-fighter"} percentiles.</p>
+    </header>
+
+    <!-- KPI -->
+    <section class="col block">
+      <h2>1 · Headline figures</h2>
+      <p>What a glance should answer before any chart. UFC.com and ESPN open athlete pages with a few big figures; stat sites skip them.</p>
+      <div class="opts">
+        <div class="opt">
+          <h3><code>K1</code>KPI tiles, A vs B</h3>
+          <div class="kp">{kpis.map((k) => <div><div class="n"><span class="a">{k.a}</span><span class="b">{k.b}</span></div><div class="k">{k.l}</div></div>)}</div>
+          <p class="why">Four answers at once. Costs a row of height.</p>
+        </div>
+        <div class="opt">
+          <h3><code>K2</code>Edge strip</h3>
+          {kpis.map((k) => (
+            <div class="mir"><span style="text-align:right;font-weight:600">{k.l !== "Avg. fight" && k.va > k.vb && <span class="edge">EDGE</span>}{k.a}</span><span class="l">{k.l}</span><span style="font-weight:600">{k.b}{k.l !== "Avg. fight" && k.vb > k.va && <span class="edge">EDGE</span>}</span></div>
+          ))}
+          <p class="why">Same figures inside the tape; marks who leads each one. Denser, no extra row.</p>
+        </div>
+        <div class="opt">
+          <h3><code>K3</code>None</h3>
+          <p class="why">Leave figures to the tape and charts. Cleanest; the first screen says less.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tape -->
+    <section class="col block">
+      <h2>2 · Tale of the tape</h2>
+      <p>Every comparable (UFC.com fight pages, ESPN, Tapology) shows it as a mirrored table. The question is how much it should show the gap.</p>
+      <div class="opts">
+        <div class="opt">
+          <h3><code>T1</code>Mirrored table</h3>
+          {tapeRows.map((r) => <div class="mir"><span style="text-align:right;font-weight:600">{Math.round(r.a)} {r.u}</span><span class="l">{r.l}</span><span style="font-weight:600">{Math.round(r.b)} {r.u}</span></div>)}
+          <p class="why">The broadcast standard. Plain; the gap is mental arithmetic.</p>
+        </div>
+        <div class="opt">
+          <h3><code>T2</code>Table + gap bar</h3>
+          {tapeRows.map((r) => {
+            const d = r.a - r.b; const w = Math.min(100, (Math.abs(d) / Math.max(r.a, r.b)) * 600);
+            return (
+              <div class="mir">
+                <div class="bx ra"><i style={`width:${d > 0 ? w : 0}%;background:var(--red)`}></i><b style="text-align:right">{Math.round(r.a)}</b></div>
+                <span class="l">{r.l}{d !== 0 && <><br /><span style="color:var(--t);font-weight:600">{d > 0 ? "+" : "−"}{Math.abs(Math.round(d * 10) / 10)} {r.u}</span></>}</span>
+                <div class="bx"><i style={`width:${d < 0 ? w : 0}%;background:var(--blue)`}></i><b>{Math.round(r.b)}</b></div>
+              </div>
+            );
+          })}
+          <p class="why">Bar grows on the side with the advantage; the label states the gap.</p>
+        </div>
+        <div class="opt">
+          <h3><code>T3</code>Spec cards</h3>
+          <div class="row2">{tapeRows.map((r) => <div style="background:var(--s2);border-radius:10px;padding:10px"><div class="k" style="color:var(--fa);font-size:12px">{r.l}</div><div style="display:flex;justify-content:space-between;font-weight:700;font-size:17px"><span class="a">{Math.round(r.a)}</span><span class="b">{Math.round(r.b)}</span></div></div>)}</div>
+          <p class="why">Tiles per attribute; good on phones, weaker for scanning many rows.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Record -->
+    <section class="col block">
+      <h2>3 · Record and form</h2>
+      <p>Tapology and Sherdog lead with W-L-D and a streak; football apps made the W/L form strip standard. Ours currently shows only mirrored bars.</p>
+      <div class="opts">
+        <div class="opt">
+          <h3><code>R1</code>Mirrored bars (current)</h3>
+          {(["wins", "losses", "draws"] as const).map((k) => {
+            const mx = Math.max(a.record.wins, b.record.wins);
+            return <div class="mir"><div class="bx ra"><i style={`width:${(a.record[k] / mx) * 80}%;background:var(--red)`}></i><b style="text-align:right">{a.record[k]}</b></div><span class="l">{k}</span><div class="bx"><i style={`width:${(b.record[k] / mx) * 80}%;background:var(--blue)`}></i><b>{b.record[k]}</b></div></div>;
+          })}
+          <p class="why">Compares counts; hides that 29 fights vs 18 is a different career length.</p>
+        </div>
+        <div class="opt">
+          <h3><code>R2</code>100% bar + win rate</h3>
+          {[{ f: a, s: "a" as const }, { f: b, s: "b" as const }].map(({ f, s }) => (
+            <div style="display:grid;gap:6px">
+              <div class="big"><span class={s} style="font-weight:600">{last(f.name)}</span><span style="font-weight:700">{pct(f.record.wins, total(f))}% <span style="color:var(--fa);font-weight:400;font-size:12px">of {total(f)} fights</span></span></div>
+              <div class="stack"><span style={`flex:${f.record.wins};background:${fill(s, 0)}`}>{f.record.wins}</span><span style={`flex:${f.record.losses};background:var(--s3)`}>{f.record.losses || ""}</span>{f.record.draws > 0 && <span style={`flex:${f.record.draws};background:var(--s2)`}>{f.record.draws}</span>}</div>
+            </div>
+          ))}
+          <p class="why">Normalises career length; the win rate is the headline.</p>
+        </div>
+        <div class="opt">
+          <h3><code>R3</code>Big record + last 10 UFC fights</h3>
+          {[{ f: a, s: "a" as const }, { f: b, s: "b" as const }].map(({ f, s }) => (
+            <div style="display:grid;gap:8px">
+              <div class="big"><span class="n">{f.record.wins}-{f.record.losses}-{f.record.draws}</span><span class={s} style="font-weight:600">{last(f.name)}</span></div>
+              <div class="form">{form(f).map((x) => <span class={x.result} title={`${x.date} · ${x.opponent} · ${x.method}`}>{x.result}</span>)}</div>
+            </div>
+          ))}
+          <p class="why">Newest first. Shows momentum (Topuria's last fight is a loss) that totals hide.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Methods -->
+    <section class="col block">
+      <h2>4 · How they win and lose</h2>
+      <p>UFC.com athlete pages use horizontal bars with %; Sherdog and Tapology use bars with counts. The spec says donuts; here are the alternatives.</p>
+      <div class="opts">
+        <div class="opt">
+          <h3><code>M1</code>Donuts (spec)</h3>
+          <div class="row2">
+            {[{ f: a, s: "a" as const }, { f: b, s: "b" as const }].map(({ f, s }) => (
+              <svg viewBox="0 0 100 100" role="img" aria-label={`${f.name} wins by method`}>
+                {donut(f, s, "wins_by").map((g) => <circle cx="50" cy="50" r="38" fill="none" stroke={g.c} stroke-width="14" stroke-dasharray={g.d} stroke-dashoffset={g.o} transform="rotate(-90 50 50)" />)}
+                <text x="50" y="50" text-anchor="middle" fill="#f4f5f6" font-size="18" font-weight="700">{f.ufc_record.W}</text>
+                <text x="50" y="64" text-anchor="middle" fill="#73767e" font-size="8">UFC wins</text>
+              </svg>
+            ))}
+          </div>
+          <div class="lg">{M.map(([, l], i) => <span><i style={`background:rgb(160 163 170 / ${TONE[i]})`}></i>{l}</span>)}</div>
+          <p class="why">Familiar; angles are hard to compare across two donuts. Losses need two more.</p>
+        </div>
+        <div class="opt">
+          <h3><code>M2</code>Method mix bars (wins + losses)</h3>
+          {[{ f: a, s: "a" as const }, { f: b, s: "b" as const }].map(({ f, s }) => (
+            <div style="display:grid;gap:4px">
+              <span class={s} style="font-weight:600">{last(f.name)} <span style="color:var(--fa);font-weight:400">wins</span></span>
+              <div class="stack">{M.map(([k], i) => f.wins_by[k] > 0 && <span style={`flex:${f.wins_by[k]};background:${fill(s, i)}`}>{f.wins_by[k]}</span>)}</div>
+              <span style="color:var(--fa);font-size:12px">losses: {M.map(([k, l]) => `${l} ${f.losses_by[k]}`).join(" · ")}</span>
+            </div>
+          ))}
+          <div class="lg">{M.map(([, l], i) => <span><i style={`background:rgb(160 163 170 / ${TONE[i]})`}></i>{l}</span>)}</div>
+          <p class="why">One bar per fighter, same length: proportions compare directly. Compact.</p>
+        </div>
+        <div class="opt">
+          <h3><code>M3</code>Mirrored by method</h3>
+          {M.map(([k, l]) => {
+            const mx = Math.max(...M.flatMap(([q]) => [a.wins_by[q], b.wins_by[q]]));
+            return <div class="mir"><div class="bx ra"><i style={`width:${(a.wins_by[k] / mx) * 80}%;background:var(--red)`}></i><b style="text-align:right">{a.wins_by[k]}</b></div><span class="l">{l}</span><div class="bx"><i style={`width:${(b.wins_by[k] / mx) * 80}%;background:var(--blue)`}></i><b>{b.wins_by[k]}</b></div></div>;
+          })}
+          <p class="why">Same language as the tape; compares counts, not shares.</p>
+        </div>
+        <div class="opt">
+          <h3><code>M4</code>Waffle: one square per UFC win</h3>
+          {[{ f: a, s: "a" as const }, { f: b, s: "b" as const }].map(({ f, s }) => (
+            <div style="display:grid;gap:6px">
+              <span class={s} style="font-weight:600">{last(f.name)}</span>
+              <div class="waf">{M.flatMap(([k], i) => Array.from({ length: f.wins_by[k] }, () => <i style={`background:${fill(s, i)}`}></i>))}</div>
+            </div>
+          ))}
+          <div class="lg">{M.map(([, l], i) => <span><i style={`background:rgb(160 163 170 / ${TONE[i]})`}></i>{l}</span>)}</div>
+          <p class="why">Counts and mix in one; each fight is visible. Distinctive.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Style -->
+    <section class="col block">
+      <h2>5 · Style (8 career metrics as percentiles)</h2>
+      <p>Fan stat apps use a radar; analysts prefer dot plots because radar area exaggerates. UFC.com shows raw numbers with rings for accuracy.</p>
+      <div class="opts">
+        <div class="opt">
+          <h3><code>P1</code>Radar overlay (spec)</h3>
+          <svg viewBox="-40 0 380 290" role="img" aria-label="Style radar">
+            {[25, 50, 75, 100].map((v) => <polygon points={metrics.map((_, i) => pt(i, v).join(",")).join(" ")} fill="none" stroke="#2a2d33" />)}
+            <polygon points={poly(a)} fill="rgb(229 72 77 / 0.18)" stroke="rgb(229 72 77)" stroke-width="2" />
+            <polygon points={poly(b)} fill="rgb(62 140 240 / 0.18)" stroke="rgb(62 140 240)" stroke-width="2" />
+            {metrics.map(([, l], i) => { const [x, y] = pt(i, 122); return <text x={x} y={y} fill="#a3a6ad" font-size="9" text-anchor="middle">{l.split(" ")[0]} {l.split(" ")[1] ?? ""}</text>; })}
+          </svg>
+          <p class="why">Instantly reads as “shape of a fighter”. Exact values hard to read.</p>
+        </div>
+        <div class="opt">
+          <h3><code>P2</code>Dumbbell dot plot</h3>
+          {metrics.map(([m, l]) => {
+            const x = P(a, m), y = P(b, m);
+            return <div class="dot-row"><span>{l}</span><div class="track"><div class="seg" style={`left:${Math.min(x, y)}%;width:${Math.abs(x - y)}%`}></div><i style={`left:${x}%;background:var(--red)`} title={`${Math.round(x)}`}></i><i style={`left:${y}%;background:var(--blue)`} title={`${Math.round(y)}`}></i></div></div>;
+          })}
+          <p class="why">Exact position on 0–100 and the gap per metric. Most honest.</p>
+        </div>
+        <div class="opt">
+          <h3><code>P3</code>Butterfly bars</h3>
+          {metrics.map(([m, l]) => (
+            <div class="mir" style="grid-template-columns:1fr 120px 1fr">
+              <div class="bx ra"><i style={`width:${P(a, m) * 0.8}%;background:var(--red)`}></i><b style="text-align:right">{Math.round(P(a, m))}</b></div>
+              <span class="l" style="font-size:11px">{l}</span>
+              <div class="bx"><i style={`width:${P(b, m) * 0.8}%;background:var(--blue)`}></i><b>{Math.round(P(b, m))}</b></div>
+            </div>
+          ))}
+          <p class="why">Matches the tape; long, eight rows.</p>
+        </div>
+      </div>
+    </section>
+    <div style="height:80px"></div>
+  </body>
+</html>

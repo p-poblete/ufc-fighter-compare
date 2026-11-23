@@ -11,9 +11,16 @@ import { dateLong } from "../lib/format";
 interface Props {
   title: string;
   description: string;
-  glow?: "pair" | "solo";
+  glow?: "pair" | "solo" | "none";
 }
 const { title, description, glow = "pair" } = Astro.props;
+const path = Astro.url.pathname;
+const nav = [
+  { href: "/", label: "Compare", on: path === "/" },
+  { href: "/fighters/", label: "Fighters", on: path.startsWith("/fighters") },
+  { href: "/method/", label: "Method", on: path.startsWith("/method") },
+];
+const icon = (d: string) => `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const meta: Meta = JSON.parse(await readFile(join(process.cwd(), "public/data/meta.json"), "utf-8"));
 ---
 
@@ -37,8 +44,30 @@ const meta: Meta = JSON.parse(await readFile(join(process.cwd(), "public/data/me
           </svg>
           <span>Fighter Compare</span>
         </a>
-        <slot name="bar" />
-        <a class="topbar__link" href={repoUrl}>Source</a>
+        <nav class="nav" aria-label="Sections">
+          {nav.map((n) => <a href={n.href} aria-current={n.on ? "page" : undefined}>{n.label}</a>)}
+          <a href={repoUrl} class="nav__ext">Source <span aria-hidden="true">↗</span></a>
+        </nav>
+        <div class="tools" role="toolbar" aria-label="Tools">
+          <button type="button" class="tool tool--search" id="t-search" aria-label="Quick search (Ctrl+K)"><Fragment set:html={icon("M9 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12zm4.5-1.5L17 17")} /><span>Search</span><kbd>Ctrl K</kbd></button>
+          <slot name="tools" />
+          <div class="tool-wrap">
+            <button type="button" class="tool" id="t-recent" aria-expanded="false" aria-controls="m-recent" title="Recent comparisons"><Fragment set:html={icon("M10 5v5l3 2M3.5 10a6.5 6.5 0 1 0 2-4.7M3 3v3h3")} /><span class="sr">Recent comparisons</span></button>
+            <div class="menu" id="m-recent" hidden></div>
+          </div>
+          <button type="button" class="tool" id="t-share" title="Share"><Fragment set:html={icon("M10 3v10M6 7l4-4 4 4M4 12v4h12v-4")} /><span class="sr">Share</span></button>
+          <button type="button" class="tool" id="t-export" title="Export image"><Fragment set:html={icon("M3 5h14v10H3zM7 9a1 1 0 1 0 0-.1M3 14l4-4 3 3 3-2 4 3")} /><span class="sr">Export image</span></button>
+          <div class="tool-wrap">
+            <button type="button" class="tool" id="t-view" aria-expanded="false" aria-controls="m-view" title="View settings"><Fragment set:html={icon("M4 6h8M15 6h1M4 14h1M8 14h8M12 4v4M6 12v4")} /><span class="sr">View settings</span></button>
+            <div class="menu menu--view" id="m-view" hidden>
+              <p class="menu__title">Units</p>
+              <div class="seg"><button type="button" data-units="metric" aria-pressed="true">Metric</button><button type="button" data-units="imperial" aria-pressed="false">Imperial</button></div>
+              <p class="menu__title">Percentiles compared with</p>
+              <div class="seg"><button type="button" data-base="auto" aria-pressed="true">Auto</button><button type="button" data-base="division" aria-pressed="false">Division</button><button type="button" data-base="global" aria-pressed="false">All fighters</button></div>
+              <p class="menu__empty">Auto uses the shared division when both fight in it.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </header>
 

@@ -5,6 +5,8 @@ import { centre, fightCharts, ownColumn, title } from "./render";
 import { prepare, search, type Searchable } from "./search";
 import { pairQuery, readPair } from "./url-state";
 import { setupFightDialog } from "./dialog";
+import { exportCard } from "./card";
+import { initTools, pushRecent } from "./tools";
 
 interface State {
   a: string | null;
@@ -28,6 +30,7 @@ export async function boot(): Promise<void> {
     return;
   }
   setupFightDialog();
+  let current: [Fighter | null, Fighter | null] = [null, null];
   const bySlug = new Map(index.map((e) => [e.slug, e]));
   const items = prepare(index);
 
@@ -62,10 +65,34 @@ export async function boot(): Promise<void> {
     }
     for (const side of ["a", "b"] as Side[]) {
       const f = side === "a" ? a : b;
-      $<HTMLInputElement>(`#q-${side}`).placeholder = f ? f.name : "Search a fighter";
+      $<HTMLInputElement>(`#q-${side}`).placeholder = f ? `Change ${f.name}` : `Pick the ${side === "a" ? "red" : "blue"} corner`;
     }
     document.title = `${title(a, b)} · UFC Fighter Compare`;
+    current = [a, b];
+    if (a && b) pushRecent({ a: a.slug, b: b.slug, an: a.name, bn: b.name });
+    mirror();
   }
+
+  /** Corner modules mirror each other: each pair takes the taller one's height (content decides, no fixed sizes). */
+  function mirror(): void {
+    const mods = (side: Side) => [...$(`#col-${side}`).querySelectorAll<HTMLElement>(":scope > [data-module]")];
+    const A = mods("a"), B = mods("b");
+    [...A, ...B].forEach((m) => (m.style.minHeight = ""));
+    if (matchMedia("(max-width: 760px)").matches) return; // stacked on phones: nothing to mirror
+    A.forEach((m, i) => {
+      const n = B[i];
+      if (!n || n.dataset.module !== m.dataset.module || m.dataset.module === "corner.history") return;
+      const h = Math.max(m.offsetHeight, n.offsetHeight);
+      m.style.minHeight = n.style.minHeight = `${h}px`;
+    });
+  }
+  addEventListener("resize", mirror);
+
+  initTools({
+    pick: (side, slug) => choose(side, slug),
+    exportImage: async () => (current[0] && current[1] ? exportCard(current[0], current[1], $("#centre")) : null),
+  });
+  document.addEventListener("settings:change", () => void render());
 
   function commit(next: State, push = true): void {
     state = next;

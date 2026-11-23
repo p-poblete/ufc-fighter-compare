@@ -2,6 +2,7 @@
 // Every block is a module (docs/spec.md §3.2) with a data-module name and one question to answer.
 import type { Fight, Fighter, Method, Metric, OddsType } from "./data";
 import { DASH, ageFrom, dateLong, esc, feetInches, initials, lastName } from "./format";
+import { settings } from "./settings";
 
 export type Tone = "a" | "b" | "solo";
 
@@ -51,13 +52,23 @@ export function streak(f: Fighter): string | null {
 
 /** Percentile population: the pair's shared division when both have one, else all fighters. */
 export function population(a: Fighter | null, b: Fighter | null = null): "division" | "global" {
+  const base = settings().base;
+  if (base === "global") return "global";
+  if (base === "division") return (!a || a.percentiles?.division) && (!b || b.percentiles?.division) ? "division" : "global";
   if (a && b) {
     return a.weight_class && a.weight_class === b.weight_class && a.percentiles?.division && b.percentiles?.division ? "division" : "global";
   }
   return (a ?? b)?.percentiles?.division ? "division" : "global";
 }
-export const popLabel = (pop: "division" | "global", f: Fighter | null) =>
-  pop === "division" && f?.weight_class ? `vs ${f.weight_class}` : "vs all fighters";
+export const popLabel = (pop: "division" | "global", f: Fighter | null, g: Fighter | null = null) =>
+  pop === "global" ? "vs all fighters" : g && f && g.weight_class !== f.weight_class ? "vs each one's division" : f?.weight_class ? `vs ${f.weight_class}` : "vs all fighters";
+
+// ---------- units ----------
+const imperial = () => settings().units === "imperial";
+export const fmtHeight = (cm: number) => (imperial() ? `${feetInches(cm)} <small>${Math.round(cm)} cm</small>` : `${Math.round(cm)} cm <small>${feetInches(cm)}</small>`);
+export const fmtReach = (cm: number) => (imperial() ? `${Math.round(cm / 2.54)}″ <small>${Math.round(cm)} cm</small>` : `${Math.round(cm)} cm <small>${Math.round(cm / 2.54)}″</small>`);
+export const fmtWeight = (lb: number) => (imperial() ? `${lb} lb` : `${Math.round(lb * 0.4536)} kg`);
+const gapUnit = (kind: "len" | "wt") => (kind === "len" ? (imperial() ? ["in", 1 / 2.54] : ["cm", 1]) : imperial() ? ["lb", 1] : ["kg", 0.4536]) as [string, number];
 
 export function title(a: Fighter | null, b: Fighter | null): string {
   if (a && b) return `${a.name} vs ${b.name}`;
@@ -78,9 +89,9 @@ export const archetypeChip = (x: string | null) => (x ? `<span class="chip chip-
 /** corner.identity. Physical facts only when no duel.matchup shows them (profile, or one corner empty). */
 export function identity(f: Fighter | null, tone: Tone, warning: string | null = null, withFacts = false): string {
   const warn = warning ? `<p class="warn" role="status">${esc(warning)}</p>` : "";
-  const corner = CORNER[tone] ? `<p class="corner">${CORNER[tone]}</p>` : "";
+  const corner = ""; // the colour and the side already say which corner
   if (!f) {
-    return mod("corner.identity", "", `${corner}${warn}<p class="nodata">Search for the ${tone === "a" ? "red" : "blue"} corner in the bar above.</p>`, {
+    return mod("corner.identity", "", `${corner}${warn}<p class="nodata">Pick a fighter for the ${tone === "a" ? "red" : "blue"} corner above.</p>`, {
       cls: "id id--empty",
       tone,
       label: CORNER[tone] || "Fighter",
@@ -92,9 +103,9 @@ export function identity(f: Fighter | null, tone: Tone, warning: string | null =
   const facts = withFacts
     ? [
         years != null ? `${years} years` : null,
-        f.height_cm != null ? `${Math.round(f.height_cm)} cm` : null,
-        f.reach_cm != null ? `${Math.round(f.reach_cm)} cm reach` : null,
-        f.weight_lbs != null ? `${f.weight_lbs} lb` : null,
+        f.height_cm != null ? fmtHeight(f.height_cm).replace(/ <small>.*<\/small>/, "") : null,
+        f.reach_cm != null ? `${fmtReach(f.reach_cm).replace(/ <small>.*<\/small>/, "")} reach` : null,
+        f.weight_lbs != null ? fmtWeight(f.weight_lbs) : null,
         f.stance ? esc(f.stance) : null,
       ].filter(Boolean)
     : [];
@@ -113,14 +124,17 @@ export function identity(f: Fighter | null, tone: Tone, warning: string | null =
   );
 }
 
-/** corner.record: professional and UFC record, current streak, last 10 results. */
+/** corner.record: record and streak; the last 10 results are the index of fights (each opens fight.dialog). */
 export function record(f: Fighter, tone: Tone): string {
   const last = f.fights.slice(0, 10);
   const u = f.ufc_record;
   const st = streak(f);
   const strip = last.length
-    ? `<ol class="form" aria-label="Last ${last.length} UFC results, newest first">${last
-        .map((x) => `<li class="r-${x.result}" title="${esc(`${dateLong(x.date)} · ${RESULT[x.result]} vs ${x.opponent}`)}">${x.result}</li>`)
+    ? `<ol class="form" aria-label="Last ${last.length} UFC fights, newest first">${last
+        .map(
+          (x, i) =>
+            `<li><button type="button" class="relief r-${x.result}" data-fight="${i}" data-slug="${f.slug}" data-tone="${tone}" aria-haspopup="dialog" title="${esc(`${dateLong(x.date)} · ${RESULT[x.result]} vs ${x.opponent} · ${x.method_detail}`)}">${x.result}</button></li>`,
+        )
         .join("")}</ol>`
     : noData("no UFC fights since 2010");
   return mod(
@@ -128,16 +142,16 @@ export function record(f: Fighter, tone: Tone): string {
     "",
     `<div class="rec__top">
        <p class="display">${f.record.wins}-${f.record.losses}-${f.record.draws}</p>
-       ${st ? `<p class="streak"><b class="metal metal--${st[0]}">${st}</b><span>${st[0] === "W" ? "win" : "losing"} streak</span></p>` : ""}
+       ${st ? `<p class="streak"><b class="relief r-${st[0]}">${st}</b><span>${st[0] === "W" ? "win" : "losing"} streak</span></p>` : ""}
      </div>
-     <p class="muted">Professional record · UFC since 2010 ${u.W}-${u.L}-${u.D}${u.NC ? ` (${u.NC} NC)` : ""}</p>
-     ${strip}`,
+     ${strip}
+     <p class="rec__spec">Professional record. Squares: last ${last.length} UFC fights, newest first. UFC since 2010: ${u.W}-${u.L}-${u.D}${u.NC ? ` (${u.NC} NC)` : ""}.</p>`,
     { cls: "rec", tone, label: "Record and form" },
   );
 }
 
 /** corner.finishes (M2): how the wins and the losses ended. */
-export function finishes(f: Fighter, tone: Tone): string {
+export function finishes(f: Fighter, tone: Tone, legend = true): string {
   const bar = (by: Record<Method, number>, label: string) => {
     const total = METHODS.reduce((s, [k]) => s + by[k], 0);
     const stack = total
@@ -145,30 +159,28 @@ export function finishes(f: Fighter, tone: Tone): string {
       : `<div class="stack stack--empty"></div>`;
     return `<div class="mix"><p class="mix__label">${label} <span>${total}</span></p>${stack}</div>`;
   };
-  const legend = `<p class="legend">${METHODS.slice(0, 3).map(([, l], i) => `<span><i class="m${i}"></i>${l}</span>`).join("")}<span class="legend__note">UFC since 2010</span></p>`;
-  return mod("corner.finishes", "", bar(f.wins_by, "Wins") + bar(f.losses_by, "Losses") + legend, { tone, label: "How the fights end" });
+  const key = legend ? `<p class="legend">${METHODS.slice(0, 3).map(([, l], i) => `<span><i class="m${i}"></i>${l}</span>`).join("")}</p>` : "";
+  return mod("corner.finishes", "", bar(f.wins_by, "Wins by method") + bar(f.losses_by, "Losses by method") + key, { tone, label: "How the fights end" });
 }
 
-/** corner.history: every UFC fight; the whole row opens fight.dialog. */
-export function history(f: Fighter, show = 6, tone: Tone = "solo"): string {
-  if (!f.fights.length) return mod("corner.history", "Fight history", noData("no UFC fights since 2010"));
+/** corner.history: every UFC fight behind one disclosure (the form squares are the quick index). */
+export function history(f: Fighter, tone: Tone = "solo", open = false): string {
+  if (!f.fights.length) return "";
   const row = (x: Fight, i: number) => `<li><button type="button" class="fight" data-fight="${i}" data-slug="${f.slug}" data-tone="${tone}" aria-haspopup="dialog">
-      <span class="res r-${x.result}" aria-label="${RESULT[x.result]}">${x.result}</span>
-      <span class="fight__main"><b>${esc(x.opponent)}</b><span>${esc(x.method_detail)}${x.round ? ` · R${x.round} ${clock(x.round_time_s)}` : ""}</span></span>
+      <span class="res relief r-${x.result}" aria-label="${RESULT[x.result]}">${x.result}</span>
+      <span class="fight__main"><b>${esc(x.opponent)}</b><span>${esc(x.method_detail)}${x.round && x.method !== "DEC" ? ` · R${x.round} ${clock(x.round_time_s)}` : ""}</span></span>
       <time class="fight__date" datetime="${x.date}">${x.date.slice(0, 4)}</time>
     </button></li>`;
-  const head = f.fights.slice(0, show).map(row).join("");
-  const rest = f.fights.slice(show);
-  const more = rest.length
-    ? `<details class="more"><summary>All ${f.fights.length} UFC fights</summary><ol class="fights">${rest.map((x, i) => row(x, i + show)).join("")}</ol></details>`
-    : "";
-  return mod("corner.history", "Fight history", `<ol class="fights">${head}</ol>${more}`, { aside: aside("open a fight for details") });
+  return mod(
+    "corner.history",
+    "",
+    `<details class="more"${open ? " open" : ""}><summary>All ${f.fights.length} UFC fights since 2010</summary><ol class="fights">${f.fights.map(row).join("")}</ol></details>`,
+    { label: "Fight history" },
+  );
 }
 
 export function ownColumn(f: Fighter | null, tone: Tone, warning: string | null = null, other: Fighter | null = null): string {
-  // Mirrored columns: both histories show as many rows as the shorter one (max 6); the rest folds away.
-  const rows = other ? Math.max(1, Math.min(6, f?.fights.length ?? 0, other.fights.length)) : 6;
-  return identity(f, tone, warning, !other) + (f ? record(f, tone) + finishes(f, tone) + history(f, rows, tone) : "");
+  return identity(f, tone, warning, !other) + (f ? record(f, tone) + finishes(f, tone, tone !== "b") + history(f, tone) : "");
 }
 
 // ---------- duel.* (both fighters, centre) ----------
@@ -179,24 +191,25 @@ export function matchup(a: Fighter, b: Fighter, today?: Date): string {
   const dot = '<i class="edge-dot" role="img" aria-label="Edge" title="Edge"></i>';
   const up = '<svg class="arrow arrow--up" viewBox="0 0 12 12" role="img" aria-label="higher"><path d="M6 2l4.5 7h-9z"/></svg>';
   const down = '<svg class="arrow arrow--down" viewBox="0 0 12 12" role="img" aria-label="lower"><path d="M6 10L1.5 3h9z"/></svg>';
-  const gap = (x: number | null, y: number | null, unit: string) =>
-    x != null && y != null && Math.abs(x - y) >= 0.5 ? `<small>${Math.round(Math.abs(x - y) * 10) / 10} ${unit} apart</small>` : "";
+  const gap = (x: number | null, y: number | null, unit: string, k = 1) =>
+    x != null && y != null && Math.abs(x - y) * k >= 0.5 ? `<small>${Math.round(Math.abs(x - y) * k * 10) / 10} ${unit} apart</small>` : "";
   const line = (label: string, va: string, vb: string, ma = "", mb = "") =>
     `<div class="mu__row"><span class="mu__v a">${ma}${va}</span><span class="mu__l">${label}</span><span class="mu__v b">${vb}${mb}</span></div>`;
   const edgeRow = (label: string, x: number | null, y: number | null) =>
     line(label, pctText(x), pctText(y), x != null && y != null && x > y ? dot : "", x != null && y != null && y > x ? dot : "");
-  const tapeRow = (label: string, x: number | null, y: number | null, fmt: (v: number) => string, unit: string) => {
-    const both = x != null && y != null && Math.abs(x - y) >= 0.5;
-    return line(`${label}${gap(x, y, unit)}`, x == null ? DASH : fmt(x), y == null ? DASH : fmt(y), both ? (x! > y! ? up : down) : "", both ? (y! > x! ? up : down) : "");
+  const tapeRow = (label: string, x: number | null, y: number | null, fmt: (v: number) => string, unit: string, k = 1) => {
+    const both = x != null && y != null && Math.abs(x - y) * k >= 0.5;
+    return line(`${label}${gap(x, y, unit, k)}`, x == null ? DASH : fmt(x), y == null ? DASH : fmt(y), both ? (x! > y! ? up : down) : "", both ? (y! > x! ? up : down) : "");
   };
-  const cm = (extra: (v: number) => string) => (v: number) => `${Math.round(v)} cm <small>${extra(v)}</small>`;
+  const [lenU, lenK] = gapUnit("len");
+  const [wtU, wtK] = gapUnit("wt");
   const body =
     edgeRow("Win rate", winRate(a), winRate(b)) +
     edgeRow("Finish rate in the UFC", finishRate(a), finishRate(b)) +
     tapeRow("Age", age(a, today), age(b, today), (v) => `${v}`, "years") +
-    tapeRow("Height", a.height_cm, b.height_cm, cm(feetInches), "cm") +
-    tapeRow("Reach", a.reach_cm, b.reach_cm, cm((v) => `${Math.round(v / 2.54)}″`), "cm") +
-    tapeRow("Weight", a.weight_lbs, b.weight_lbs, (v) => `${v} lb`, "lb") +
+    tapeRow("Height", a.height_cm, b.height_cm, fmtHeight, lenU, lenK) +
+    tapeRow("Reach", a.reach_cm, b.reach_cm, fmtReach, lenU, lenK) +
+    tapeRow("Weight", a.weight_lbs, b.weight_lbs, fmtWeight, wtU, wtK) +
     line("Stance", a.stance ? esc(a.stance) : DASH, b.stance ? esc(b.stance) : DASH);
   return mod("duel.matchup", "", body, { cls: "mu", label: "Figures and tale of the tape" });
 }
@@ -228,9 +241,12 @@ export function style(a: Fighter | null, b: Fighter | null): string {
     "duel.style",
     "Style",
     `<div class="chart chart--radar" data-chart="radar" role="img" aria-label="Radar of the eight style percentiles"></div>
-     <div class="spec">${cells}</div>
-     <p class="desc">Large figure: percentile ${popLabel(pop, a ?? b)}, 100 is best (strikes absorbed inverted). Small figure: career value. Point at the radar or a metric to compare it.</p>`,
-    { cls: solo ? "style style--solo" : "style", aside: `${layers}${aside(popLabel(pop, a ?? b))}` },
+     <div class="spec" id="spec-${solo ? "s" : "ab"}" hidden>${cells}
+       <p class="desc">Large figure: percentile ${popLabel(pop, a ?? b, b)}, 100 is best (strikes absorbed inverted). Small figure: career value.</p></div>`,
+    {
+      cls: solo ? "style style--solo" : "style",
+      aside: `${layers}${aside(popLabel(pop, a ?? b, b))}<button type="button" class="icon-btn" data-toggle="spec-${solo ? "s" : "ab"}" aria-expanded="false" aria-controls="spec-${solo ? "s" : "ab"}" title="Show the 8 metrics"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5h12M4 10h12M4 15h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="sr">Show the 8 metrics</span></button>`,
+    },
   );
 }
 

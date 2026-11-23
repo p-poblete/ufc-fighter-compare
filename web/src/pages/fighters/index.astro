@@ -1,0 +1,68 @@
+---
+// Fighters directory: every fighter in index.json, filterable in the page, each linking to its profile.
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import Base from "../../layouts/Base.astro";
+import type { IndexEntry } from "../../lib/data";
+import { normalize } from "../../lib/search";
+
+const index: IndexEntry[] = JSON.parse(await readFile(join(process.cwd(), "public/data/index.json"), "utf-8"));
+const rows = [...index].sort((x, y) => y.last_fight.localeCompare(x.last_fight));
+const divisions = [...new Set(index.map((e) => e.weight_class).filter((d): d is string => !!d))].sort();
+---
+
+<Base title="Fighters · UFC Fighter Compare" description="Every UFC fighter since 2010: search, filter by division and open a profile." glow="none">
+  <main class="wide dir">
+    <header class="dir__head">
+      <h1 class="display">Fighters</h1>
+      <p class="muted"><span id="dir-count">{rows.length.toLocaleString("en-US")}</span> fighters with a UFC fight since 2010, most recently active first.</p>
+    </header>
+    <div class="dir__filters panel" role="search">
+      <label class="sr" for="dir-q">Search fighters</label>
+      <input id="dir-q" class="dir__input" type="search" placeholder="Search by name or nickname" autocomplete="off" spellcheck="false" />
+      <select id="dir-g" aria-label="Gender"><option value="">All fighters</option><option value="M">Men</option><option value="F">Women</option></select>
+      <select id="dir-d" aria-label="Division"><option value="">All divisions</option>{divisions.map((d) => <option value={d}>{d}</option>)}</select>
+      <label class="dir__active"><input type="checkbox" id="dir-a" /> Active in the last 2 years</label>
+    </div>
+    <div class="panel dir__table">
+      <table>
+        <thead><tr><th scope="col">Fighter</th><th scope="col">Division</th><th scope="col" class="num">Record</th><th scope="col" class="num">Last UFC fight</th><th scope="col"><span class="sr">Actions</span></th></tr></thead>
+        <tbody id="dir-body">
+          {rows.map((e) => (
+            <tr data-k={normalize(`${e.name} ${e.nickname ?? ""}`)} data-g={e.gender ?? ""} data-d={e.weight_class ?? ""} data-l={e.last_fight}>
+              <th scope="row"><a href={`/fighters/${e.slug}/`}>{e.name}</a>{e.nickname && <span class="muted"> “{e.nickname}”</span>}</th>
+              <td>{e.weight_class ?? "—"}</td>
+              <td class="num">{e.record}</td>
+              <td class="num">{e.last_fight}</td>
+              <td class="num"><a class="ghost ghost--sm" href={`/?a=${e.slug}`}>Compare</a></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p class="nodata" id="dir-none" hidden>No fighter matches these filters.</p>
+    </div>
+  </main>
+  <script>
+    import { normalize } from "../../lib/search";
+    import { initTools } from "../../lib/tools";
+    initTools();
+    const q = document.getElementById("dir-q") as HTMLInputElement;
+    const g = document.getElementById("dir-g") as HTMLSelectElement;
+    const d = document.getElementById("dir-d") as HTMLSelectElement;
+    const act = document.getElementById("dir-a") as HTMLInputElement;
+    const rows = [...document.querySelectorAll<HTMLTableRowElement>("#dir-body tr")];
+    const cut = new Date(Date.now() - 2 * 365.25 * 864e5).toISOString().slice(0, 10);
+    const apply = () => {
+      const k = normalize(q.value);
+      let n = 0;
+      for (const r of rows) {
+        const show = (!k || r.dataset.k!.includes(k)) && (!g.value || r.dataset.g === g.value) && (!d.value || r.dataset.d === d.value) && (!act.checked || r.dataset.l! >= cut);
+        r.hidden = !show;
+        if (show) n++;
+      }
+      document.getElementById("dir-count")!.textContent = n.toLocaleString("en-US");
+      document.getElementById("dir-none")!.hidden = n > 0;
+    };
+    for (const el of [q, g, d, act]) el.addEventListener("input", apply);
+  </script>
+</Base>
