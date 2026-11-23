@@ -1,7 +1,7 @@
 // Client script: pickers, URL state and re-rendering of the comparison.
 import { loadFighter, loadIndex, type Fighter, type IndexEntry, type Side } from "./data";
 import { esc } from "./format";
-import { card, finding, recordBars, tape, title } from "./render";
+import { centre, fightCharts, ownColumn, title } from "./render";
 import { prepare, search, type Searchable } from "./search";
 import { pairQuery, readPair } from "./url-state";
 
@@ -12,6 +12,8 @@ interface State {
   warnB: string | null;
 }
 
+const RED = "rgb(229 72 77)";
+const BLUE = "rgb(62 140 240)";
 const $ = <T extends HTMLElement>(sel: string, root: ParentNode = document) => root.querySelector<T>(sel)!;
 
 export async function boot(): Promise<void> {
@@ -22,7 +24,6 @@ export async function boot(): Promise<void> {
     index = await loadIndex();
   } catch {
     $("#live").textContent = "Fighter list could not load. Reload the page to try again.";
-    $("#finding").textContent = "Fighter list could not load. Reload the page to try again.";
     return;
   }
   const bySlug = new Map(index.map((e) => [e.slug, e]));
@@ -38,16 +39,29 @@ export async function boot(): Promise<void> {
     try {
       [a, b] = await Promise.all([state.a ? loadFighter(state.a) : null, state.b ? loadFighter(state.b) : null]);
     } catch {
-      if (id === renderId) $("#finding").textContent = "A fighter could not load. Check your connection and try again.";
+      if (id === renderId) $("#live").textContent = "A fighter could not load. Check your connection and try again.";
       return;
     }
     if (id !== renderId) return; // a newer selection won
+    const charts = await import("./charts");
+    if (id !== renderId) return;
+    const mid = $("#centre");
+    const row = $("#fights");
+    charts.disposeCharts(mid);
+    charts.disposeCharts(row);
     $("#title").textContent = title(a, b);
-    $("#finding").textContent = finding(a, b);
-    $("#card-a").innerHTML = card(a, "a", state.warnA);
-    $("#card-b").innerHTML = card(b, "b", state.warnB);
-    $("#tape").innerHTML = tape(a, b);
-    $("#record").innerHTML = recordBars(a, b);
+    $("#col-a").innerHTML = ownColumn(a, "a", state.warnA);
+    $("#col-b").innerHTML = ownColumn(b, "b", state.warnB);
+    mid.innerHTML = centre(a, b);
+    row.innerHTML = fightCharts(a, b);
+    if (a && b) {
+      charts.drawCharts(mid, [{ f: a, color: RED }, { f: b, color: BLUE }]);
+      charts.drawCharts(row, [{ f: a, color: RED }, { f: b, color: BLUE }]);
+    }
+    for (const side of ["a", "b"] as Side[]) {
+      const f = side === "a" ? a : b;
+      $<HTMLInputElement>(`#q-${side}`).placeholder = f ? f.name : "Search a fighter";
+    }
     document.title = `${title(a, b)} · UFC Fighter Compare`;
   }
 
@@ -88,18 +102,19 @@ export async function boot(): Promise<void> {
 }
 
 function setupPicker(side: Side, items: Searchable[], choose: (side: Side, slug: string) => void): void {
-  const root = $(`.fighter[data-side="${side}"]`);
+  const root = $(`.pick[data-side="${side}"]`);
   const input = $<HTMLInputElement>(".combo__input", root);
   const list = $<HTMLUListElement>(".combo__list", root);
-  const gender = $<HTMLSelectElement>(".filter-gender", root);
-  const division = $<HTMLSelectElement>(".filter-division", root);
+  const filter = $<HTMLSelectElement>(".pick__filter", root);
   let results: IndexEntry[] = [];
   let active = -1;
 
   const optionId = (i: number) => `opt-${side}-${i}`;
 
   function open(): void {
-    results = search(items, input.value, { gender: gender.value as "" | "M" | "F", division: division.value });
+    const v = filter.value;
+    const filters = v.startsWith("g:") ? { gender: v.slice(2) as "M" | "F" } : { division: v };
+    results = search(items, input.value, filters);
     active = results.length ? 0 : -1;
     list.innerHTML = results.length
       ? results
@@ -112,7 +127,7 @@ function setupPicker(side: Side, items: Searchable[], choose: (side: Side, slug:
           )
           .join("")
       : `<li class="opt--none" role="presentation">No fighter matches “${esc(input.value)}”${
-          gender.value || division.value ? " with these filters" : ""
+          filter.value ? " in this filter" : ""
         }</li>`;
     list.hidden = false;
     input.setAttribute("aria-expanded", "true");
@@ -172,10 +187,8 @@ function setupPicker(side: Side, items: Searchable[], choose: (side: Side, slug:
     const li = (ev.target as HTMLElement).closest<HTMLLIElement>("[role=option]");
     if (li) pick(Number(li.id.split("-").pop()));
   });
-  for (const select of [gender, division]) {
-    select.addEventListener("change", () => {
-      input.focus();
-      open();
-    });
-  }
+  filter.addEventListener("change", () => {
+    input.focus();
+    open();
+  });
 }

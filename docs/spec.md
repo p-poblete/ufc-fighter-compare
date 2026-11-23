@@ -51,6 +51,21 @@ Incluye:
 - **Actualización semanal automática** con GitHub Actions.
 - **Despliegue** en Cloudflare Pages conectado al repositorio de GitHub.
 
+### 3.1 Cambios v0.3 (2026-11-23, decididos por Piero tras el laboratorio de componentes)
+
+Sustituyen lo que contradigan de la lista anterior.
+
+- **Composición tipo dashboard en tres columnas**: a la izquierda los datos propios del peleador A, a la derecha los de B, pegados a los bordes; en el centro, los gráficos compartidos. Fondo gris carbón casi monocromo con un resplandor rojo desde el borde izquierdo y azul desde el derecho que se difumina hacia el centro. Sin bordes naranjas ni sombras en los paneles. Barra fija arriba con los dos buscadores y el intercambio.
+- **Componentes elegidos** (códigos del laboratorio `/lab-components`):
+  - K2 · tira de cifras con «edge» (tasa de victorias, tasa de finalización en la UFC, duración media sin «edge», ROI).
+  - T2 · tale of the tape con barra de diferencia hacia quien tiene la ventaja y la diferencia escrita.
+  - R1 (centro) · récord en barras en espejo; R3 (columnas propias) · récord grande y forma de las últimas 10 peleas en la UFC.
+  - M2 (columnas propias) · barra de reparto por método de victorias, con derrotas debajo; M3 (centro) · victorias y derrotas por método en espejo. Sustituyen a las donas.
+  - P1 (centro) · radar superpuesto; P3 (centro) · barras en espejo de los 8 percentiles.
+- **Gráficos interactivos traídos de `ufc-fight-analytics/src/app.py`** (ECharts, con detalle al pasar el puntero o tocar): rendimiento por pelea con selector de métrica (golpes significativos por minuto, precisión, derribos, intentos de sumisión), retorno por pelea según el tipo de cuota (forma del punto según el resultado), distribución de la duración de las peleas. El historial de cada uno va en su columna (últimas peleas y desplegable con todas).
+- **Perfil por peleador**: página estática `/fighters/<slug>/` por cada entrada del índice, con los componentes de un solo peleador (ficha, cifras, forma, métodos, radar frente a su división, percentiles, rendimiento, retorno, duración e historial completo) y un enlace para compararlo. Los nombres del comparador enlazan a su perfil.
+- **Fotos**: pendiente de decidir (Wikimedia Commons cubre aproximadamente 1 de cada 4 peleadores); mientras, monograma.
+
 ### Fuera de alcance
 
 - PCA, t-SNE, UMAP, clústeres, correlaciones con cuotas, gráficos globales por división (son del repositorio de análisis `ufc-fight-analytics`).

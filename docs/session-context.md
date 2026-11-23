@@ -24,6 +24,13 @@ Actualizado: 2026-11-23
 - `.venv/bin/pytest` → 88 passed; `ruff check`/`format --check` limpios; `pipeline.build --offline` OK.
 - Web: `tsc --noEmit` y `npm run build` OK; `npm ci` limpio desde el lockfile OK. Inspector del skill (`--app`) 0 FAIL a 1440/768/390 (WARN `numeric-align` defendido: el tale of the tape va en espejo). Prueba e2e con Chromium (script temporal, no versionado): CA3 («jose aldo»/«JOSÉ ALDO»), CA4 (URL reabierta + swap, sin errores de consola), CA5 (4 casos) y 360 px sin scroll horizontal → 10/10.
 
+## Dashboard v0.3 (2026-11-23, tarde)
+- Rediseño decidido por Piero (spec §3.1): gris carbón casi monocromo, resplandor rojo desde la izquierda y azul desde la derecha; columnas propias pegadas a los bordes (ficha, R3, M2, apuestas por tipo de cuota, historial), centro compartido (K2, T2, estilo P1 radar + P3, R1 + M3) y fila completa con los gráficos de app.py: rendimiento por pelea con selector, retorno por pelea y duración (ECharts 6.1, carga diferida, 182 KB comprimidos).
+- Perfil estático por peleador en `/fighters/<slug>/` (2.304 páginas; build en ~10 s).
+- Laboratorios sin versionar: `web/src/pages/lab*.astro` y `web/public/lab/` (fotos de Commons para la prueba). Borrar al cerrar el diseño.
+- Pendiente de decidir: fotos (Wikidata/Commons ~25 % de cobertura; tratamiento en escala de grises).
+- e2e (script temporal): CA3, CA4, swap, CA5 y 360 px → 10/10.
+
 ## Siguiente paso
 1. Piero: `git push` y conectar el repo en Cloudflare Pages (raíz `web`, build `npm ci && npm run build`, salida `dist`, Node 24 por `.node-version`). Con eso se cierra el corte 2.
 2. Corte 3: radar de percentiles (ECharts), arquetipo y donas de victoria/derrota.

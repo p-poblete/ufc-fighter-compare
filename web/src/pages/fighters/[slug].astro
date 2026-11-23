@@ -1,0 +1,52 @@
+---
+// One static profile per fighter in index.json.
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import Base from "../../layouts/Base.astro";
+import type { Fighter, IndexEntry } from "../../lib/data";
+import { DASH } from "../../lib/format";
+import { betting, chartPanels, finishRate, form, history, identity, methodMix, styleBlock, winRate } from "../../lib/render";
+
+export async function getStaticPaths() {
+  const index: IndexEntry[] = JSON.parse(await readFile(join(process.cwd(), "public/data/index.json"), "utf-8"));
+  return index.map((e) => ({ params: { slug: e.slug } }));
+}
+
+const { slug } = Astro.params;
+const f: Fighter = JSON.parse(await readFile(join(process.cwd(), "public/data/fighters", `${slug}.json`), "utf-8"));
+const pct = (x: number | null) => (x == null ? DASH : `${Math.round(x)}%`);
+const roi = f.odds.total.roi_pct;
+const kpis = [
+  { l: "Win rate", v: pct(winRate(f)) },
+  { l: "Finish rate in the UFC", v: pct(finishRate(f)) },
+  { l: "Average fight", v: f.duration.avg_minutes == null ? DASH : `${f.duration.avg_minutes.toFixed(1)} min` },
+  { l: "Betting ROI", v: roi == null ? DASH : `${roi > 0 ? "+" : roi < 0 ? "−" : ""}${Math.abs(Math.round(roi))}%` },
+];
+const desc = `${f.name}: ${f.record.wins}-${f.record.losses}-${f.record.draws}${f.weight_class ? `, ${f.weight_class}` : ""}. Style percentiles, methods, betting record and every UFC fight since 2010.`;
+---
+
+<Base title={`${f.name} · UFC Fighter Compare`} description={desc} glow="solo">
+  <nav slot="bar" class="bar bar--solo" aria-label="Profile actions">
+    <a class="cta" href={`/?a=${f.slug}`}>Compare {f.name} with another fighter</a>
+  </nav>
+
+  <main class="wide profile" id="profile" data-slug={f.slug}>
+    <h1 class="sr">{f.name}</h1>
+    <aside class="col col--solo"><Fragment set:html={identity(f, "solo", null, false) + form(f) + methodMix(f, "solo") + betting(f)} /></aside>
+    <div class="col col--mid">
+      <section class="panel kpis" aria-label="Headline figures">
+        {kpis.map((k) => <div><p class="kpis__v">{k.v}</p><p class="kpis__l">{k.l}</p></div>)}
+      </section>
+      <Fragment set:html={styleBlock(f, null) + chartPanels(true) + history(f, f.fights.length)} />
+    </div>
+  </main>
+
+  <script>
+    import { loadFighter } from "../../lib/data";
+    const root = document.getElementById("profile")!;
+    loadFighter(root.dataset.slug!).then(async (f) => {
+      const { drawCharts } = await import("../../lib/charts");
+      drawCharts(root.querySelector(".col--mid")!, [{ f, color: "rgb(236 237 240)" }]);
+    });
+  </script>
+</Base>

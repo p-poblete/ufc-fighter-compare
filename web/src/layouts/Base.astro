@@ -1,0 +1,62 @@
+---
+import "@fontsource-variable/inter";
+import "../styles/app.css";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import { repoUrl } from "../config";
+import type { Meta } from "../lib/data";
+import { dateLong } from "../lib/format";
+
+interface Props {
+  title: string;
+  description: string;
+  glow?: "pair" | "solo";
+}
+const { title, description, glow = "pair" } = Astro.props;
+const meta: Meta = JSON.parse(await readFile(join(process.cwd(), "public/data/meta.json"), "utf-8"));
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0b0c0e" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <slot name="head" />
+  </head>
+  <body data-glow={glow}>
+    <header class="topbar">
+      <div class="wide topbar__in">
+        <a class="brand" href="/" aria-label="Fighter Compare, home">
+          <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M9 7v18" stroke="#e5484d" stroke-width="4" /><path d="M23 7v18" stroke="#3e8cf0" stroke-width="4" />
+          </svg>
+          <span>Fighter Compare</span>
+        </a>
+        <slot name="bar" />
+        <a class="topbar__link" href={repoUrl}>Source</a>
+      </div>
+    </header>
+
+    <slot />
+
+    <footer class="wide footer">
+      <p>
+        Data through <time datetime={meta.data_through}>{dateLong(meta.data_through)}</time> ·
+        {meta.fights.toLocaleString("en-US")} UFC fights since 2010 · {meta.fighters.toLocaleString("en-US")} fighters.
+      </p>
+      <p>
+        Sources:{" "}
+        {meta.sources.map((s, i) => (
+          <>
+            <a href={s.url}>{s.name}</a> ({s.license}){i < meta.sources.length - 1 ? "; " : "."}
+          </>
+        ))}{" "}
+        Odds fallback by Matt Dabbert, CC BY 4.0. Code under MIT on <a href={repoUrl}>GitHub</a>. Not affiliated with the UFC.
+      </p>
+    </footer>
+  </body>
+</html>
