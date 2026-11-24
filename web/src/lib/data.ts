@@ -37,9 +37,12 @@ export interface Fighter {
   archetype: string | null;
   specialties: string[];
   discipline: string | null;
+  /** UFC title fights won since 2010 (undisputed or interim, as the source marks them); null if none. */
+  titles: { wins: number; divisions: string[]; last: string } | null;
   /** Wikimedia Commons thumbnail with its credit; null for about three in four fighters (monogram). */
   photo: Photo | null;
-  record: { wins: number; losses: number; draws: number };
+  /** Null when the source has no professional record: use careerRecord() in render.ts. */
+  record: { wins: number | null; losses: number | null; draws: number | null };
   ufc_record: { W: number; L: number; D: number; NC: number };
   ufc_fights: number;
   last_fight: string;
@@ -92,6 +95,7 @@ export interface Fight {
   odds: number | null;
   opp_odds: number | null;
   implied_prob_fair: number | null;
+  title: boolean;
   stats: { kd: number; sig_landed: number; sig_attempted: number; td: number; td_attempted: number; sub_att: number } | null;
 }
 

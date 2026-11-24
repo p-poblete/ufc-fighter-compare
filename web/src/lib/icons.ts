@@ -28,5 +28,8 @@ export const SPECIALTIES: Record<string, Badge> = {
   goes_distance: { label: "Goes the distance", rule: "60% or more of fights end in a decision (5 or more)", path: "M12 21.5a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 9.5v4l2.5 2M10 2.5h4M18.5 6l1.3-1.3" },
 };
 
+/** Championship belt: centre plate, side plates and strap. */
+export const BELT = "M2.5 9.5h4M17.5 9.5h4M2.5 14.5h4M17.5 14.5h4M6.5 7h11v10h-11zM12 14.6a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2z";
+
 export const svgIcon = (path: string, cls = "ico") =>
   `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true"><path d="${path}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;

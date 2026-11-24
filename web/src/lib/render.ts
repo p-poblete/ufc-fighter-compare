@@ -3,7 +3,7 @@
 import type { Fight, Fighter, Method, Metric, OddsType } from "./data";
 import { DASH, ageFrom, dateLong, esc, feetInches, initials, lastName } from "./format";
 import { settings } from "./settings";
-import { ARCHETYPES, SPECIALTIES, svgIcon } from "./icons";
+import { ARCHETYPES, BELT, SPECIALTIES, svgIcon } from "./icons";
 
 export type Tone = "a" | "b" | "solo";
 
@@ -31,8 +31,22 @@ const RESULT: Record<Fight["result"], string> = { W: "Win", L: "Loss", D: "Draw"
 export function age(f: Fighter, today?: Date): number | null {
   return f.dob ? ageFrom(f.dob, today) : f.age;
 }
-const totalFights = (f: Fighter) => f.record.wins + f.record.losses + f.record.draws;
-export const winRate = (f: Fighter) => (totalFights(f) ? (f.record.wins / totalFights(f)) * 100 : null);
+/** Professional record; when the source has none (about one in nine fighters), the UFC record, as index.json does. */
+export function careerRecord(f: Fighter): { wins: number; losses: number; draws: number } {
+  const r = f.record;
+  return r.wins == null || r.losses == null || r.draws == null
+    ? { wins: f.ufc_record.W, losses: f.ufc_record.L, draws: f.ufc_record.D }
+    : { wins: r.wins, losses: r.losses, draws: r.draws };
+}
+export const recordText = (f: Fighter) => {
+  const r = careerRecord(f);
+  return `${r.wins}-${r.losses}-${r.draws}`;
+};
+const totalFights = (f: Fighter) => {
+  const r = careerRecord(f);
+  return r.wins + r.losses + r.draws;
+};
+export const winRate = (f: Fighter) => (totalFights(f) ? (careerRecord(f).wins / totalFights(f)) * 100 : null);
 export const finishRate = (f: Fighter) =>
   f.ufc_record.W ? ((f.wins_by["KO/TKO"] + f.wins_by.SUB) / f.ufc_record.W) * 100 : null;
 export const pctText = (x: number | null) => (x == null ? DASH : `${Math.round(x)}%`);
@@ -61,8 +75,6 @@ export function population(a: Fighter | null, b: Fighter | null = null): "divisi
   }
   return (a ?? b)?.percentiles?.division ? "division" : "global";
 }
-export const popLabel = (pop: "division" | "global", f: Fighter | null, g: Fighter | null = null) =>
-  pop === "global" ? "vs all fighters" : g && f && g.weight_class !== f.weight_class ? "vs each one's division" : f?.weight_class ? `vs ${f.weight_class}` : "vs all fighters";
 
 // ---------- units ----------
 const imperial = () => settings().units === "imperial";
@@ -87,21 +99,29 @@ function mod(name: string, heading: string, body: string, opts: { aside?: string
   return `<section ${attrs}><header class="panel__head"><h2>${heading}</h2>${opts.aside ?? ""}</header>${body}</section>`;
 }
 const noData = (why: string) => `<p class="nodata">No data · ${esc(why)}</p>`;
-const aside = (t: string) => `<span class="panel__aside">${t}</span>`;
 /** Archetype and specialties as recognisable icons; hover or focus shows the label and its rule. */
-const badge = (cls: string, label: string, rule: string, path: string) =>
-  `<span class="badge ${cls}" tabindex="0" role="img" aria-label="${esc(`${label}: ${rule}`)}">${svgIcon(path)}<span class="badge__tip"><b>${esc(label)}</b>${esc(rule)}</span></span>`;
+const badge = (cls: string, label: string, rule: string, face: string) =>
+  `<span class="badge ${cls}" tabindex="0" role="img" aria-label="${esc(`${label}: ${rule}`)}">${face}<span class="badge__tip"><b>${esc(label)}</b>${esc(rule)}</span></span>`;
 export const archetypeChip = (x: string | null) =>
-  x && ARCHETYPES[x] ? badge(`chip chip--${x.toLowerCase()}`, x, ARCHETYPES[x].rule, ARCHETYPES[x].path) : "";
+  x && ARCHETYPES[x] ? badge(`chip chip--label chip--${x.toLowerCase()}`, x, ARCHETYPES[x].rule, `${svgIcon(ARCHETYPES[x].path)}<span>${esc(x)}</span>`) : "";
+/** Specialty icons shown before the rest fold into a "+N" badge that lists them. */
+const SHOWN_SPECIALTIES = 3;
 export function badges(f: Fighter): string {
-  const spec = (f.specialties ?? [])
-    .filter((k) => SPECIALTIES[k])
-    .map((k) => badge("spec-badge", SPECIALTIES[k].label, SPECIALTIES[k].rule, SPECIALTIES[k].path))
+  const keys = (f.specialties ?? []).filter((k) => SPECIALTIES[k]);
+  const spec = keys
+    .slice(0, SHOWN_SPECIALTIES)
+    .map((k) => badge("spec-badge", SPECIALTIES[k].label, SPECIALTIES[k].rule, svgIcon(SPECIALTIES[k].path)))
     .join("");
-  const disc = f.discipline
-    ? `<span class="disc" tabindex="0" title="Listed style on UFC.com (via TidyTuesday/{fightr})">${esc(f.discipline)}</span>`
+  const rest = keys.slice(SHOWN_SPECIALTIES);
+  const more = rest.length
+    ? `<span class="badge spec-badge spec-badge--more" tabindex="0" role="img" aria-label="${esc(`More specialties: ${rest.map((k) => SPECIALTIES[k].label).join(", ")}`)}">+${rest.length}<span class="badge__tip">${rest
+        .map((k) => `<b>${esc(SPECIALTIES[k].label)}</b><span class="tip__rule">${esc(SPECIALTIES[k].rule)}</span>`)
+        .join("")}</span></span>`
     : "";
-  return `<div class="badges">${archetypeChip(f.archetype)}${disc}${spec}</div>`;
+  const disc = f.discipline
+    ? badge("disc", f.discipline, "Listed style on UFC.com (via TidyTuesday/{fightr})", esc(f.discipline))
+    : "";
+  return `<div class="badges">${archetypeChip(f.archetype)}${disc}${spec}${more}</div>`;
 }
 
 // ---------- corner.* (one fighter, against their edge) ----------
@@ -113,6 +133,14 @@ function portrait(f: Fighter): string {
   const lic = p.license_url ? `<a href="${esc(p.license_url)}" rel="license noopener" target="_blank">${esc(p.license)}</a>` : esc(p.license);
   return `<div class="portrait portrait--photo"><img src="${esc(p.url)}" width="${p.width}" height="${p.height}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"></div>
     <span class="badge credit" tabindex="0" role="note" aria-label="Photo credit: ${esc(p.author ?? "unknown author")}, ${esc(p.license)}">©<span class="badge__tip"><b>Photo</b>${esc(p.author ?? "Unknown author")} · ${lic} · <a href="${esc(p.page)}" rel="noopener" target="_blank">Wikimedia Commons</a></span></span>`;
+}
+
+/** Champion mark at the portrait's top-left corner: title fights won and their divisions on hover/focus. */
+function championMark(f: Fighter): string {
+  const t = f.titles;
+  if (!t) return "";
+  const rule = `${t.wins} UFC title ${t.wins === 1 ? "fight" : "fights"} won since 2010${t.divisions.length ? ` · ${t.divisions.join(", ")}` : ""}`;
+  return badge("champ", "UFC champion", rule, svgIcon(BELT));
 }
 
 export function identity(f: Fighter | null, tone: Tone, warning: string | null = null, withFacts = false): string {
@@ -140,7 +168,7 @@ export function identity(f: Fighter | null, tone: Tone, warning: string | null =
   return mod(
     "corner.identity",
     "",
-    `${portrait(f)}
+    `${portrait(f)}${championMark(f)}
      <div class="id__text">
        <h2 class="id__name">${name}</h2>
        ${sub ? `<p class="id__sub">${sub}</p>` : ""}
@@ -157,10 +185,11 @@ export function identity(f: Fighter | null, tone: Tone, warning: string | null =
 export function record(f: Fighter, tone: Tone): string {
   const u = f.ufc_record;
   const st = streak(f);
+  const career = careerRecord(f);
   const outside = {
-    W: Math.max(0, f.record.wins - u.W),
-    L: Math.max(0, f.record.losses - u.L),
-    D: Math.max(0, f.record.draws - u.D),
+    W: Math.max(0, career.wins - u.W),
+    L: Math.max(0, career.losses - u.L),
+    D: Math.max(0, career.draws - u.D),
   };
   const plain = (r: "W" | "L" | "D", n: number) =>
     Array.from({ length: n }, () => `<li><span class="sq sq--${r}" title="${RESULT[r]} outside the UFC or before 2010"></span></li>`).join("");
@@ -176,7 +205,7 @@ export function record(f: Fighter, tone: Tone): string {
     "corner.record",
     "",
     `<div class="rec__top">
-       <p class="display">${f.record.wins}-${f.record.losses}-${f.record.draws}</p>
+       <p class="display">${recordText(f)}</p>
        ${st ? `<p class="streak"><b class="relief r-${st[0]}">${st}</b><span>${st[0] === "W" ? "win" : "losing"} streak</span></p>` : ""}
      </div>
      <ol class="squares" aria-label="Professional fights: earlier career, then UFC fights since 2010 from oldest to newest">${plain("W", outside.W)}${plain("L", outside.L)}${plain("D", outside.D)}${ufc}</ol>`,
@@ -218,30 +247,31 @@ export function ownColumn(f: Fighter | null, tone: Tone, warning: string | null 
 // ---------- duel.* (both fighters, centre) ----------
 type Row = { label: string; a: string; b: string; ea?: boolean; eb?: boolean };
 
-/** duel.matchup: who arrives better (gold dot on the leader), then the tape with up/down arrows and the gap written. */
+/** duel.matchup: win and finish rates, then the tape with up/down arrows and the gap written.
+ *  Green/red where higher is better (rates, height, reach); grey where it is neither (age, weight). */
 export function matchup(a: Fighter, b: Fighter, today?: Date): string {
-  const dot = '<i class="edge-dot" role="img" aria-label="Edge" title="Edge"></i>';
-  const up = '<svg class="arrow arrow--up" viewBox="0 0 12 12" role="img" aria-label="higher"><path d="M6 2l4.5 7h-9z"/></svg>';
-  const down = '<svg class="arrow arrow--down" viewBox="0 0 12 12" role="img" aria-label="lower"><path d="M6 10L1.5 3h9z"/></svg>';
+  const arrow = (dir: "up" | "down", neutral: boolean) =>
+    `<svg class="arrow arrow--${neutral ? "neutral" : dir}" viewBox="0 0 12 12" role="img" aria-label="${dir === "up" ? "higher" : "lower"}"><path d="${dir === "up" ? "M6 2l4.5 7h-9z" : "M6 10L1.5 3h9z"}"/></svg>`;
   const gap = (x: number | null, y: number | null, unit: string, k = 1) =>
     x != null && y != null && Math.abs(x - y) * k >= 0.5 ? `<small>${Math.round(Math.abs(x - y) * k * 10) / 10} ${unit} apart</small>` : "";
   const line = (label: string, va: string, vb: string, ma = "", mb = "") =>
     `<div class="mu__row"><span class="mu__v a">${ma}${va}</span><span class="mu__l">${label}</span><span class="mu__v b">${vb}${mb}</span></div>`;
-  const edgeRow = (label: string, x: number | null, y: number | null) =>
-    line(label, pctText(x), pctText(y), x != null && y != null && x > y ? dot : "", x != null && y != null && y > x ? dot : "");
-  const tapeRow = (label: string, x: number | null, y: number | null, fmt: (v: number) => string, unit: string, k = 1) => {
-    const both = x != null && y != null && Math.abs(x - y) * k >= 0.5;
-    return line(`${label}${gap(x, y, unit, k)}`, x == null ? DASH : fmt(x), y == null ? DASH : fmt(y), both ? (x! > y! ? up : down) : "", both ? (y! > x! ? up : down) : "");
-  };
+  // Arrows only when the figures shown differ (97% vs 97% gets none).
+  const marks = (x: number | null, y: number | null, differ: boolean, neutral: boolean): [string, string] =>
+    x != null && y != null && differ ? [arrow(x > y ? "up" : "down", neutral), arrow(y > x ? "up" : "down", neutral)] : ["", ""];
+  const rateRow = (label: string, x: number | null, y: number | null) =>
+    line(label, pctText(x), pctText(y), ...marks(x, y, pctText(x) !== pctText(y), false));
+  const tapeRow = (label: string, x: number | null, y: number | null, fmt: (v: number) => string, unit: string, k = 1, neutral = false) =>
+    line(`${label}${gap(x, y, unit, k)}`, x == null ? DASH : fmt(x), y == null ? DASH : fmt(y), ...marks(x, y, x != null && y != null && Math.abs(x - y) * k >= 0.5, neutral));
   const [lenU, lenK] = gapUnit("len");
   const [wtU, wtK] = gapUnit("wt");
   const body =
-    edgeRow("Win rate", winRate(a), winRate(b)) +
-    edgeRow("Finish rate in the UFC", finishRate(a), finishRate(b)) +
-    tapeRow("Age", age(a, today), age(b, today), (v) => `${v}`, "years") +
+    rateRow("Win rate", winRate(a), winRate(b)) +
+    rateRow("Finish rate in the UFC", finishRate(a), finishRate(b)) +
+    tapeRow("Age", age(a, today), age(b, today), (v) => `${v}`, "years", 1, true) +
     tapeRow("Height", a.height_cm, b.height_cm, fmtHeight, lenU, lenK) +
     tapeRow("Reach", a.reach_cm, b.reach_cm, fmtReach, lenU, lenK) +
-    tapeRow("Weight", a.weight_lbs, b.weight_lbs, fmtWeight, wtU, wtK) +
+    tapeRow("Weight", a.weight_lbs, b.weight_lbs, fmtWeight, wtU, wtK, true) +
     line("Stance", a.stance ? esc(a.stance) : DASH, b.stance ? esc(b.stance) : DASH);
   return mod("duel.matchup", "", body, { cls: "mu", label: "Figures and tale of the tape" });
 }
@@ -262,22 +292,29 @@ export function style(a: Fighter | null, b: Fighter | null): string {
     p && f?.career
       ? `<span class="spec__v ${cls}"><b>${Math.round(p[m])}</b><small>${RAW[m](f.career[m])}</small></span>`
       : `<span class="spec__v ${cls}"><b>${DASH}</b></span>`;
-  const cells = METRICS.map(
-    ([m, l]) => `<div class="spec__cell"><p class="spec__l">${l}</p><div class="spec__vals">${val(a, pa, m, solo ? "s" : "a")}${solo ? "" : val(b, pb, m, "b")}</div></div>`,
+  // One block, one row per metric: A | metric | B (mirrored like the tape); solo: metric | value.
+  const cells = METRICS.map(([m, l]) =>
+    solo
+      ? `<div class="spec__cell spec__row spec__row--solo"><p class="spec__l">${l}</p>${val(a, pa, m, "s")}</div>`
+      : `<div class="spec__cell spec__row">${val(a, pa, m, "a")}<p class="spec__l">${l}</p>${val(b, pb, m, "b")}</div>`,
   ).join("");
+  const missing = !solo && a && b ? (!pa ? a : !pb ? b : null) : null;
+  const layerBtn = (k: "a" | "b", f: Fighter, p: unknown) =>
+    `<button type="button" data-layer="${k}" aria-pressed="false"${p ? "" : " disabled"}>${esc(lastName(f.name))}</button>`;
   const layers =
     !solo && a && b
-      ? `<div class="seg" role="group" aria-label="Radar layer"><button type="button" data-layer="both" aria-pressed="true">Both</button><button type="button" data-layer="a" aria-pressed="false">${esc(lastName(a.name))}</button><button type="button" data-layer="b" aria-pressed="false">${esc(lastName(b.name))}</button></div>`
+      ? `<div class="seg" role="group" aria-label="Radar layer"><button type="button" data-layer="both" aria-pressed="true">Both</button>${layerBtn("a", a, pa)}${layerBtn("b", b, pb)}</div>`
       : "";
+  const gapNote = missing ? `<p class="nodata style__missing" data-tone="${missing === a ? "a" : "b"}">No data · ${esc(lastName(missing.name))}: fewer than 3 UFC fights or missing career stats</p>` : "";
   return mod(
     "duel.style",
     "",
     `<div class="style__body"><div class="chart chart--radar" data-chart="radar" role="img" aria-label="Radar of the eight style percentiles"></div>
-     <div class="spec" id="spec-${solo ? "s" : "ab"}" hidden>${cells}
-       <p class="desc">Large figure: percentile ${popLabel(pop, a ?? b, b)}, 100 is best (strikes absorbed inverted). Small figure: career value.</p></div></div>`,
+     <div class="spec spec--rows" id="spec-${solo ? "s" : "ab"}" hidden><div class="spec__list">${cells}</div></div></div>`,
     {
       cls: solo ? "style style--solo" : "style",
-      aside: `${layers}${aside(popLabel(pop, a ?? b, b))}<button type="button" class="icon-btn" data-toggle="spec-${solo ? "s" : "ab"}" aria-expanded="false" aria-controls="spec-${solo ? "s" : "ab"}" title="Show the 8 metrics"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5h12M4 10h12M4 15h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="sr">Show the 8 metrics</span></button>`,
+      // Layer choice on the left, the metric sheet toggle on the right.
+      aside: `${layers}${gapNote}<button type="button" class="icon-btn" data-toggle="spec-${solo ? "s" : "ab"}" aria-expanded="false" aria-controls="spec-${solo ? "s" : "ab"}" title="Show the 8 metrics"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5h12M4 10h12M4 15h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="sr">Show the 8 metrics</span></button>`,
     },
   );
 }

@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import Base from "../../layouts/Base.astro";
 import type { Fighter, IndexEntry } from "../../lib/data";
-import { finishRate, finishes, fightRows, history, identity, pctText, record, style, winRate } from "../../lib/render";
+import { finishRate, finishes, recordText, fightRows, history, identity, pctText, record, style, winRate } from "../../lib/render";
 
 export async function getStaticPaths() {
   const index: IndexEntry[] = JSON.parse(await readFile(join(process.cwd(), "public/data/index.json"), "utf-8"));
@@ -13,7 +13,7 @@ export async function getStaticPaths() {
 
 const { slug } = Astro.params;
 const f: Fighter = JSON.parse(await readFile(join(process.cwd(), "public/data/fighters", `${slug}.json`), "utf-8"));
-const desc = `${f.name}: ${f.record.wins}-${f.record.losses}-${f.record.draws}${f.weight_class ? `, ${f.weight_class}` : ""}. Style, finishes, betting returns and every UFC fight since 2010.`;
+const desc = `${f.name}: ${recordText(f)}${f.weight_class ? `, ${f.weight_class}` : ""}. Style, finishes, betting returns and every UFC fight since 2010.`;
 ---
 
 <Base title={`${f.name} · UFC Fighter Compare`} description={desc} glow="solo">

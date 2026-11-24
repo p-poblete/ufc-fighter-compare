@@ -74,6 +74,7 @@ export async function boot(): Promise<void> {
     const mods = (side: Side) => [...$(`#col-${side}`).querySelectorAll<HTMLElement>(":scope > [data-module]")];
     const A = mods("a"), B = mods("b");
     [...A, ...B].forEach((m) => (m.style.minHeight = ""));
+    alignRadar();
     if (matchMedia("(max-width: 760px)").matches) return; // stacked on phones: nothing to mirror
     A.forEach((m, i) => {
       const n = B[i];
@@ -83,6 +84,26 @@ export async function boot(): Promise<void> {
     });
   }
   addEventListener("resize", mirror);
+
+  /** Three columns: the tape grows so the radar block starts level with the records. */
+  function alignRadar(): void {
+    const mu = document.querySelector<HTMLElement>('#centre [data-module="duel.matchup"]');
+    const st = document.querySelector<HTMLElement>('#centre [data-module="duel.style"]');
+    const rec = document.querySelector<HTMLElement>('#col-a [data-module="corner.record"], #col-b [data-module="corner.record"]');
+    if (!mu) return;
+    mu.style.minHeight = "";
+    mu.style.removeProperty("--mu-pad");
+    if (!st || !rec || matchMedia("(max-width: 1180px)").matches) return;
+    const delta = rec.getBoundingClientRect().top - st.getBoundingClientRect().top;
+    if (delta > 0) mu.style.minHeight = `${mu.getBoundingClientRect().height + delta}px`;
+    else if (delta < 0) {
+      // Tape taller than the portrait (narrow columns): tighten its rows, then fill any rounding left over.
+      const rows = mu.querySelectorAll(".mu__row").length;
+      mu.style.setProperty("--mu-pad", `${Math.max(2, 9 + delta / (2 * rows))}px`);
+      const rest = rec.getBoundingClientRect().top - st.getBoundingClientRect().top;
+      if (rest > 0) mu.style.minHeight = `${mu.getBoundingClientRect().height + rest}px`;
+    }
+  }
 
   initTools({
     pick: (side, slug) => choose(side, slug),
@@ -124,6 +145,7 @@ export async function boot(): Promise<void> {
   });
 
   void render();
+  void document.fonts.ready.then(mirror); // display type changes the heights once it loads
 }
 
 function setupPicker(side: Side, items: Searchable[], choose: (side: Side, slug: string) => void): void {

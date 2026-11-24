@@ -137,6 +137,7 @@ function radar(el: HTMLElement, entries: Entry[], layer: string) {
         },
       ],
     }));
+  const radius = Math.max(60, Math.min(el.clientHeight / 2 - 34, el.clientWidth / 2 - (el.clientWidth < 480 ? 96 : 118)));
   const chart = instance(el);
   chart.setOption(
     {
@@ -144,10 +145,12 @@ function radar(el: HTMLElement, entries: Entry[], layer: string) {
       radar: {
         indicator: METRICS.map(([m]) => ({ name: SHORT[m], max: 100 })),
         // Narrow (metric sheet open, phones): a smaller radar leaves room for the axis names.
-        radius: el.clientWidth < 480 ? "46%" : "70%",
-        center: ["50%", "52%"],
+        // Radius in pixels: as large as the block allows, leaving room for the axis names around it.
+        radius,
+        center: ["50%", "50%"],
         splitNumber: 4,
-        axisName: { ...font, fontSize: el.clientWidth < 480 ? 11 : 12, color: MUTED },
+        axisNameGap: 8,
+        axisName: { ...font, fontSize: el.clientWidth < 480 ? 11 : 12, color: MUTED, rich: { on: { color: INK, fontWeight: 700 } } },
         splitLine: { lineStyle: { color: LINE } },
         splitArea: { show: false },
         axisLine: { lineStyle: { color: LINE } },
@@ -163,9 +166,36 @@ function radar(el: HTMLElement, entries: Entry[], layer: string) {
   const tip = panel.querySelector<HTMLElement>(".radar__tip") ?? Object.assign(document.createElement("div"), { className: "radar__tip" });
   el.style.position = "relative";
   el.append(tip);
+  // With the metric sheet open the sheet is the read-out: the radar lights the axis name and its vertices instead of a tip.
+  const sheetOpen = () => !!panel.querySelector(".spec:not([hidden])");
+  el.querySelectorAll(".radar__vertex").forEach((d) => d.remove()); // from the previous draw
+  const marks = shown
+    .filter((e) => e.f.percentiles?.[pop])
+    .map((e) => {
+      const dot = Object.assign(document.createElement("i"), { className: "radar__vertex" });
+      dot.style.setProperty("--c", e.color);
+      dot.hidden = true;
+      el.append(dot);
+      return { e, dot };
+    });
+  let lit: number | null = null;
+  const lightAxis = (i: number | null) => {
+    if (i === lit) return;
+    lit = i;
+    chart.setOption({ radar: { axisName: { formatter: (name: string) => (i != null && name === SHORT[METRICS[i][0]] ? `{on|${name}}` : name) } } });
+    const a = ((i ?? 0) * Math.PI) / 4;
+    for (const { e, dot } of marks) {
+      dot.hidden = i == null;
+      if (i == null) continue;
+      const r = (radius * e.f.percentiles![pop]![METRICS[i][0]]) / 100;
+      dot.style.left = `${el.clientWidth / 2 - Math.sin(a) * r}px`;
+      dot.style.top = `${el.clientHeight / 2 - Math.cos(a) * r}px`;
+    }
+  };
   const setActive = (i: number | null) => {
     cells.forEach((c, j) => c.classList.toggle("is-active", j === i));
-    if (i == null) {
+    lightAxis(sheetOpen() ? i : null);
+    if (i == null || sheetOpen()) {
       tip.hidden = true;
       return;
     }
@@ -178,9 +208,9 @@ function radar(el: HTMLElement, entries: Entry[], layer: string) {
   el.onpointermove = (ev) => {
     const r = el.getBoundingClientRect();
     const dx = ev.clientX - (r.left + r.width / 2);
-    const dy = ev.clientY - (r.top + r.height * 0.52);
+    const dy = ev.clientY - (r.top + r.height / 2);
     const dist = Math.hypot(dx, dy);
-    if (dist > Math.min(r.width, r.height) * 0.5) return setActive(null);
+    if (dist > radius + 30) return setActive(null); // the web plus a margin for the axis names
     const ang = (Math.atan2(dx, -dy) + 2 * Math.PI) % (2 * Math.PI); // 0 at the top, clockwise
     const i = (8 - Math.round(ang / (Math.PI / 4))) % 8; // ECharts lays indicators counter-clockwise
     setActive(i);
@@ -189,7 +219,13 @@ function radar(el: HTMLElement, entries: Entry[], layer: string) {
   };
   el.onpointerleave = () => setActive(null);
   cells.forEach((c, j) => {
-    c.onpointerenter = () => setActive(j);
+    c.onpointerenter = () => {
+      setActive(j);
+      // From the sheet: the tip sits by that axis's tip on the web (indicators run counter-clockwise from the top).
+      const a = (j * Math.PI) / 4;
+      tip.style.left = `${el.clientWidth / 2 - Math.sin(a) * radius + 10}px`;
+      tip.style.top = `${el.clientHeight / 2 - Math.cos(a) * radius + 10}px`;
+    };
     c.onpointerleave = () => setActive(null);
   });
   setActive(null);
@@ -438,10 +474,12 @@ export function drawCharts(root: ParentNode, entries: Entry[], tones: string[] =
     if (kind === "perf") wire(panel, "data-metric", draw);
     if (kind === "radar") {
       wire(panel, "data-layer", draw);
-      let w = el.clientWidth;
+      // The radius is set in pixels, so redraw when the block changes size (alignRadar stretches it).
+      let w = el.clientWidth, h = el.clientHeight;
       new ResizeObserver(() => {
-        if (Math.abs(el.clientWidth - w) > 40) {
+        if (Math.abs(el.clientWidth - w) > 8 || Math.abs(el.clientHeight - h) > 8) {
           w = el.clientWidth;
+          h = el.clientHeight;
           draw();
         }
       }).observe(el);

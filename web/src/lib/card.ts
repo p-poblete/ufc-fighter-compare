@@ -1,7 +1,7 @@
 // Export image: a 1200×630 share card drawn on a canvas (names, records, rates, tape and the radar).
 import * as echarts from "echarts/core";
 import type { Fighter } from "./data";
-import { age, finishRate, winRate } from "./render";
+import { age, finishRate, recordText, winRate } from "./render";
 
 const W = 1200, H = 630;
 const RED = "#e5484d", BLUE = "#3e8cf0";
@@ -51,7 +51,7 @@ export async function exportCard(a: Fighter, b: Fighter, centre: HTMLElement): P
     g.font = display(54);
     g.fillText(f.name, x, 128);
     g.font = display(84);
-    g.fillText(`${f.record.wins}-${f.record.losses}-${f.record.draws}`, x, 222);
+    g.fillText(recordText(f), x, 222);
     g.font = ui(18);
     g.fillStyle = "#a6a9b1";
     const facts = [age(f) != null ? `${age(f)} yrs` : null, f.height_cm ? `${Math.round(f.height_cm)} cm` : null, f.reach_cm ? `${Math.round(f.reach_cm)} cm reach` : null].filter(Boolean).join(" · ");

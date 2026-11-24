@@ -534,6 +534,26 @@ body[data-glow="none"]::before { background: none; }
 .id { background: linear-gradient(to right, color-mix(in srgb, var(--c) 14%, transparent), rgb(255 255 255 / 0.03) 70%); }
 .col--b .id { background: linear-gradient(to left, color-mix(in srgb, var(--c) 14%, transparent), rgb(255 255 255 / 0.03) 70%); }
 
+/* Block material: corner frost (C, Piero, 2026-11-24). Corner blocks are glass tinted by their
+   corner colour from the outer edge inwards. Shared blocks take red from the left and blue from
+   the right; profile blocks take the solo tone from the left. */
+.dash .panel { background: linear-gradient(to right, rgb(229 72 77 / 0.12), rgb(255 255 255 / 0.02) 35%, rgb(255 255 255 / 0.02) 65%, rgb(62 140 240 / 0.12));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1); }
+.dash .panel:hover { background: linear-gradient(to right, rgb(229 72 77 / 0.16), rgb(255 255 255 / 0.04) 35%, rgb(255 255 255 / 0.04) 65%, rgb(62 140 240 / 0.16)); }
+.profile .panel { background: linear-gradient(to right, rgb(255 159 67 / 0.12), rgb(255 255 255 / 0.02) 70%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1); }
+.profile .panel:hover { background: linear-gradient(to right, rgb(255 159 67 / 0.16), rgb(255 255 255 / 0.04) 70%); }
+.col--a .panel { background: linear-gradient(to right, rgb(229 72 77 / 0.12), rgb(255 255 255 / 0.02) 70%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1); }
+.col--b .panel { background: linear-gradient(to left, rgb(62 140 240 / 0.12), rgb(255 255 255 / 0.02) 70%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1); }
+.col--a .panel:hover { background: linear-gradient(to right, rgb(229 72 77 / 0.16), rgb(255 255 255 / 0.04) 70%); }
+.col--b .panel:hover { background: linear-gradient(to left, rgb(62 140 240 / 0.16), rgb(255 255 255 / 0.04) 70%); }
+@media (max-width: 760px) {
+  .col--b .panel { background: linear-gradient(to right, rgb(62 140 240 / 0.12), rgb(255 255 255 / 0.02) 70%); }
+  .col--b .panel:hover { background: linear-gradient(to right, rgb(62 140 240 / 0.16), rgb(255 255 255 / 0.04) 70%); }
+}
+
 /* ---------- v0.5.2 ---------- */
 /* Picker: one line — gender, division, search field with the magnifier that searches with those filters. */
 .col > .pick { flex-direction: row; align-items: center; gap: 6px; padding: 6px; height: 46px; }
@@ -647,3 +667,118 @@ body[data-glow="none"]::before { background: none; }
 
 /* Radar block without a title: controls sit on the right */
 .panel__head--bare { justify-content: flex-end; }
+
+/* ---------- v0.7 (goldfish review, 2026-11-24) ---------- */
+/* Layering: every glass block is its own stacking context, so a tooltip or chart tip was painted under the
+   next block. The block being used rises above its neighbours (still under the pickers, z 15, and the top bar, z 20). */
+.panel:hover, .panel:focus-within { z-index: 10; }
+
+/* Tape arrows: grey where higher is neither better nor worse (age, weight) */
+.arrow--neutral { fill: var(--faint); }
+
+/* Badges: visible focus, tips anchored inside the corner, Escape closes them */
+.badge:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.badge__tip { left: 0; transform: none; }
+.col--b .badge__tip { left: auto; right: 0; }
+.badge.is-dismissed .badge__tip { display: none !important; }
+.badge__tip .tip__rule { display: block; margin-bottom: 6px; }
+.badge__tip .tip__rule:last-child { margin-bottom: 0; }
+/* Archetype: icon and its word */
+.chip.chip--label { width: auto; padding: 0 10px 0 7px; gap: 5px; grid-auto-flow: column; font: 700 12px var(--ui); }
+.chip--label .ico { width: 17px; height: 17px; }
+.spec-badge--more { font: 700 13px var(--ui); color: var(--muted); }
+.disc.badge { width: auto; }
+
+/* Radar: who has no data */
+.style__missing { margin-right: auto; font-size: 12px; }
+.seg button:disabled { opacity: 0.4; cursor: not-allowed; }
+.seg button:disabled:hover { color: var(--muted); }
+
+/* Narrower screens: the comparison comes right after both identities and records;
+   how the fights end and the histories follow the radar. */
+@media (max-width: 1180px) {
+  .dash .col--a, .dash .col--b, .dash .col__body { display: contents; }
+  .dash {
+    grid-template-areas: "pa pb" "ia ib" "ra rb" "mid mid" "fa fb" "ha hb" "row row";
+    align-items: start;
+  }
+  .dash .col--a > .pick { grid-area: pa; } .dash .col--b > .pick { grid-area: pb; }
+  .col--a [data-module="corner.identity"] { grid-area: ia; } .col--b [data-module="corner.identity"] { grid-area: ib; }
+  .col--a [data-module="corner.record"] { grid-area: ra; align-self: stretch; } .col--b [data-module="corner.record"] { grid-area: rb; align-self: stretch; }
+  .col--a [data-module="corner.finishes"] { grid-area: fa; align-self: stretch; } .col--b [data-module="corner.finishes"] { grid-area: fb; align-self: stretch; }
+  .col--a [data-module="corner.history"] { grid-area: ha; } .col--b [data-module="corner.history"] { grid-area: hb; }
+  .dash .hist { flex: none; height: 420px; }
+}
+@media (max-width: 760px) {
+  .dash { grid-template-areas: "pa" "ia" "ra" "pb" "ib" "rb" "mid" "fa" "fb" "ha" "hb" "row"; }
+  .dash .hist { height: 360px; }
+}
+
+/* Touch: 44 px targets on phones */
+@media (max-width: 760px) {
+  .tool { height: 44px; min-width: 44px; }
+  .nav a { min-height: 44px; display: inline-flex; align-items: center; }
+  .col > .pick { height: auto; min-height: 56px; }
+  .dd__btn, .pick .combo__input { height: 44px; }
+  .pick__go { width: 44px; height: 44px; }
+  .seg button, .pick__filters .seg button { height: 44px; min-width: 44px; }
+  .brand { min-height: 44px; }
+  .dd__menu [role="option"], .combo__list [role="option"], .menu__item { min-height: 44px; align-items: center; }
+  .dlg__close { width: 44px; height: 44px; }
+  /* small marks keep their look; an invisible ring takes the tap */
+  .badge::after, .icon-btn::after, .disc::after { content: ""; position: absolute; inset: -6px; }
+  .icon-btn { position: relative; }
+  .icon-btn::after { inset: -7px; }
+  .id--square .credit::after { inset: -9px; }
+  /* the record squares are a picture here; fights open from the history */
+  .sq--ufc { pointer-events: none; }
+}
+
+/* duel.matchup grows (rows spread evenly) so the radar block starts level with the records */
+.panel.mu { align-content: stretch; }
+
+/* Three columns: the radar block runs down to where the fight histories end. */
+@media (min-width: 1181px) {
+  .dash .col--mid { grid-template-rows: auto 1fr; align-content: stretch; }
+  .dash .col--mid > .style { display: flex; flex-direction: column; }
+  .dash .col--mid > .style > .style__body { flex: 1; height: auto; min-height: clamp(380px, 34vw, 500px); }
+}
+.mu__row { padding-block: var(--mu-pad, 9px); }
+
+/* duel.style detail: one block of rows (A | metric | B), lit together with the radar axis */
+.style__body .spec.spec--rows { display: flex; flex-direction: column; gap: 10px; justify-content: center; }
+.spec__list { background: rgb(255 255 255 / 0.03); border-radius: 12px; padding: 4px; display: grid; }
+.spec__row { display: grid; grid-template-columns: 4.8em minmax(0, 1fr) 4.8em; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; background: none; }
+.spec__row + .spec__row { border-top: 1px solid var(--line); }
+.spec__row--solo { grid-template-columns: minmax(0, 1fr) auto; }
+.spec__row .spec__l { text-align: center; text-wrap: balance; }
+.spec__row--solo .spec__l { text-align: left; }
+.spec__row .spec__v { display: flex; align-items: baseline; gap: 6px; }
+.spec__row .spec__v.b { justify-content: flex-end; }
+.spec__row .spec__v b { font-size: 22px; }
+.spec__row .spec__v small { margin-top: 0; }
+@media (min-width: 761px) { .style__body:has(.spec:not([hidden])) { grid-template-columns: minmax(0, 1fr) 230px; } }
+
+/* Sheet rows: the metric's name on its own line, the two figures under it (same block) */
+.spec__row, .spec__row--solo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "l l" "a b"; row-gap: 2px; padding: 7px 10px; }
+.spec__row--solo { grid-template-areas: "l l" "s s"; }
+.spec__row .spec__l { grid-area: l; text-align: left; text-wrap: pretty; }
+.spec__row .spec__v.a { grid-area: a; } .spec__row .spec__v.b { grid-area: b; } .spec__row .spec__v.s { grid-area: s; }
+/* Radar: lit vertex of the selected axis */
+.radar__vertex { position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 3px rgb(11 12 15 / 0.9), 0 0 12px 2px var(--c); pointer-events: none; z-index: 1; }
+
+/* duel.style header: layer choice at the left, the sheet toggle at the right */
+.style > .panel__head--bare { justify-content: flex-start; }
+.style > .panel__head--bare .icon-btn { margin-left: auto; }
+.style__missing { margin-right: 0; }
+
+/* Champion mark: top-left corner of the portrait, gold */
+.id--square .champ { position: absolute; top: 12px; left: 12px; z-index: 2; width: 30px; height: 30px; color: #f2c14e;
+  background: rgb(8 9 12 / 0.55); backdrop-filter: blur(8px); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 0 0 1px rgb(242 193 78 / 0.45); }
+.id--square .champ .ico { width: 20px; height: 20px; }
+.id--square .champ .badge__tip { bottom: auto; top: calc(100% + 8px); left: 0; right: auto; }
+.col--b .id--square .champ .badge__tip { left: 0; right: auto; }
+.id--square .warn { top: 50px; }
+
+/* Record squares: UFC fights glow in the corner's colour */
+.sq--ufc { box-shadow: 0 0 0 1px rgb(0 0 0 / 0.4), 0 0 6px 1px color-mix(in srgb, var(--c, var(--solo)) 85%, transparent); }

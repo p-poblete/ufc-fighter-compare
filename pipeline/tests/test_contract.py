@@ -13,6 +13,7 @@ BUILT = (PROCESSED / "fights.parquet").exists() and (WEB_DATA / "index.json").ex
 needs_build = pytest.mark.skipif(not BUILT, reason="run `python -m pipeline.build` first")
 
 FIGHT_COLUMNS = {
+    "title_bout",
     "fight_id",
     "date",
     "fighter",

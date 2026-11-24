@@ -273,6 +273,8 @@ def build_tables(
                     row["nickname"] = text_or_none(key[f"nickname_{own}"]) if key is not None else None
                     row["dob"] = key[f"dob_{own}"] if key is not None else None
             row["matched"] = j is not None
+            # Title fight: mdabbert marks them (to its last event); jerzyszocik only in a few division labels.
+            row["title_bout"] = any(k is not None and bool(k["title_bout"]) for k in (j, m))
             row["j_weight_class"] = normalize_weight_class(j["weight_class"]) if j is not None else None
             row["j_gender"] = j["gender"] if j is not None else None
             row["j_finish_round"] = j["finish_round"] if j is not None else None
@@ -433,6 +435,7 @@ def _fights_table(long: pd.DataFrame) -> pd.DataFrame:
         "odds_decimal",
         "opp_odds_decimal",
         "implied_prob_fair",
+        "title_bout",
         *STAT_COLUMNS.values(),
     ]
     fights = long[cols].copy()
@@ -454,6 +457,7 @@ def _fights_table(long: pd.DataFrame) -> pd.DataFrame:
     for col in ["odds_decimal", "opp_odds_decimal", "implied_prob_fair"]:
         fights[col] = fights[col].astype("Float64").round(6)
     fights["weight_class_inferred"] = fights["weight_class_inferred"].astype(bool)
+    fights["title_bout"] = fights["title_bout"].astype(bool)
     fights["date"] = fights["date"].dt.date
     return fights.sort_values(["date", "fight_id", "fighter_slug"], kind="stable").reset_index(drop=True)
 

@@ -39,6 +39,7 @@ COLUMNS = [
     "finish_time",
     "url_1",
     "url_2",
+    "title_bout",
 ]
 
 
@@ -87,6 +88,8 @@ def load_jerzyszocik(folder: Path) -> pd.DataFrame:
         "url_2",
     ]
     df["source"] = "jerzyszocik"
+    # This source marks only a few title fights, in the division label ("UFC Lightweight Title").
+    df["title_bout"] = df["weight_class"].astype("string").str.contains("title", case=False, na=False)
     return df
 
 
@@ -101,6 +104,7 @@ def load_mdabbert(folder: Path) -> pd.DataFrame:
             "gender": raw["gender"].map({"MALE": "M", "FEMALE": "F"}),
             "odds_1": raw["R_odds"].map(american_to_decimal),
             "odds_2": raw["B_odds"].map(american_to_decimal),
+            "title_bout": raw["title_bout"].astype(bool),
         }
     )
     df["source"] = "mdabbert"
@@ -119,6 +123,7 @@ def build_snapshot(jerzy_dir: Path, mdabbert_dir: Path) -> pd.DataFrame:
     for col in ["dob_1", "dob_2"]:
         df[col] = pd.to_datetime(df[col])
     df["finish_round"] = df["finish_round"].astype("Int64")
+    df["title_bout"] = df["title_bout"].astype("boolean").fillna(False).astype(bool)
     df = df.sort_values(["source", "date", "name_1", "name_2"], kind="stable").reset_index(drop=True)
     return df
 

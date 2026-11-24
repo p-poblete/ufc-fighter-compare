@@ -64,7 +64,7 @@ Sustituyen lo que contradigan de la lista anterior.
   - P1 (centro) · radar superpuesto; P3 (centro) · barras en espejo de los 8 percentiles.
 - **Gráficos interactivos traídos de `ufc-fight-analytics/src/app.py`** (ECharts, con detalle al pasar el puntero o tocar): rendimiento por pelea con selector de métrica (golpes significativos por minuto, precisión, derribos, intentos de sumisión), retorno por pelea según el tipo de cuota (forma del punto según el resultado), distribución de la duración de las peleas. El historial de cada uno va en su columna (últimas peleas y desplegable con todas).
 - **Perfil por peleador**: página estática `/fighters/<slug>/` por cada entrada del índice, con los componentes de un solo peleador (ficha, cifras, forma, métodos, radar frente a su división, percentiles, rendimiento, retorno, duración e historial completo) y un enlace para compararlo. Los nombres del comparador enlazan a su perfil.
-- **Fotos**: pendiente de decidir (Wikimedia Commons cubre aproximadamente 1 de cada 4 peleadores); mientras, monograma.
+- **Fotos** (decidido 2026-11-24): Wikimedia Commons vía Wikidata (~1 de cada 4 peleadores), en color natural, con crédito (autor, licencia, enlace) tras un © en el retrato; sin foto, monograma.
 
 ### 3.2 Módulos (v0.4, 2026-11-23)
 
@@ -73,10 +73,10 @@ Cada bloque es un módulo con nombre interno (`data-module`), una pregunta que r
 | Módulo | Pregunta | Contenido |
 |---|---|---|
 | `corner.identity` | ¿Quién es? | Nombre (enlace al perfil), apodo, división, arquetipo, esquina. Datos físicos solo si no hay `duel.matchup` en la vista (perfil o un solo lado). |
-| `corner.record` | ¿Cómo le va? | Récord profesional, récord UFC, racha actual, forma de las últimas 10. |
+| `corner.record` | ¿Cómo le va? | Récord profesional, racha actual y forma de toda la carrera (un cuadro por pelea; las UFC desde 2010 se abren en `fight.dialog`, salvo en móvil, donde se abren desde el historial). |
 | `corner.finishes` | ¿Cómo terminan sus peleas? | Reparto por método de victorias y derrotas (M2). |
 | `corner.history` | ¿Contra quién ha peleado? | Lista de peleas UFC; cada fila entera abre `fight.dialog`. |
-| `duel.matchup` | ¿Quién llega mejor? | Tasa de victorias y de finalización con «Edge»; tale of the tape (edad, altura, alcance, peso, guardia) con la diferencia escrita. |
+| `duel.matchup` | ¿Quién llega mejor? | Tasa de victorias y de finalización con flecha verde/roja (sin «Edge»; sin flecha si la cifra mostrada es igual); tale of the tape con flechas verde/roja en altura y alcance y neutras (gris) en edad y peso, (edad, altura, alcance, peso, guardia) con la diferencia escrita. |
 | `duel.style` | ¿Cómo pelea cada uno? | Radar grande con selector de capa (los dos, A, B) y ficha técnica de 8 métricas (percentil y valor real). |
 | `fights.performance` | ¿Cómo ha rendido pelea a pelea? | Dispersión por fecha con selector de métrica y de periodo. Fila completa. |
 | `fights.returns` | ¿Ha dado dinero apostarle? | Dispersión de retorno por pelea, ROI por tipo de cuota de los dos y victorias reales frente a esperadas, todo según el periodo. Fila completa. Sustituye a la columna de apuestas. |
@@ -113,7 +113,6 @@ Se retiran de la comparación: el bloque central de récord y métodos en espejo
 - PCA, t-SNE, UMAP, clústeres, correlaciones con cuotas, gráficos globales por división (son del repositorio de análisis `ufc-fight-analytics`).
 - Predicciones o modelos de quién ganará.
 - Comparar más de dos peleadores.
-- Fotos de peleadores (derechos de imagen): se usa un avatar con iniciales.
 - Peleas anteriores a 2010 en historial, donas y dispersión (la fuente base empieza en 2010). El récord total sí incluye toda la carrera.
 - Cuentas de usuario, backend o base de datos.
 - Interfaz en español o bilingüe.
@@ -233,6 +232,7 @@ Lo genera este repositorio (`pipeline.build`); el repositorio de análisis `ufc-
 | `odds_source` | `jerzyszocik` / `mdabbert` / null | sí | pipeline |
 | `weight_class`, `gender` | str | sí (solo en no emparejadas) | jerzyszocik o inferido (6.2) |
 | `weight_class_inferred` | bool | no | pipeline |
+| `title_bout` | bool | no | mdabbert `title_bout` (hasta su último evento) o «Title» en la división de jerzyszocik; incluye títulos interinos si la fuente los marca |
 | `odds_decimal`, `opp_odds_decimal` | float | sí | jerzyszocik / mdabbert |
 | `implied_prob_fair` | float | sí | pipeline (solo si existen las dos cuotas) |
 | `kd`, `kd_against`, `sig_landed`, `sig_attempted`, `sig_absorbed`, `str_landed`, `str_attempted`, `str_absorbed`, `td`, `td_attempted`, `taken_down`, `sub_att`, `clinch`, `clinch_taken`, `ground`, `ground_taken` | int | sí | Almanac `FightStats` |
@@ -293,3 +293,5 @@ JSON para la web:
 | Fecha | Enfoque | Veredicto | Aplicados | Descartados (motivo) |
 |---|---|---|---|---|
 | 2026-11-23 | Funcionalidad, bordes y contrato de datos (1 revisor) | LISTO CON CAMBIOS | 12/12: asalto y tiempo derivados de `fight_time_s` (comprobado que es tiempo total); percentiles división + global, población, SApM invertido; slugs estables con `slugs.csv`; integridad referencial y filas para rivales sin perfil; nulos de `fighters` y «—» en la ficha (CA6, CA6b); tipos de cuota semiabiertos; fórmula de ROI, `n`, D/NC, fórmula americana→decimal y misma fuente para ambas cuotas; puerta de licencias con variante B definida; reglas de URL (CA5); build determinista (`data_through`, edad en cliente, commit solo si cambia `fights`); validación de volumen leída de `meta.json` con tolerancia 0,5 %; `meta.json` en CA1, escalas de porcentaje, inferencia por peso actual | — |
+| 2026-11-24 | Interfaz y diseño visual, web en marcha a 1440/768/390 (1 revisor) | LISTO CON CAMBIOS | Orden bajo 1180 px: identidad y récord de A y B, comparación, métodos e historiales; flechas en tasas (sin «Edge»), neutras en edad y peso; badges con anillo de foco, tooltip anclado al borde de su esquina y cierre con Escape, arquetipo con su palabra, 3 especialidades y «+N», disciplina con tooltip; «No data» en el radar y capa desactivada; toques de 44 px en móvil (cuadros de forma como dibujo); capas: el bloque en uso sube sobre sus vecinos (tooltips tapados por el bloque central); forma = toda la carrera; fotos fuera de «Fuera de alcance» | Contraste de las barras de método y color semántico (Piero: colores de esquina, sin cambios); Tab en los cuadros de forma, espejo del nombre, barra a 768 px y tabla de /fighters/ (menores, no pedidos) |
+| 2026-11-24 | Diseño (2 revisores: comparación; perfiles, directorio, Method y menús) y pruebas (1 revisor), cortados por tiempo | NO LISTO por poco (comparación); LISTO CON CAMBIOS (perfiles); LISTO CON CAMBIOS provisional (pruebas: suites, tsc y build OK; e2e sin terminar) | Pendiente de decisión de Piero. Ya arreglado antes del informe: récord «null-null-null» en 250 peleadores | — |

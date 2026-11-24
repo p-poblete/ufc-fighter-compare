@@ -48,6 +48,18 @@ def _pct_block(table: pd.DataFrame, idx) -> dict | None:
     return {m: clean(table.at[idx, m]) for m in CAREER_METRICS}
 
 
+def _titles(own: pd.DataFrame) -> dict | None:
+    """UFC title fights won (undisputed or interim, as the source marks them), or None."""
+    won = own[own["title_bout"] & (own["result"] == "W")]
+    if won.empty:
+        return None
+    return {
+        "wins": len(won),
+        "divisions": sorted({d for d in won["weight_class"].dropna()}),
+        "last": clean(won["date"].max()),
+    }
+
+
 def _fight_rows(fights: pd.DataFrame) -> list[dict]:
     rows = []
     ordered = fights.sort_values(["date", "fight_id"], ascending=[False, True], kind="stable")
@@ -67,6 +79,7 @@ def _fight_rows(fights: pd.DataFrame) -> list[dict]:
                 "odds": clean(f["odds_decimal"]),
                 "opp_odds": clean(f["opp_odds_decimal"]),
                 "implied_prob_fair": clean(f["implied_prob_fair"]),
+                "title": bool(f["title_bout"]),
                 "stats": {k: clean(f[k]) for k in FIGHT_STATS},
             }
         )
@@ -120,6 +133,7 @@ def build_payloads(
             "archetype": clean(row["archetype"]),
             "specialties": metrics.specialties(_own_pct(idx, division_pct, global_pct), own),
             "discipline": clean(row.get("discipline")),
+            "titles": _titles(own),
             "photo": pictures.get(slug),
             "record": metrics.career_record(row),
             "ufc_record": ufc,

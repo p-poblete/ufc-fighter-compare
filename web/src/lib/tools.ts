@@ -74,6 +74,24 @@ export function initTools(hooks: ToolHooks = {}): void {
   loadSettings();
   const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel);
 
+  // Badge tooltips close with Escape (WCAG 1.4.13) and stay closed until the pointer or focus leaves.
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key !== "Escape") return;
+    for (const b of document.querySelectorAll<HTMLElement>(".badge:hover, .badge:focus-within")) b.classList.add("is-dismissed");
+  });
+  document.addEventListener(
+    "mouseleave",
+    (ev) => {
+      const t = ev.target as HTMLElement;
+      if (t.classList?.contains("is-dismissed") && !t.matches(":focus-within")) t.classList.remove("is-dismissed");
+    },
+    true,
+  );
+  document.addEventListener("focusout", (ev) => {
+    const b = (ev.target as HTMLElement).closest?.(".badge.is-dismissed");
+    if (b && !b.contains(ev.relatedTarget as Node) && !b.matches(":hover")) b.classList.remove("is-dismissed");
+  });
+
   // Disclosures such as the radar's metric sheet.
   document.addEventListener("click", (ev) => {
     const btn = (ev.target as HTMLElement).closest<HTMLElement>("[data-toggle]");
