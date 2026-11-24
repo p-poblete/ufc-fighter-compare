@@ -106,6 +106,15 @@ export function badges(f: Fighter): string {
 
 // ---------- corner.* (one fighter, against their edge) ----------
 /** corner.identity. Physical facts only when no duel.matchup shows them (profile, or one corner empty). */
+/** The square's background: the Commons photo when there is one (credit behind a © on hover/focus), else the monogram. */
+function portrait(f: Fighter): string {
+  const p = f.photo;
+  if (!p) return `<div class="portrait" aria-hidden="true"><span>${esc(initials(f.name))}</span></div>`;
+  const lic = p.license_url ? `<a href="${esc(p.license_url)}" rel="license noopener" target="_blank">${esc(p.license)}</a>` : esc(p.license);
+  return `<div class="portrait portrait--photo"><img src="${esc(p.url)}" width="${p.width}" height="${p.height}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"></div>
+    <span class="badge credit" tabindex="0" role="note" aria-label="Photo credit: ${esc(p.author ?? "unknown author")}, ${esc(p.license)}">©<span class="badge__tip"><b>Photo</b>${esc(p.author ?? "Unknown author")} · ${lic} · <a href="${esc(p.page)}" rel="noopener" target="_blank">Wikimedia Commons</a></span></span>`;
+}
+
 export function identity(f: Fighter | null, tone: Tone, warning: string | null = null, withFacts = false): string {
   const warn = warning ? `<p class="warn" role="status">${esc(warning)}</p>` : "";
   const corner = ""; // the colour and the side already say which corner
@@ -131,7 +140,7 @@ export function identity(f: Fighter | null, tone: Tone, warning: string | null =
   return mod(
     "corner.identity",
     "",
-    `<div class="portrait" aria-hidden="true"><span>${esc(initials(f.name))}</span></div>
+    `${portrait(f)}
      <div class="id__text">
        <h2 class="id__name">${name}</h2>
        ${sub ? `<p class="id__sub">${sub}</p>` : ""}

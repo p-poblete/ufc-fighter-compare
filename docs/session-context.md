@@ -43,9 +43,9 @@ Actualizado: 2026-11-24
 - v0.5.2: iconos de postura por arquetipo, selector de esquina en una línea, récord en cuadros estilo GitHub, leyenda en ambas esquinas. v0.6: especialidades y disciplina (pipeline + iconos), identidad en retrato cuadrado (monograma), todas las peleas como cuadros, desplegables de vidrio.
 - Push hecho (13 commits, hasta 48007d1).
 - Laboratorios borrados (respaldo en `~/Respaldos/ufc-compare-labs-20261124.tgz`) y sus líneas quitadas de `.gitignore`. Build OK (2.307 páginas).
-- Fotos: alternativas evaluadas, decisión pendiente de Piero (Commons+monograma, solo monograma, silueta/icono de arquetipo; descartadas UFC.com/Sherdog/Tapology por derechos e IA por parecido).
+- Fotos (decisión de Piero: A+B): Commons vía Wikidata, en color natural, con monograma si no hay foto; crédito tras un © arriba a la derecha del retrato (tooltip con autor, licencia y enlace). `pipeline/photos.py` (`python -m pipeline.photos`, manual) genera el snapshot versionado `data/raw/photos.csv`: emparejado por «UFC athlete ID» P9722 = slug y, si no, por nombre único con ID de Sherdog. 563/2.304 (24 %). La web enlaza la miniatura de Commons (480 px). Pendiente: la imagen exportada (`lib/card.ts`) aún usa monograma.
 
 ## Siguiente paso
 1. Piero: conectar el repo en Cloudflare Pages (raíz `web`, build `npm ci && npm run build`, salida `dist`, Node 24). Después, borrar la app antigua de Streamlit Cloud (share.streamlit.io → app → Delete).
-2. Piero: decidir fotos y confirmar decisiones v0.5 sin consultar (iconos de herramientas, menú View, imagen exportada, columnas del directorio, textos de Method).
+2. Piero: confirmar decisiones v0.5 sin consultar (iconos de herramientas, menú View, imagen exportada, columnas del directorio, textos de Method).
 3. Corte 3: donas de victoria/derrota (radar y arquetipo ya hechos).

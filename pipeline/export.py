@@ -10,8 +10,9 @@ from pathlib import Path
 
 import pandas as pd
 
-from pipeline import metrics
+from pipeline import metrics, photos
 from pipeline.data import CAREER_METRICS
+from pipeline.photos import SOURCE as PHOTOS_SOURCE
 from pipeline.sources import SOURCES
 from pipeline.styles import SOURCE as STYLES_SOURCE
 
@@ -88,6 +89,7 @@ def build_payloads(
     """Returns (index, meta, {slug: fighter payload}) without touching the disk."""
     by_fighter = dict(tuple(fights.groupby("fighter_slug", sort=False)))
     index, payloads = [], {}
+    pictures = photos.load()
     for idx, row in fighters.iterrows():
         slug = row["fighter_slug"]
         own = by_fighter[slug]
@@ -118,6 +120,7 @@ def build_payloads(
             "archetype": clean(row["archetype"]),
             "specialties": metrics.specialties(_own_pct(idx, division_pct, global_pct), own),
             "discipline": clean(row.get("discipline")),
+            "photo": pictures.get(slug),
             "record": metrics.career_record(row),
             "ufc_record": ufc,
             "ufc_fights": int(row["ufc_fights"]),
@@ -137,7 +140,7 @@ def build_payloads(
     index.sort(key=lambda r: r["slug"])
     meta = {
         "data_through": clean(fights["date"].max()),
-        "sources": [*SOURCES, STYLES_SOURCE],
+        "sources": [*SOURCES, STYLES_SOURCE, PHOTOS_SOURCE],
         "fights": int(fights["fight_id"].nunique()),
         "fighters": len(fighters),
     }

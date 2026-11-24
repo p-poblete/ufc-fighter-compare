@@ -24,6 +24,12 @@
       "url": "https://github.com/rfordatascience/tidytuesday/tree/main/data/2026/2026-07-07",
       "license": "not stated; credited",
       "provides": "listed fighting style (base discipline), where available"
+    },
+    {
+      "name": "Wikimedia Commons via Wikidata",
+      "url": "https://commons.wikimedia.org/",
+      "license": "per image (credited on the page)",
+      "provides": "fighter photos, where available"
     }
   ],
   "fights": 7750,

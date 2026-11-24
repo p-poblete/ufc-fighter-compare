@@ -12,6 +12,16 @@ export interface IndexEntry {
   last_fight: string; // ISO date
 }
 
+export interface Photo {
+  url: string;
+  width: number;
+  height: number;
+  author: string | null;
+  license: string;
+  license_url: string | null;
+  page: string;
+}
+
 export interface Fighter {
   slug: string;
   name: string;
@@ -27,6 +37,8 @@ export interface Fighter {
   archetype: string | null;
   specialties: string[];
   discipline: string | null;
+  /** Wikimedia Commons thumbnail with its credit; null for about three in four fighters (monogram). */
+  photo: Photo | null;
   record: { wins: number; losses: number; draws: number };
   ufc_record: { W: number; L: number; D: number; NC: number };
   ufc_fights: number;
