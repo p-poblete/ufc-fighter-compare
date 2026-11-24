@@ -25,6 +25,8 @@ export interface Fighter {
   weight_class: string | null;
   gender: Gender | null;
   archetype: string | null;
+  specialties: string[];
+  discipline: string | null;
   record: { wins: number; losses: number; draws: number };
   ufc_record: { W: number; L: number; D: number; NC: number };
   ufc_fights: number;

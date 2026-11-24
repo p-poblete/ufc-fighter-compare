@@ -137,3 +137,37 @@ def test_archetype(slpm, td, expected):
 
 def test_archetype_outside_population_is_null():
     assert metrics.archetype(None) is None
+
+
+def _fights(rows):
+    import pandas as pd
+
+    return pd.DataFrame(rows, columns=["result", "method", "round", "kd"])
+
+
+def test_specialties_finishers_and_chin():
+    from pipeline.metrics import specialties
+
+    fights = _fights([("W", "KO/TKO", 1, 1)] * 4 + [("W", "DEC", 3, 0)] * 2 + [("L", "DEC", 3, 0)] * 2)
+    got = specialties(None, fights)
+    assert "ko_artist" in got and "fast_starter" in got and "heavy_hands" in got
+    assert "iron_chin" in got  # 8 fights, no KO loss
+    assert "sub_specialist" not in got
+
+
+def test_specialties_from_percentiles():
+    from pipeline.metrics import specialties
+
+    pct = {"slpm": 40, "str_acc": 75, "sapm": 60, "str_def": 82}
+    pct |= {"td_avg": 85, "td_acc": 50, "td_def": 90, "sub_avg": 10}
+    got = specialties(pct, _fights([("W", "DEC", 3, 0)] * 5))
+    assert {"counter_striker", "wrestler", "takedown_wall", "hard_to_hit", "goes_distance"} <= set(got)
+    assert "volume_striker" not in got and "brawler" not in got
+
+
+def test_discipline_labels():
+    from pipeline.styles import discipline
+
+    assert discipline("Brazilian Jiu-Jitsu") == "BJJ"
+    assert discipline("Jiu-Jitsu") == "BJJ"
+    assert discipline("MMA") is None and discipline("Freestyle") is None and discipline(None) is None

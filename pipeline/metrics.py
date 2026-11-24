@@ -185,3 +185,69 @@ def add_archetypes(fighters: pd.DataFrame, global_pct: pd.DataFrame, division_pc
         labels.append(archetype(table.loc[idx]) if idx in table.index else None)
     fighters["archetype"] = pd.Series(labels, index=fighters.index, dtype="string")
     return fighters
+
+
+# --- specialties -----------------------------------------------------------------------------
+# Labels fans use on forums, each computed from our own numbers. A fighter shows every one they meet.
+# Percentiles come from the fighter's division when available, else from all fighters.
+SPECIALTIES = [
+    "ko_artist",
+    "sub_specialist",
+    "heavy_hands",
+    "fast_starter",
+    "volume_striker",
+    "sniper",
+    "counter_striker",
+    "brawler",
+    "pressure_fighter",
+    "wrestler",
+    "takedown_wall",
+    "hard_to_hit",
+    "iron_chin",
+    "goes_distance",
+]
+
+
+def specialties(pct: dict | pd.Series | None, fights: pd.DataFrame) -> list[str]:
+    """Specialty ids the fighter meets (see SPECIALTIES; rules in docs/spec.md §3.3)."""
+    out: list[str] = []
+    wins = fights[fights["result"] == "W"]
+    losses = fights[fights["result"] == "L"]
+    n_w = len(wins)
+    ko_w = int((wins["method"] == "KO/TKO").sum())
+    sub_w = int((wins["method"] == "SUB").sum())
+    if ko_w >= 3 and ko_w / n_w >= 0.5:
+        out.append("ko_artist")
+    if sub_w >= 3 and sub_w / n_w >= 0.4:
+        out.append("sub_specialist")
+    with_stats = fights[fights["kd"].notna()]
+    if len(with_stats) >= 5 and with_stats["kd"].astype(float).mean() >= 0.5:
+        out.append("heavy_hands")
+    if n_w >= 4 and int((wins["round"] == 1).sum()) / n_w >= 0.5:
+        out.append("fast_starter")
+
+    p = None if pct is None else {k: (None if pd.isna(v) else float(v)) for k, v in dict(pct).items()}
+    if p and all(p.get(m) is not None for m in ("slpm", "str_acc", "sapm", "str_def", "td_avg", "td_def")):
+        if p["slpm"] >= 80:
+            out.append("volume_striker")
+        if p["str_acc"] >= 80:
+            out.append("sniper")
+        if p["str_def"] >= 75 and p["str_acc"] >= 70 and p["slpm"] < 50:
+            out.append("counter_striker")
+        if p["slpm"] >= 70 and p["sapm"] <= 30:  # sapm percentile is inverted: low = absorbs a lot
+            out.append("brawler")
+        if p["slpm"] >= 70 and p["td_avg"] >= 60:
+            out.append("pressure_fighter")
+        if p["td_avg"] >= 80:
+            out.append("wrestler")
+        if p["td_def"] >= 85:
+            out.append("takedown_wall")
+        if p["str_def"] >= 80:
+            out.append("hard_to_hit")
+
+    if len(fights) >= 8 and int((losses["method"] == "KO/TKO").sum()) == 0:
+        out.append("iron_chin")
+    decided = fights[fights["result"].isin(["W", "L", "D"])]
+    if len(decided) >= 5 and (decided["method"] == "DEC").mean() >= 0.6:
+        out.append("goes_distance")
+    return out

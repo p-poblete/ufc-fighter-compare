@@ -13,6 +13,7 @@ import pandas as pd
 from pipeline import metrics
 from pipeline.data import CAREER_METRICS
 from pipeline.sources import SOURCES
+from pipeline.styles import SOURCE as STYLES_SOURCE
 
 FIGHT_STATS = ["kd", "sig_landed", "sig_attempted", "td", "td_attempted", "sub_att"]
 
@@ -71,6 +72,13 @@ def _fight_rows(fights: pd.DataFrame) -> list[dict]:
     return rows
 
 
+def _own_pct(idx, division_pct: pd.DataFrame, global_pct: pd.DataFrame):
+    """The fighter's percentiles: division when available, else all fighters, else None."""
+    if idx in division_pct.index:
+        return division_pct.loc[idx]
+    return global_pct.loc[idx] if idx in global_pct.index else None
+
+
 def build_payloads(
     fights: pd.DataFrame,
     fighters: pd.DataFrame,
@@ -108,6 +116,8 @@ def build_payloads(
             "weight_class": clean(row["weight_class"]),
             "gender": clean(row["gender"]),
             "archetype": clean(row["archetype"]),
+            "specialties": metrics.specialties(_own_pct(idx, division_pct, global_pct), own),
+            "discipline": clean(row.get("discipline")),
             "record": metrics.career_record(row),
             "ufc_record": ufc,
             "ufc_fights": int(row["ufc_fights"]),
@@ -127,7 +137,7 @@ def build_payloads(
     index.sort(key=lambda r: r["slug"])
     meta = {
         "data_through": clean(fights["date"].max()),
-        "sources": SOURCES,
+        "sources": [*SOURCES, STYLES_SOURCE],
         "fights": int(fights["fight_id"].nunique()),
         "fighters": len(fighters),
     }

@@ -3,6 +3,7 @@
 import type { Fight, Fighter, Method, Metric, OddsType } from "./data";
 import { DASH, ageFrom, dateLong, esc, feetInches, initials, lastName } from "./format";
 import { settings } from "./settings";
+import { ARCHETYPES, SPECIALTIES, svgIcon } from "./icons";
 
 export type Tone = "a" | "b" | "solo";
 
@@ -78,21 +79,30 @@ export function title(a: Fighter | null, b: Fighter | null): string {
 /** A module. An empty heading leaves the header out and names the block for assistive tech instead. */
 function mod(name: string, heading: string, body: string, opts: { aside?: string; label?: string; cls?: string; tone?: Tone } = {}): string {
   const attrs = `class="panel ${opts.cls ?? ""}" data-module="${name}"${opts.tone ? ` data-tone="${opts.tone}"` : ""}`;
-  if (!heading) return `<section ${attrs} aria-label="${opts.label ?? name}">${body}</section>`;
+  if (!heading.trim()) {
+    // No title: the content names itself; controls (if any) still get their header row.
+    const head = opts.aside ? `<header class="panel__head panel__head--bare">${opts.aside}</header>` : "";
+    return `<section ${attrs} aria-label="${opts.label ?? name}">${head}${body}</section>`;
+  }
   return `<section ${attrs}><header class="panel__head"><h2>${heading}</h2>${opts.aside ?? ""}</header>${body}</section>`;
 }
 const noData = (why: string) => `<p class="nodata">No data · ${esc(why)}</p>`;
 const aside = (t: string) => `<span class="panel__aside">${t}</span>`;
-// Archetype as a posture silhouette: Striker throwing a straight punch, Grappler shooting a takedown, Balanced in guard.
-const POSTURE: Record<string, string> = {
-  Striker: '<circle cx="8" cy="4" r="2.2"/><path d="M8 7l-1.5 6 -2 5M8 7l1 6 3 5M8 8.5l9-1.5M8 9.5l-3 2.5"/>',
-  Grappler: '<circle cx="15.5" cy="7" r="2.2"/><path d="M14 9l-7 3.5 -3 5.5M7 12.5l1.5 5.5M13 10l2 4M11 11l-1 4"/>',
-  Balanced: '<circle cx="10" cy="4" r="2.2"/><path d="M10 7v6l-3 5M10 13l3 5M10 8.5l-3 1.5 1.5-3M10 8.5l3 1.5-1.5-3"/>',
-};
+/** Archetype and specialties as recognisable icons; hover or focus shows the label and its rule. */
+const badge = (cls: string, label: string, rule: string, path: string) =>
+  `<span class="badge ${cls}" tabindex="0" role="img" aria-label="${esc(`${label}: ${rule}`)}">${svgIcon(path)}<span class="badge__tip"><b>${esc(label)}</b>${esc(rule)}</span></span>`;
 export const archetypeChip = (x: string | null) =>
-  x && POSTURE[x]
-    ? `<span class="chip chip--${x.toLowerCase()} chip--icon" role="img" aria-label="${esc(x)}" title="${esc(x)}"><svg viewBox="0 0 20 20" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${POSTURE[x]}</g></svg></span>`
+  x && ARCHETYPES[x] ? badge(`chip chip--${x.toLowerCase()}`, x, ARCHETYPES[x].rule, ARCHETYPES[x].path) : "";
+export function badges(f: Fighter): string {
+  const spec = (f.specialties ?? [])
+    .filter((k) => SPECIALTIES[k])
+    .map((k) => badge("spec-badge", SPECIALTIES[k].label, SPECIALTIES[k].rule, SPECIALTIES[k].path))
+    .join("");
+  const disc = f.discipline
+    ? `<span class="disc" tabindex="0" title="Listed style on UFC.com (via TidyTuesday/{fightr})">${esc(f.discipline)}</span>`
     : "";
+  return `<div class="badges">${archetypeChip(f.archetype)}${disc}${spec}</div>`;
+}
 
 // ---------- corner.* (one fighter, against their edge) ----------
 /** corner.identity. Physical facts only when no duel.matchup shows them (profile, or one corner empty). */
@@ -121,15 +131,14 @@ export function identity(f: Fighter | null, tone: Tone, warning: string | null =
   return mod(
     "corner.identity",
     "",
-    `<div class="frame" aria-hidden="true"><span>${esc(initials(f.name))}</span></div>
+    `<div class="portrait" aria-hidden="true"><span>${esc(initials(f.name))}</span></div>
      <div class="id__text">
-       ${corner}
        <h2 class="id__name">${name}</h2>
        ${sub ? `<p class="id__sub">${sub}</p>` : ""}
-       ${archetypeChip(f.archetype)}
        ${facts.length ? `<p class="id__facts">${facts.join(" · ")}</p>` : ""}
+       ${badges(f)}
      </div>${warn}`,
-    { cls: "id", tone, label: f.name },
+    { cls: "id id--square", tone, label: f.name },
   );
 }
 
@@ -145,7 +154,7 @@ export function record(f: Fighter, tone: Tone): string {
     D: Math.max(0, f.record.draws - u.D),
   };
   const plain = (r: "W" | "L" | "D", n: number) =>
-    Array.from({ length: n }, () => `<li class="sq sq--${r}" title="${RESULT[r]} outside the UFC or before 2010"></li>`).join("");
+    Array.from({ length: n }, () => `<li><span class="sq sq--${r}" title="${RESULT[r]} outside the UFC or before 2010"></span></li>`).join("");
   const ufc = [...f.fights]
     .map((x, i) => ({ x, i }))
     .reverse()
@@ -253,7 +262,7 @@ export function style(a: Fighter | null, b: Fighter | null): string {
       : "";
   return mod(
     "duel.style",
-    "Style",
+    "",
     `<div class="style__body"><div class="chart chart--radar" data-chart="radar" role="img" aria-label="Radar of the eight style percentiles"></div>
      <div class="spec" id="spec-${solo ? "s" : "ab"}" hidden>${cells}
        <p class="desc">Large figure: percentile ${popLabel(pop, a ?? b, b)}, 100 is best (strikes absorbed inverted). Small figure: career value.</p></div></div>`,

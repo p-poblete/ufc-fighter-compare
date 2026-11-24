@@ -85,6 +85,29 @@ Cada bloque es un módulo con nombre interno (`data-module`), una pregunta que r
 
 Se retiran de la comparación: el bloque central de récord y métodos en espejo (R1 + M3, repetía `corner.record` y `corner.finishes`), la duración media y el ROI de las cifras (viven en `fights.length` y `fights.returns`) y el título visible «A vs B» (queda como h1 para lectores de pantalla).
 
+### 3.3 Arquetipo, especialidades y disciplina (v0.6, 2026-11-23)
+
+- Arquetipo con icono: Striker = guante, Grappler = candado, Balanced = balanza (elegido por Piero).
+- Disciplina de base desde el campo «fighting style» de UFC.com vía TidyTuesday 2026-07-07 / {fightr} (`pipeline/styles.py`, snapshot `data/raw/ufc_styles.csv`, 388 peleadores); licencia no declarada, se acredita en el pie. Se descartan etiquetas genéricas (MMA, Freestyle, Striker, Grappler, Brawler).
+- Especialidades (`metrics.specialties`, percentiles de su división o globales; se muestran solo las que cumple):
+
+| id | Etiqueta | Regla |
+|---|---|---|
+| ko_artist | Knockout artist | ≥ 3 victorias UFC por KO/TKO y ≥ 50 % de sus victorias |
+| sub_specialist | Submission specialist | ≥ 3 por sumisión y ≥ 40 % |
+| heavy_hands | Heavy hands | ≥ 0,5 derribos de golpeo (knockdowns) por pelea, con ≥ 5 peleas con estadísticas |
+| fast_starter | Fast starter | ≥ 50 % de victorias en el asalto 1, con ≥ 4 victorias |
+| volume_striker | Volume striker | golpes/min ≥ p80 |
+| sniper | Sniper | precisión ≥ p80 |
+| counter_striker | Counter striker | defensa ≥ p75, precisión ≥ p70 y volumen < p50 |
+| brawler | Brawler | volumen ≥ p70 y golpes absorbidos (invertido) ≤ p30 |
+| pressure_fighter | Pressure fighter | volumen ≥ p70 y derribos ≥ p60 |
+| wrestler | Wrestler | derribos/15 ≥ p80 |
+| takedown_wall | Takedown wall | defensa de derribo ≥ p85 |
+| hard_to_hit | Hard to hit | defensa de golpeo ≥ p80 |
+| iron_chin | Iron chin | ≥ 8 peleas UFC sin derrotas por KO/TKO |
+| goes_distance | Goes the distance | ≥ 60 % a decisión, con ≥ 5 peleas |
+
 ### Fuera de alcance
 
 - PCA, t-SNE, UMAP, clústeres, correlaciones con cuotas, gráficos globales por división (son del repositorio de análisis `ufc-fight-analytics`).

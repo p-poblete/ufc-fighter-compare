@@ -577,3 +577,66 @@ body[data-glow="none"]::before { background: none; }
   .style__body .chart--radar { height: 360px; }
   .pick .pick__filter { width: 96px; }
 }
+
+/* ---------- v0.6 ---------- */
+/* Glass for every floating list (search results, filters, menus) — the same material as the blocks. */
+.combo__list, .dd__menu, .menu {
+  background: rgb(24 26 31 / 0.72);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12), inset 0 0 0 1px rgb(255 255 255 / 0.06), 0 18px 44px rgb(0 0 0 / 0.55);
+}
+/* The picker floats above the fighter block below it. */
+.col > .pick { position: relative; z-index: 15; }
+
+/* Picker dropdowns */
+.dd { position: relative; flex: none; }
+.dd__btn { height: 32px; display: inline-flex; align-items: center; gap: 4px; padding: 0 8px; border: 0; border-radius: 8px; background: rgb(255 255 255 / 0.07); color: var(--muted); font: 600 12px var(--ui); cursor: pointer; max-width: 128px; }
+.dd__btn span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dd__btn svg { width: 12px; height: 12px; flex: none; }
+.dd__btn:hover, .dd__btn[aria-expanded="true"] { color: var(--text); background: rgb(255 255 255 / 0.12); }
+.dd__menu { position: absolute; left: 0; top: calc(100% + 8px); z-index: 30; min-width: 140px; max-height: 320px; overflow-y: auto; padding: 6px; border-radius: 12px; display: grid; gap: 2px; }
+.dd__menu--wide { min-width: 200px; }
+.dd__menu [role="option"] { text-align: left; padding: 7px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--text); font: 500 13px var(--ui); cursor: pointer; }
+.dd__menu [role="option"]:hover, .dd__menu [role="option"]:focus-visible { background: rgb(255 255 255 / 0.1); outline: none; }
+.dd__menu [aria-selected="true"] { color: var(--text); font-weight: 700; box-shadow: inset 2px 0 0 var(--text); }
+.dd__group { color: var(--faint); font-size: 11px; font-weight: 650; padding: 8px 10px 2px; }
+.pick .combo__list { left: -150px; right: 0; }
+
+/* corner.identity: a square, the portrait (monogram for now) fills it, text and icons on top at the foot */
+.id--square { aspect-ratio: 1; height: auto; padding: 0; overflow: hidden; position: relative; display: block !important; background: none !important; }
+.portrait { position: absolute; inset: 0; display: grid; place-items: center;
+  background: radial-gradient(90% 80% at 50% 30%, color-mix(in srgb, var(--c) 42%, #15171b), #0f1013 75%); }
+.portrait span { font: 800 clamp(96px, 11vw, 160px)/1 var(--display); font-stretch: 75%; color: rgb(255 255 255 / 0.13); transform: translateY(-18%); letter-spacing: -0.02em; }
+.id--square::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgb(8 9 12 / 0.92) 0%, rgb(8 9 12 / 0.6) 38%, transparent 70%); pointer-events: none; }
+.id--square .id__text { position: absolute; inset: auto 0 0 0; z-index: 1; padding: 18px; display: grid; gap: 4px; justify-items: start; text-align: left; }
+.col--b .id--square .id__text { justify-items: end; text-align: right; }
+.id--square .id__name { font-size: 30px; }
+.id--square .warn { position: absolute; top: 14px; left: 18px; z-index: 1; }
+
+/* Archetype, discipline and specialty badges with their rule on hover/focus */
+.badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.col--b .id--square .badges { justify-content: flex-end; }
+.badge { position: relative; width: 32px; height: 32px; display: inline-grid; place-items: center; border-radius: 9px; cursor: help; outline: none; }
+.badge .ico { width: 19px; height: 19px; }
+.spec-badge { background: rgb(255 255 255 / 0.1); color: var(--text); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14); }
+.chip.badge { margin-top: 0; padding: 0; }
+.disc { height: 32px; display: inline-flex; align-items: center; padding: 0 10px; border-radius: 9px; background: rgb(255 255 255 / 0.1); font: 800 14px var(--display); font-stretch: 85%; letter-spacing: 0.02em; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14); cursor: help; }
+.badge__tip { position: absolute; z-index: 20; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); width: 220px; display: none; padding: 8px 10px; border-radius: 10px; text-align: left; font: 400 12px/1.4 var(--ui); color: var(--muted);
+  background: rgb(24 26 31 / 0.9); backdrop-filter: blur(16px); box-shadow: 0 12px 30px rgb(0 0 0 / 0.5); }
+.badge__tip b { display: block; color: var(--text); font-weight: 650; margin-bottom: 2px; }
+.badge:hover .badge__tip, .badge:focus-visible .badge__tip { display: block; }
+.id--square { overflow: visible; }
+.id--square .portrait { border-radius: inherit; overflow: hidden; }
+.id--square::after { border-radius: inherit; }
+
+/* Record squares: every professional fight painted; UFC fights marked by a shadow instead of a border */
+.squares li { display: block; }
+.sq { width: 13px; height: 13px; }
+.sq--ufc { box-shadow: 0 0 0 1px rgb(0 0 0 / 0.4), 0 0 6px 1px rgb(255 255 255 / 0.55); }
+
+/* History: rows at their natural height; the block keeps its size and scrolls */
+.fight { height: auto; padding-block: 7px; }
+
+/* Radar block without a title: controls sit on the right */
+.panel__head--bare { justify-content: flex-end; }

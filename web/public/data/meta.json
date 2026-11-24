@@ -18,6 +18,12 @@
       "url": "https://www.kaggle.com/datasets/mdabbert/ultimate-ufc-dataset",
       "license": "CC BY 4.0",
       "provides": "fallback odds"
+    },
+    {
+      "name": "TidyTuesday 2026-07-07 / {fightr} (UFC.com athlete profiles)",
+      "url": "https://github.com/rfordatascience/tidytuesday/tree/main/data/2026/2026-07-07",
+      "license": "not stated; credited",
+      "provides": "listed fighting style (base discipline), where available"
     }
   ],
   "fights": 7750,

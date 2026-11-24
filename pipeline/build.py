@@ -15,6 +15,7 @@ import pandas as pd
 from pipeline import data, export, metrics, validate
 from pipeline.paths import ALIASES, PROCESSED, WEB_CONFIG, WEB_DATA
 from pipeline.sources import load_almanac, load_enrichment
+from pipeline.styles import add_disciplines
 
 
 def _read_json(path):
@@ -32,7 +33,7 @@ def main(argv: list[str] | None = None) -> int:
 
     clean = data.build_tables(load_almanac(offline=args.offline), load_enrichment(), frozen, data.load_aliases(ALIASES))
     global_pct, division_pct = metrics.compute_percentiles(clean.fighters)
-    fighters = metrics.add_archetypes(clean.fighters, global_pct, division_pct)
+    fighters = add_disciplines(metrics.add_archetypes(clean.fighters, global_pct, division_pct))
     index, meta, payloads = export.build_payloads(clean.fights, fighters, global_pct, division_pct)
 
     report = validate.validate(

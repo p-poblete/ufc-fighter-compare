@@ -130,15 +130,14 @@ function setupPicker(side: Side, items: Searchable[], choose: (side: Side, slug:
   const root = $(`.pick[data-side="${side}"]`);
   const input = $<HTMLInputElement>(".combo__input", root);
   const list = $<HTMLUListElement>(".combo__list", root);
-  const filter = $<HTMLSelectElement>(".pick__filter", root);
+  const ddValue = (k: string) => root.querySelector<HTMLElement>(`[data-dd="${k}"]`)!.dataset.value ?? "";
   let results: IndexEntry[] = [];
   let active = -1;
 
   const optionId = (i: number) => `opt-${side}-${i}`;
 
   function open(): void {
-    const gender = (root.querySelector<HTMLSelectElement>(".pick__gender")!.value ?? "") as "" | "M" | "F";
-    results = search(items, input.value, { gender, division: filter.value });
+    results = search(items, input.value, { gender: ddValue("gender") as "" | "M" | "F", division: ddValue("division") });
     active = results.length ? 0 : -1;
     list.innerHTML = results.length
       ? results
@@ -151,7 +150,7 @@ function setupPicker(side: Side, items: Searchable[], choose: (side: Side, slug:
           )
           .join("")
       : `<li class="opt--none" role="presentation">No fighter matches “${esc(input.value)}”${
-          filter.value || root.querySelector<HTMLSelectElement>(".pick__gender")!.value ? " with these filters" : ""
+          ddValue("gender") || ddValue("division") ? " with these filters" : ""
         }</li>`;
     list.hidden = false;
     input.setAttribute("aria-expanded", "true");
@@ -212,15 +211,44 @@ function setupPicker(side: Side, items: Searchable[], choose: (side: Side, slug:
     if (li) pick(Number(li.id.split("-").pop()));
   });
   // The filters narrow the suggestions; the magnifier lists the fighters that match them.
-  root.querySelector(".pick__gender")!.addEventListener("change", () => {
-    input.focus();
-    open();
+  root.querySelectorAll<HTMLElement>(".dd").forEach((dd) => {
+    const btn = dd.querySelector<HTMLButtonElement>(".dd__btn")!;
+    const menu = dd.querySelector<HTMLElement>(".dd__menu")!;
+    const set = (openIt: boolean) => {
+      menu.hidden = !openIt;
+      btn.setAttribute("aria-expanded", String(openIt));
+      if (openIt) menu.querySelector<HTMLElement>('[aria-selected="true"]')?.focus();
+    };
+    btn.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      set(menu.hidden);
+    });
+    menu.addEventListener("click", (ev) => {
+      const opt = (ev.target as HTMLElement).closest<HTMLElement>("[data-v]");
+      if (!opt) return;
+      dd.dataset.value = opt.dataset.v ?? "";
+      menu.querySelectorAll("[data-v]").forEach((o) => o.setAttribute("aria-selected", String(o === opt)));
+      btn.querySelector("span")!.textContent = opt.textContent;
+      set(false);
+      input.focus();
+      open();
+    });
+    menu.addEventListener("keydown", (ev) => {
+      const opts = [...menu.querySelectorAll<HTMLElement>("[data-v]")];
+      const i = opts.indexOf(document.activeElement as HTMLElement);
+      if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
+        ev.preventDefault();
+        opts[(i + (ev.key === "ArrowDown" ? 1 : -1) + opts.length) % opts.length]?.focus();
+      } else if (ev.key === "Escape") {
+        set(false);
+        btn.focus();
+      }
+    });
+    document.addEventListener("click", (ev) => {
+      if (!menu.hidden && !dd.contains(ev.target as Node)) set(false);
+    });
   });
   root.querySelector(".pick__go")!.addEventListener("click", () => {
-    input.focus();
-    open();
-  });
-  filter.addEventListener("change", () => {
     input.focus();
     open();
   });

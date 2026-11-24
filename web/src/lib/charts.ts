@@ -63,12 +63,12 @@ function inRange(fights: Fight[], range: Range, today = new Date()): { x: Fight;
 const avgLine = (axisKey: "xAxis" | "yAxis", value: number, color: string, text: string, slot = 0, at: "start" | "end" = "end") => ({
   silent: true,
   symbol: "none",
-  lineStyle: { color, type: "dashed" as const, width: 1.5, opacity: 0.9 },
+  lineStyle: { color, type: "dashed" as const, width: 1, opacity: 0.45 },
   // Vertical lines get a horizontal label above the plot, one row per fighter so they never overlap.
   label:
     axisKey === "xAxis"
-      ? { show: true, formatter: text, color, fontSize: 11, fontFamily: font.fontFamily, position: at, rotate: 0, distance: 4 + slot * 14 }
-      : { show: true, formatter: text, color, fontSize: 11, fontFamily: font.fontFamily, position: "insideEndTop" as const },
+      ? { show: true, formatter: text, color, opacity: 0.7, fontSize: 11, fontFamily: font.fontFamily, position: at, rotate: 0, distance: 4 + slot * 14 }
+      : { show: true, formatter: text, color, opacity: 0.7, fontSize: 11, fontFamily: font.fontFamily, position: "insideEndTop" as const },
   data: [{ [axisKey]: value }],
 });
 
@@ -304,7 +304,7 @@ function roi(el: HTMLElement, entries: Entry[], range: Range, tones: string[]) {
       },
       series: [
         ...series,
-        { type: "scatter", data: [], silent: true, markLine: { silent: true, symbol: "none", lineStyle: { color: MUTED, type: "solid", width: 1 }, label: { show: true, formatter: "break-even", color: FAINT, fontSize: 11, position: "end", rotate: 0, distance: 18 }, data: [{ xAxis: 0 }] } },
+        { type: "scatter", data: [], silent: true, markLine: { silent: true, symbol: "none", lineStyle: { color: MUTED, type: "solid", width: 1, opacity: 0.35 }, label: { show: true, formatter: "break-even", color: FAINT, opacity: 0.7, fontSize: 11, position: "end", rotate: 0, distance: 18 }, data: [{ xAxis: 0 }] } },
       ],
     },
     true,
