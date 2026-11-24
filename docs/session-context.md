@@ -1,6 +1,6 @@
 # Contexto de sesión — ufc-fighter-compare
 
-Actualizado: 2026-11-23
+Actualizado: 2026-11-24
 
 ## Estado
 - Repo público https://github.com/p-poblete/ufc-fighter-compare. Spec v0.2 aprobada en `docs/spec.md`.
@@ -39,6 +39,13 @@ Actualizado: 2026-11-23
 - Material de bloques: vidrio (A) elegido por Piero. Historial abierto con scroll que llena la columna; detalle del radar a la derecha del radar; selector con filtros género + división.
 - Pendiente de confirmar por Piero (decisiones tomadas sin consulta): iconos de herramientas, agrupar unidades+base en «View», leyenda de métodos solo en el lado rojo, maquetación de la imagen exportada, columnas del directorio, textos de Method.
 
+## v0.5.2–v0.6 y cierre (2026-11-24)
+- v0.5.2: iconos de postura por arquetipo, selector de esquina en una línea, récord en cuadros estilo GitHub, leyenda en ambas esquinas. v0.6: especialidades y disciplina (pipeline + iconos), identidad en retrato cuadrado (monograma), todas las peleas como cuadros, desplegables de vidrio.
+- Push hecho (13 commits, hasta 48007d1).
+- Laboratorios borrados (respaldo en `~/Respaldos/ufc-compare-labs-20261124.tgz`) y sus líneas quitadas de `.gitignore`. Build OK (2.307 páginas).
+- Fotos: alternativas evaluadas, decisión pendiente de Piero (Commons+monograma, solo monograma, silueta/icono de arquetipo; descartadas UFC.com/Sherdog/Tapology por derechos e IA por parecido).
+
 ## Siguiente paso
-1. Piero: `git push` y conectar el repo en Cloudflare Pages (raíz `web`, build `npm ci && npm run build`, salida `dist`, Node 24 por `.node-version`). Con eso se cierra el corte 2.
-2. Corte 3: radar de percentiles (ECharts), arquetipo y donas de victoria/derrota.
+1. Piero: conectar el repo en Cloudflare Pages (raíz `web`, build `npm ci && npm run build`, salida `dist`, Node 24). Después, borrar la app antigua de Streamlit Cloud (share.streamlit.io → app → Delete).
+2. Piero: decidir fotos y confirmar decisiones v0.5 sin consultar (iconos de herramientas, menú View, imagen exportada, columnas del directorio, textos de Method).
+3. Corte 3: donas de victoria/derrota (radar y arquetipo ya hechos).
