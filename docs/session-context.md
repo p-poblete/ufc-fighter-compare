@@ -59,7 +59,11 @@ Actualizado: 2026-11-24
 - Coherencia de datos (script en scratchpad, sin versionar): títulos coherentes (322 peleas, ambos lados, un ganador). Bug arreglado: 250 peleadores sin récord profesional mostraban «null-null-null» (récord, meta description del perfil, imagen exportada); ahora usan el récord UFC como ya hacía `index.json` (`careerRecord()`/`recordText()` en render.ts; tipo `record` anulable). Pendiente de decidir: 14 peleadores con récord profesional por debajo del UFC (fuente desactualizada, p. ej. Aljamain Sterling 26-5 con 6 derrotas UFC).
 - Tras `pipeline.build` el servidor de desarrollo dejó de servir JSON regenerados: reiniciado (`astro dev --port 4321 --host 127.0.0.1`).
 
+## v0.3 en borrador (2026-11-25)
+- Revisión de Piero (`UFC - Revision 24_11_26.md` en el vault) pasada a `docs/spec.md` §11: qué entra, qué queda para otro avance (calculadora de ROI, prime, métodos de toda la carrera, mapa de golpes y acciones por momento: sin datos), cortes y preguntas abiertas §11.4. Decisiones de §11.4 cerradas el 2026-11-25 (grupos: radar superpuesto 3–4 con colores dinámicos; tarjeta B con índice compuesto; campeón oro/plata/gris; exportar con casillas; volteo 3D). Pez dorado: ronda 1 NO LISTO, ronda 2 LISTO CON CAMBIOS; todo aplicado en spec §11 y registrado en §10. Spec renombrada a v0.8. Volteo en todo corner.identity; en la comparación el reverso omite lo del tale of the tape.
+
 ## Siguiente paso
+0. Piero revisa los supuestos de §11.5 → `/minerva` por cortes (empezar por el corte 1: datos y diálogo).
 1. Piero: conectar el repo en Cloudflare Pages (raíz `web`, build `npm ci && npm run build`, salida `dist`, Node 24). Después, borrar la app antigua de Streamlit Cloud (share.streamlit.io → app → Delete).
 2. Piero: confirmar decisiones v0.5 sin consultar (iconos de herramientas, menú View, imagen exportada, columnas del directorio, textos de Method).
 3. Corte 3: donas de victoria/derrota (radar y arquetipo ya hechos).
