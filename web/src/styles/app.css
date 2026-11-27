@@ -636,7 +636,7 @@ body[data-glow="none"]::before { background: none; }
 .id--square .id__name { font-size: 30px; }
 .id--square .warn { position: absolute; top: 14px; left: 18px; z-index: 1; }
 .portrait--photo { background: #0f1013; }
-.portrait--photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+.portrait--photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
 .id--square .credit { position: absolute; top: 12px; right: 12px; z-index: 2; width: 26px; height: 26px; border-radius: 8px; font: 700 13px var(--ui); color: var(--text);
   background: rgb(8 9 12 / 0.55); backdrop-filter: blur(8px); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14); }
 .id--square .credit .badge__tip { bottom: auto; top: calc(100% + 8px); left: auto; right: 0; transform: none; }
@@ -739,11 +739,32 @@ body[data-glow="none"]::before { background: none; }
 /* duel.matchup grows (rows spread evenly) so the radar block starts level with the records */
 .panel.mu { align-content: stretch; }
 
-/* Three columns: the radar block runs down to where the fight histories end. */
+/* Three columns: the radar sits on top and grows to the records; the tape starts level with them and runs down to where the fight histories end. */
 @media (min-width: 1181px) {
   .dash .col--mid { grid-template-rows: auto 1fr; align-content: stretch; }
-  .dash .col--mid > .style { display: flex; flex-direction: column; }
-  .dash .col--mid > .style > .style__body { flex: 1; height: auto; min-height: clamp(380px, 34vw, 500px); }
+  .dash .col--mid > .style { order: -1; display: flex; flex-direction: column; }
+  .dash .col--mid > .style > .style__body { flex: 1; height: auto; min-height: clamp(220px, 20vw, 300px); }
+}
+
+/* First view: from 1181 x 900 everything but the three charts fits the window; if a pair does not fit, the page scrolls. */
+@media (min-width: 1181px) and (min-height: 900px) {
+  .dash {
+    --gap: clamp(6px, 1.1dvh, 12px);
+    grid-template-rows: minmax(calc(100dvh - 80px - var(--gap)), auto) auto;
+    padding-bottom: 32px;
+  }
+  .dash .panel { padding: clamp(8px, 1.5dvh, 18px) 20px; gap: clamp(5px, 1.1dvh, 14px); }
+  .dash .mu { padding-block: clamp(4px, 0.9dvh, 10px); --mu-pad: clamp(3px, 0.8dvh, 9px); }
+  .dash .col--mid > .style > .style__body { min-height: 280px; } /* the radar never loses its axis names */
+  .dash .hist { height: 0; min-height: 96px; } /* the list never sets the row height: it scrolls inside */
+  .dash .hist .fights { contain: size; min-height: 0; }
+  .dash .id--square { --side: max(140px, calc(54dvh - 224px)); height: var(--side); width: var(--side); max-width: 100%; align-self: flex-start; }
+  .dash .col--b .id--square { align-self: flex-end; }
+  .dash .mix { gap: clamp(3px, 0.6dvh, 6px); }
+  .dash .stack { height: clamp(20px, 3.4dvh, 26px); }
+  .dash .id--square .id__text { padding: clamp(10px, 1.9dvh, 18px); }
+  .dash .id--square .badges { margin-top: clamp(4px, 0.9dvh, 8px); }
+  .dash .rec .display { font-size: clamp(40px, 5.2dvh, 52px); }
 }
 .mu__row { padding-block: var(--mu-pad, 9px); }
 
@@ -785,3 +806,5 @@ body[data-glow="none"]::before { background: none; }
 
 /* Record squares: UFC fights glow in the corner's colour */
 .sq--ufc { box-shadow: 0 0 0 1px rgb(0 0 0 / 0.4), 0 0 6px 1px color-mix(in srgb, var(--c, var(--solo)) 85%, transparent); }
+
+.style__body--empty { display: grid; place-items: center; text-align: center; }

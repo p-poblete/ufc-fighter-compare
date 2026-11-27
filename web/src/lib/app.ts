@@ -85,25 +85,71 @@ export async function boot(): Promise<void> {
   }
   addEventListener("resize", mirror);
 
-  /** Three columns: the tape grows so the radar block starts level with the records. */
+  /** Three columns: the radar (top) grows so the tape starts level with the records; the tape fills down to the histories. */
   function alignRadar(): void {
-    const mu = document.querySelector<HTMLElement>('#centre [data-module="duel.matchup"]');
-    const st = document.querySelector<HTMLElement>('#centre [data-module="duel.style"]');
+    const top = document.querySelector<HTMLElement>('#centre [data-module="duel.style"]');
+    const tape = document.querySelector<HTMLElement>('#centre [data-module="duel.matchup"]');
     const rec = document.querySelector<HTMLElement>('#col-a [data-module="corner.record"], #col-b [data-module="corner.record"]');
-    if (!mu) return;
-    mu.style.minHeight = "";
-    mu.style.removeProperty("--mu-pad");
-    if (!st || !rec || matchMedia("(max-width: 1180px)").matches) return;
-    const delta = rec.getBoundingClientRect().top - st.getBoundingClientRect().top;
-    if (delta > 0) mu.style.minHeight = `${mu.getBoundingClientRect().height + delta}px`;
-    else if (delta < 0) {
-      // Tape taller than the portrait (narrow columns): tighten its rows, then fill any rounding left over.
-      const rows = mu.querySelectorAll(".mu__row").length;
-      mu.style.setProperty("--mu-pad", `${Math.max(2, 9 + delta / (2 * rows))}px`);
-      const rest = rec.getBoundingClientRect().top - st.getBoundingClientRect().top;
-      if (rest > 0) mu.style.minHeight = `${mu.getBoundingClientRect().height + rest}px`;
+    const ids = [...document.querySelectorAll<HTMLElement>('#col-a [data-module="corner.identity"], #col-b [data-module="corner.identity"]')];
+    for (const e of [top, tape, ...ids]) if (e) e.style.minHeight = "";
+    for (const e of ids) { e.style.width = ""; e.style.height = ""; }
+    const sb = top?.querySelector<HTMLElement>(".style__body");
+    if (sb) { sb.style.minHeight = ""; sb.style.height = ""; }
+    const square = (e: HTMLElement, side0: number) => {
+      const side = Math.min(side0, e.parentElement?.clientWidth ?? side0); // never wider than its column, so it stays a square
+      e.style.width = `${Math.ceil(side)}px`; e.style.height = `${Math.ceil(side)}px`; };
+    if (!top || !tape || !rec || matchMedia("(max-width: 1180px)").matches) return;
+    // Portraits never get shorter than their own overlays (belts, photo credit) plus the text block at the foot.
+    const need = Math.max(0, ...ids.map((id) => {
+      const text = id.querySelector<HTMLElement>(".id__text");
+      if (!text) return 0;
+      const top0 = id.getBoundingClientRect().top;
+      const over = Math.max(0, ...[...id.querySelectorAll<HTMLElement>(".belts, .credit, .warn")].map((o) => o.getBoundingClientRect().bottom - top0));
+      return over + 4 + text.offsetHeight;
+    }));
+    for (const e of ids) if (e.getBoundingClientRect().height < need) square(e, need);
+    const gap = () => rec.getBoundingClientRect().top - tape.getBoundingClientRect().top;
+    const firstView = matchMedia("(min-height: 900px)").matches; // portraits keep their --side there
+    if (gap() < 0) {
+      if (firstView) {
+        // Portrait capped by its column: the radar block gives the difference back (it never drops below 280px, the CSS floor).
+        const body = top.querySelector<HTMLElement>(".style__body");
+        if (body) {
+          const h = body.getBoundingClientRect().height;
+          body.style.minHeight = body.style.height = `${Math.max(280, h + gap())}px`;
+        }
+        // Radar at its 280px floor and the tape still below the records: the records sit under the portrait, so the
+        // portraits (always square) take the difference; the history list below absorbs it.
+        const g = gap();
+        if (g < -0.5) for (const e of ids) square(e, e.getBoundingClientRect().height - g);
+      } else {
+        // Radar taller than the portrait area: the portraits take the difference so both sides stay level.
+        for (const e of ids) square(e, e.getBoundingClientRect().height - gap());
+      }
     }
+    const delta = gap();
+    if (delta > 0.5) top.style.minHeight = `${top.getBoundingClientRect().height + delta}px`;
   }
+
+  // Content changes (new pair, corner, photo, fonts) re-align; runs converge, the counter only guards against ping-pong.
+  // When the cap is hit, one last deferred pass settles whatever the burst left (never a loop: it is a single timeout).
+  let runs = 0, runsAt = 0, queued = false, settle = 0;
+  const realign = new ResizeObserver(() => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      const now = performance.now();
+      if (now - runsAt > 300) runs = 0;
+      runsAt = now;
+      if (++runs <= 4) mirror();
+      else {
+        clearTimeout(settle);
+        settle = window.setTimeout(() => { runs = 0; runsAt = performance.now(); mirror(); }, 350);
+      }
+    });
+  });
+  for (const id of ["#col-a", "#col-b", "#centre"]) realign.observe($(id));
 
   initTools({
     pick: (side, slug) => choose(side, slug),

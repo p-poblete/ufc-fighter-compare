@@ -293,7 +293,13 @@ export function style(a: Fighter | null, b: Fighter | null): string {
   const pa = a?.percentiles?.[pop] ?? null;
   const pb = b?.percentiles?.[pop] ?? null;
   const solo = !b;
-  if (!pa && !pb) return mod("duel.style", "Style", noData("fewer than 3 UFC fights or missing career stats"));
+  // Same block, same size and place as the radar: only the body says "No data" (the page layout never changes).
+  if (!pa && !pb) {
+    return mod("duel.style", "", `<div class="style__body style__body--empty">${noData("fewer than 3 UFC fights or missing career stats")}</div>`, {
+      cls: solo ? "style style--solo" : "style",
+      aside: `<button type="button" class="icon-btn" disabled aria-hidden="true" tabindex="-1" style="visibility:hidden"></button>`,
+    });
+  }
   const val = (f: Fighter | null, p: Record<Metric, number> | null, m: Metric, cls: string) =>
     p && f?.career
       ? `<span class="spec__v ${cls}"><b>${Math.round(p[m])}</b><small>${RAW[m](f.career[m])}</small></span>`
