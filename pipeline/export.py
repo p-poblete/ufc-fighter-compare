@@ -12,11 +12,54 @@ import pandas as pd
 
 from pipeline import metrics, photos
 from pipeline.data import CAREER_METRICS
+from pipeline.paths import CHAMPIONS
 from pipeline.photos import SOURCE as PHOTOS_SOURCE
 from pipeline.sources import SOURCES
 from pipeline.styles import SOURCE as STYLES_SOURCE
 
-FIGHT_STATS = ["kd", "sig_landed", "sig_attempted", "td", "td_attempted", "sub_att"]
+FIGHT_STATS = [
+    "kd",
+    "kd_against",
+    "sig_landed",
+    "sig_attempted",
+    "sig_absorbed",
+    "str_landed",
+    "str_attempted",
+    "str_absorbed",
+    "td",
+    "td_attempted",
+    "taken_down",
+    "sub_att",
+    "clinch",
+    "clinch_taken",
+    "ground",
+    "ground_taken",
+]
+
+
+def load_champions(path: Path) -> pd.DataFrame:
+    """data/raw/champions.csv (division, slug, interim, since); empty frame when missing."""
+    cols = ["division", "slug", "interim", "since"]
+    if not path.exists():
+        return pd.DataFrame(columns=cols)
+    return pd.read_csv(path, dtype=str, keep_default_na=False)[cols]
+
+
+def is_interim(value: str) -> bool | None:
+    """Strict boolean from the CSV text; None when it is neither true nor false."""
+    return {"true": True, "false": False}.get(str(value).strip().lower())
+
+
+def belts_for(slug: str, own: pd.DataFrame, champions: pd.DataFrame) -> list[dict]:
+    """Rule 7a: belts from the CSV, plus a former belt per division with a title win and no current belt."""
+    current = {}
+    for r in champions[champions["slug"] == slug].itertuples():
+        current[r.division] = "interim" if is_interim(r.interim) else "champion"
+    won = own[own["title_bout"] & (own["result"] == "W")]
+    for division in sorted({d for d in won["weight_class"].dropna()}):
+        current.setdefault(division, "former")
+    order = {"champion": 0, "interim": 1, "former": 2}
+    return [{"division": d, "kind": k} for d, k in sorted(current.items(), key=lambda kv: (order[kv[1]], kv[0]))]
 
 
 def clean(value):
@@ -46,18 +89,6 @@ def _pct_block(table: pd.DataFrame, idx) -> dict | None:
     if idx not in table.index:
         return None
     return {m: clean(table.at[idx, m]) for m in CAREER_METRICS}
-
-
-def _titles(own: pd.DataFrame) -> dict | None:
-    """UFC title fights won (undisputed or interim, as the source marks them), or None."""
-    won = own[own["title_bout"] & (own["result"] == "W")]
-    if won.empty:
-        return None
-    return {
-        "wins": len(won),
-        "divisions": sorted({d for d in won["weight_class"].dropna()}),
-        "last": clean(won["date"].max()),
-    }
 
 
 def _fight_rows(fights: pd.DataFrame) -> list[dict]:
@@ -98,15 +129,18 @@ def build_payloads(
     fighters: pd.DataFrame,
     global_pct: pd.DataFrame,
     division_pct: pd.DataFrame,
+    champions: pd.DataFrame | None = None,
 ) -> tuple[list[dict], dict, dict[str, dict]]:
     """Returns (index, meta, {slug: fighter payload}) without touching the disk."""
     by_fighter = dict(tuple(fights.groupby("fighter_slug", sort=False)))
     index, payloads = [], {}
     pictures = photos.load()
+    champions = load_champions(CHAMPIONS) if champions is None else champions
     for idx, row in fighters.iterrows():
         slug = row["fighter_slug"]
         own = by_fighter[slug]
         ufc = metrics.ufc_record(own)
+        belts = belts_for(slug, own, champions)
         index.append(
             {
                 "slug": slug,
@@ -133,7 +167,7 @@ def build_payloads(
             "archetype": clean(row["archetype"]),
             "specialties": metrics.specialties(_own_pct(idx, division_pct, global_pct), own),
             "discipline": clean(row.get("discipline")),
-            "titles": _titles(own),
+            "belts": belts,
             "photo": pictures.get(slug),
             "record": metrics.career_record(row),
             "ufc_record": ufc,

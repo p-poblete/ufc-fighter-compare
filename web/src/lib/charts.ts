@@ -234,8 +234,8 @@ function radar(el: HTMLElement, entries: Entry[], layer: string) {
 // ---------- fights.performance ----------
 export type PerfMetric = "slpm" | "acc" | "td" | "sub";
 const PERF: Record<PerfMetric, { label: string; unit: string; digits: number; value: (x: Fight) => number | null }> = {
-  slpm: { label: "Significant strikes landed per minute", unit: "/min", digits: 1, value: (x) => (x.stats && x.fight_time_s ? x.stats.sig_landed / (x.fight_time_s / 60) : null) },
-  acc: { label: "Significant strike accuracy", unit: "%", digits: 0, value: (x) => (x.stats && x.stats.sig_attempted ? (x.stats.sig_landed / x.stats.sig_attempted) * 100 : null) },
+  slpm: { label: "Significant strikes landed per minute", unit: "/min", digits: 1, value: (x) => (x.stats?.sig_landed != null && x.fight_time_s ? x.stats.sig_landed / (x.fight_time_s / 60) : null) },
+  acc: { label: "Significant strike accuracy", unit: "%", digits: 0, value: (x) => (x.stats?.sig_landed != null && x.stats.sig_attempted ? (x.stats.sig_landed / x.stats.sig_attempted) * 100 : null) },
   td: { label: "Takedowns landed", unit: "", digits: 0, value: (x) => (x.stats ? x.stats.td : null) },
   sub: { label: "Submission attempts", unit: "", digits: 0, value: (x) => (x.stats ? x.stats.sub_att : null) },
 };

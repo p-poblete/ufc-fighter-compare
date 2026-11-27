@@ -1,6 +1,6 @@
 // Pure HTML builders shared by the build (prerendered pages) and the client script.
 // Every block is a module (docs/spec.md §3.2) with a data-module name and one question to answer.
-import type { Fight, Fighter, Method, Metric, OddsType } from "./data";
+import type { Fight, FightStats, Fighter, Method, Metric, OddsType } from "./data";
 import { DASH, ageFrom, dateLong, esc, feetInches, initials, lastName } from "./format";
 import { settings } from "./settings";
 import { ARCHETYPES, BELT, SPECIALTIES, svgIcon } from "./icons";
@@ -135,12 +135,18 @@ function portrait(f: Fighter): string {
     <span class="badge credit" tabindex="0" role="note" aria-label="Photo credit: ${esc(p.author ?? "unknown author")}, ${esc(p.license)}">©<span class="badge__tip"><b>Photo</b>${esc(p.author ?? "Unknown author")} · ${lic} · <a href="${esc(p.page)}" rel="noopener" target="_blank">Wikimedia Commons</a></span></span>`;
 }
 
-/** Champion mark at the portrait's top-left corner: title fights won and their divisions on hover/focus. */
+const BELT_LABEL = { champion: "Champion", interim: "Interim champion", former: "Former champion" } as const;
+
+/** Belts stacked at the portrait's top-left corner, one per division: gold (champion), silver (interim) or grey (former). */
 function championMark(f: Fighter): string {
-  const t = f.titles;
-  if (!t) return "";
-  const rule = `${t.wins} UFC title ${t.wins === 1 ? "fight" : "fights"} won since 2010${t.divisions.length ? ` · ${t.divisions.join(", ")}` : ""}`;
-  return badge("champ", "UFC champion", rule, svgIcon(BELT));
+  if (!f.belts?.length) return "";
+  const items = f.belts
+    .map((b) => {
+      const text = `${BELT_LABEL[b.kind]} · ${b.division}`;
+      return `<span class="badge champ champ--${b.kind}" tabindex="0" role="img" aria-label="${esc(text)}">${svgIcon(BELT)}<span class="badge__tip"><b>${esc(text)}</b></span></span>`;
+    })
+    .join("");
+  return `<div class="belts">${items}</div>`;
 }
 
 export function identity(f: Fighter | null, tone: Tone, warning: string | null = null, withFacts = false): string {
@@ -223,7 +229,7 @@ export function finishes(f: Fighter, tone: Tone, legend = true): string {
     return `<div class="mix"><p class="mix__label">${label} <span>${total}</span></p>${stack}</div>`;
   };
   const key = legend ? `<p class="legend">${METHODS.slice(0, 3).map(([, l], i) => `<span><i class="m${i}"></i>${l}</span>`).join("")}</p>` : "";
-  return mod("corner.finishes", "", bar(f.wins_by, "Wins by method") + bar(f.losses_by, "Losses by method") + key, { tone, label: "How the fights end" });
+  return mod("corner.finishes", "", `<p class="desc">UFC since 2010</p>` + bar(f.wins_by, "Wins by method") + bar(f.losses_by, "Losses by method") + key, { tone, label: "How the fights end" });
 }
 
 /** corner.history: every UFC fight, open, in a scrolling list that fills the rest of the column. */
@@ -384,34 +390,45 @@ export function fightCharts(a: Fighter | null, b: Fighter | null): string {
 /** Content of the fight dialog: one fight seen from both sides (`opp` is the opponent's record of it, if found). */
 export function fightDetail(f: Fighter, x: Fight, opp: Fight | null): string {
   const ret = x.odds ? (x.result === "W" ? 100 * (x.odds - 1) : x.result === "L" ? -100 : 0) : null;
-  const facts: [string, string][] = [
-    ["Method", esc(x.method_detail)],
-    ["Ended", x.round ? `Round ${x.round}, ${clock(x.round_time_s)}` : DASH],
-    ["Fight time", clock(x.fight_time_s)],
-    ["Division", x.weight_class ? esc(x.weight_class) : DASH],
-    [`${esc(lastName(f.name))} odds`, x.odds ? x.odds.toFixed(2) : DASH],
-    [`${esc(lastName(x.opponent))} odds`, x.opp_odds ? x.opp_odds.toFixed(2) : DASH],
-    ["Fair win chance", x.implied_prob_fair != null ? `${Math.round(x.implied_prob_fair * 100)}%` : DASH],
-    ["Return on 100", ret == null ? DASH : `${ret > 0 ? "+" : ""}${Math.round(ret)}`],
-  ];
+  const oppRet = x.opp_odds ? (x.result === "L" ? 100 * (x.opp_odds - 1) : x.result === "W" ? -100 : 0) : null;
+  const num = (v: number | null | undefined) => (v == null ? DASH : String(v));
+  const pct = (v: number | null) => (v == null ? DASH : `${Math.round(v * 100)}%`);
+  const money = (v: number | null) => (v == null ? DASH : `${v > 0 ? "+" : ""}${Math.round(v)}`);
   const s = x.stats, o = opp?.stats ?? null;
-  const stat = (label: string, mine: string, theirs: string) => `<tr><td class="num">${mine}</td><th scope="row">${label}</th><td class="num">${theirs}</td></tr>`;
-  const ofs = (l: number, t: number) => `${l} / ${t} <small>${t ? Math.round((l / t) * 100) : 0}%</small>`;
-  const stats =
-    s || o
-      ? `<table class="dstats"><thead><tr><th scope="col" class="num">${esc(lastName(f.name))}</th><td></td><th scope="col" class="num">${esc(lastName(x.opponent))}</th></tr></thead><tbody>
-          ${stat("Knockdowns", s ? `${s.kd}` : DASH, o ? `${o.kd}` : DASH)}
-          ${stat("Significant strikes", s ? ofs(s.sig_landed, s.sig_attempted) : DASH, o ? ofs(o.sig_landed, o.sig_attempted) : DASH)}
-          ${stat("Takedowns", s ? ofs(s.td, s.td_attempted) : DASH, o ? ofs(o.td, o.td_attempted) : DASH)}
-          ${stat("Submission attempts", s ? `${s.sub_att}` : DASH, o ? `${o.sub_att}` : DASH)}
-        </tbody></table>`
-      : noData("no per-fight statistics");
+  const row = (label: string, mine: string, theirs: string) => `<tr><td class="num">${mine}</td><th scope="row">${label}</th><td class="num">${theirs}</td></tr>`;
+  const stat = (label: string, key: keyof FightStats) => row(label, num(s?.[key]), num(o?.[key]));
+  const head = [
+    `${dateLong(x.date)}`,
+    x.weight_class ? esc(x.weight_class) : DASH,
+    x.title ? "Title bout" : "Non-title bout",
+  ].join(" · ");
+  const ended = [x.method_detail ? esc(x.method_detail) : esc(x.method), x.round ? `Round ${x.round}` : null, x.round_time_s != null ? clock(x.round_time_s) : null].filter(Boolean);
+  const table = `<div class="dstats-wrap"><table class="dstats"><thead><tr><th scope="col" class="num">${esc(lastName(f.name))}</th><td></td><th scope="col" class="num">${esc(lastName(x.opponent))}</th></tr></thead><tbody>
+      ${row("Odds (decimal)", x.odds ? x.odds.toFixed(2) : DASH, x.opp_odds ? x.opp_odds.toFixed(2) : DASH)}
+      ${row("Fair win chance", pct(x.implied_prob_fair), pct(x.implied_prob_fair == null ? null : 1 - x.implied_prob_fair))}
+      ${row("Return on 100", money(ret), money(oppRet))}
+      ${stat("Knockdowns", "kd")}
+      ${stat("Knockdowns against", "kd_against")}
+      ${stat("Significant strikes landed", "sig_landed")}
+      ${stat("Significant strikes attempted", "sig_attempted")}
+      ${stat("Significant strikes absorbed", "sig_absorbed")}
+      ${stat("Total strikes landed", "str_landed")}
+      ${stat("Total strikes attempted", "str_attempted")}
+      ${stat("Total strikes absorbed", "str_absorbed")}
+      ${stat("Takedowns landed", "td")}
+      ${stat("Takedowns attempted", "td_attempted")}
+      ${stat("Times taken down", "taken_down")}
+      ${stat("Submission attempts", "sub_att")}
+      ${stat("Clinch strikes landed", "clinch")}
+      ${stat("Clinch strikes absorbed", "clinch_taken")}
+      ${stat("Ground strikes landed", "ground")}
+      ${stat("Ground strikes absorbed", "ground_taken")}
+    </tbody></table></div>`;
   return `<header class="dlg__head">
       <span class="res res--lg r-${x.result}">${x.result}</span>
-      <div><h2 id="dlg-title">${esc(lastName(f.name))} vs ${esc(x.opponent)}</h2><p class="muted">${RESULT[x.result]} · ${dateLong(x.date)}</p></div>
+      <div><h2 id="dlg-title">${esc(lastName(f.name))} vs ${esc(x.opponent)}</h2><p class="muted">${RESULT[x.result]} · ${head}</p><p class="muted">${ended.join(" · ")}${x.fight_time_s != null ? ` · fight time ${clock(x.fight_time_s)}` : ""}</p></div>
       <button type="button" class="dlg__close" data-close aria-label="Close">×</button>
     </header>
-    <dl class="dlg__facts">${facts.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>
-    ${stats}
+    ${table}
     <p class="dlg__actions"><a class="cta" href="/?a=${f.slug}&amp;b=${x.opponent_slug}">Compare with ${esc(x.opponent)}</a><a class="ghost" href="/fighters/${x.opponent_slug}/">${esc(x.opponent)}'s profile</a></p>`;
 }

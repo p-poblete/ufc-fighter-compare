@@ -13,7 +13,7 @@ import sys
 import pandas as pd
 
 from pipeline import data, export, metrics, validate
-from pipeline.paths import ALIASES, PROCESSED, WEB_CONFIG, WEB_DATA
+from pipeline.paths import ALIASES, CHAMPIONS, PROCESSED, WEB_CONFIG, WEB_DATA
 from pipeline.sources import load_almanac, load_enrichment
 from pipeline.styles import add_disciplines
 
@@ -34,7 +34,8 @@ def main(argv: list[str] | None = None) -> int:
     clean = data.build_tables(load_almanac(offline=args.offline), load_enrichment(), frozen, data.load_aliases(ALIASES))
     global_pct, division_pct = metrics.compute_percentiles(clean.fighters)
     fighters = add_disciplines(metrics.add_archetypes(clean.fighters, global_pct, division_pct))
-    index, meta, payloads = export.build_payloads(clean.fights, fighters, global_pct, division_pct)
+    champions = export.load_champions(CHAMPIONS)
+    index, meta, payloads = export.build_payloads(clean.fights, fighters, global_pct, division_pct, champions)
 
     report = validate.validate(
         clean.fights,
@@ -45,6 +46,7 @@ def main(argv: list[str] | None = None) -> int:
         payloads,
         previous_meta,
         validate.config_slugs(WEB_CONFIG),
+        champions=champions,
     )
     for warning in report.warnings:
         print(f"WARNING {warning}")

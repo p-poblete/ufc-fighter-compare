@@ -11,6 +11,7 @@ const sections = [
   ["sources", "Sources"],
   ["matching", "Joining the sources"],
   ["records", "Records and finishes"],
+  ["belts", "Championship belts"],
   ["style", "Style percentiles and archetype"],
   ["odds", "Odds, fair chance and ROI"],
   ["limits", "Limitations"],
@@ -41,6 +42,11 @@ const sections = [
       <section id="records">
         <h2>Records and finishes</h2>
         <p>The professional record (wins-losses-draws) covers the whole career, as listed by UFCStats. Everything else on the site uses UFC fights since 2010: the UFC record, the last-10 form, the streak, how fights end and the fight history. Win rate is wins over all professional fights; finish rate is KO/TKO plus submission wins over UFC wins. Fight length is counted in minutes and binned by round (a 15:00 decision belongs to round 3).</p>
+      </section>
+
+      <section id="belts">
+        <h2>Championship belts</h2>
+        <p>Gold is a current champion and silver an interim champion, both from a hand-kept list (<code>data/raw/champions.csv</code>). Grey marks a former champion: someone who won at least one title bout in that division since 2010 and is not current there. The source does not tell interim title fights apart, so former interim champions also count as former champions. Title data is complete up to 2026-03-28; after that date only the title fights marked by the jerzyszocik dataset are included, up to 2026-05-16.</p>
       </section>
 
       <section id="style">

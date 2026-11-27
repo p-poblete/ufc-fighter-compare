@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
 from datetime import date
@@ -13,6 +14,7 @@ COMPLEMENT = {"W": "L", "L": "W", "D": "D", "NC": "NC"}
 PERCENT_COLUMNS = ["str_acc", "str_def", "td_acc", "td_def"]
 VOLUME_TOLERANCE = 0.995
 MIN_DATE = date(2010, 1, 1)
+MAX_FIGHTER_BYTES = 50_000
 
 
 @dataclass
@@ -43,6 +45,7 @@ def validate(
     previous_meta: dict | None,
     featured: list[str],
     today: date | None = None,
+    champions: pd.DataFrame | None = None,
 ) -> Report:
     report = Report()
     err = report.errors.append
@@ -106,6 +109,16 @@ def validate(
         if col in fighters and fighters[col].astype("string").str.upper().isin(["NULL", "NONE", "NAN", ""]).any():
             err(f"fighters.{col}: placeholder strings such as 'NULL'")
 
+    # Size of each fighter file (spec 11.1 row 12).
+    for slug, payload in payloads.items():
+        if isinstance(payload, dict):
+            size = len(json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+            if size > MAX_FIGHTER_BYTES:
+                err(f"fighters/{slug}.json: {size} bytes > {MAX_FIGHTER_BYTES}")
+
+    if champions is not None:
+        check_champions(champions, known, set(fights["weight_class"].dropna()), err)
+
     # Volume against the versioned meta.json.
     if previous_meta and previous_meta.get("fights"):
         before, now = previous_meta["fights"], fights["fight_id"].nunique()
@@ -114,3 +127,21 @@ def validate(
         elif now < before:
             report.warnings.append(f"volume: {now} fights, previously {before}")
     return report
+
+
+def check_champions(champions: pd.DataFrame, known: set[str], divisions: set[str], err) -> None:
+    """champions.csv (spec 11.1 row 7a): known slugs and divisions, boolean interim, one belt per kind and division."""
+    seen: dict[tuple[str, bool], int] = {}
+    for r in champions.itertuples():
+        if r.slug not in known:
+            err(f"champions.csv: slug '{r.slug}' not in fighters")
+        if r.division not in divisions:
+            err(f"champions.csv: division '{r.division}' is not a weight_class value")
+        interim = {"true": True, "false": False}.get(str(r.interim).strip().lower())
+        if interim is None:
+            err(f"champions.csv: interim '{r.interim}' for {r.slug} is not true/false")
+            continue
+        seen[(r.division, interim)] = seen.get((r.division, interim), 0) + 1
+    for (division, interim), n in seen.items():
+        if n > 1:
+            err(f"champions.csv: {n} {'interim' if interim else 'current'} champions in {division}")

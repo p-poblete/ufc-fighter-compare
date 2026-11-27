@@ -37,8 +37,8 @@ export interface Fighter {
   archetype: string | null;
   specialties: string[];
   discipline: string | null;
-  /** UFC title fights won since 2010 (undisputed or interim, as the source marks them); null if none. */
-  titles: { wins: number; divisions: string[]; last: string } | null;
+  /** One belt per division: current champion, interim champion or former champion (data/raw/champions.csv plus title bouts won). */
+  belts: Belt[];
   /** Wikimedia Commons thumbnail with its credit; null for about three in four fighters (monogram). */
   photo: Photo | null;
   /** Null when the source has no professional record: use careerRecord() in render.ts. */
@@ -53,6 +53,11 @@ export interface Fighter {
   odds: Odds;
   duration: Duration;
   fights: Fight[];
+}
+
+export interface Belt {
+  division: string;
+  kind: "champion" | "interim" | "former";
 }
 
 export type Metric = "slpm" | "str_acc" | "sapm" | "str_def" | "td_avg" | "td_acc" | "td_def" | "sub_avg";
@@ -81,6 +86,26 @@ export interface Duration {
   decision_pct: number | null;
 }
 
+/** The 16 per-fight statistic columns of fights.parquet, null where the source has none. */
+export interface FightStats {
+  kd: number | null;
+  kd_against: number | null;
+  sig_landed: number | null;
+  sig_attempted: number | null;
+  sig_absorbed: number | null;
+  str_landed: number | null;
+  str_attempted: number | null;
+  str_absorbed: number | null;
+  td: number | null;
+  td_attempted: number | null;
+  taken_down: number | null;
+  sub_att: number | null;
+  clinch: number | null;
+  clinch_taken: number | null;
+  ground: number | null;
+  ground_taken: number | null;
+}
+
 export interface Fight {
   date: string;
   opponent: string;
@@ -96,7 +121,7 @@ export interface Fight {
   opp_odds: number | null;
   implied_prob_fair: number | null;
   title: boolean;
-  stats: { kd: number; sig_landed: number; sig_attempted: number; td: number; td_attempted: number; sub_att: number } | null;
+  stats: FightStats | null;
 }
 
 export interface Meta {

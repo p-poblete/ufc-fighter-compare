@@ -62,6 +62,12 @@ Actualizado: 2026-11-24
 ## v0.3 en borrador (2026-11-25)
 - Revisión de Piero (`UFC - Revision 24_11_26.md` en el vault) pasada a `docs/spec.md` §11: qué entra, qué queda para otro avance (calculadora de ROI, prime, métodos de toda la carrera, mapa de golpes y acciones por momento: sin datos), cortes y preguntas abiertas §11.4. Decisiones de §11.4 cerradas el 2026-11-25 (grupos: radar superpuesto 3–4 con colores dinámicos; tarjeta B con índice compuesto; campeón oro/plata/gris; exportar con casillas; volteo 3D). Pez dorado: ronda 1 NO LISTO, ronda 2 LISTO CON CAMBIOS; todo aplicado en spec §11 y registrado en §10. Spec renombrada a v0.8. Volteo en todo corner.identity; en la comparación el reverso omite lo del tale of the tape.
 
+## v0.8 con /minerva (2026-11-25)
+- Corte 1 (diálogo ampliado, cinturones oro/plata/dorado viejo #b0905a, `champions.csv` revisado, «UFC since 2010») APROBADO y en el índice, sin commit.
+- Corte 2 (portada: radar↔tape, primera vista ≥1181×900) sin indexar en web/src/{styles/app.css,lib/app.ts,lib/render.ts}: 7 iteraciones. Funciona salvo 13 px de desfase tape/récord a 1181–~1200×900 (tope de columna). Pendiente: Piero decide aceptar o ajustar márgenes; después argos + linceo + censor.
+- Estado detallado en `docs/minerva-estado.md` (no versionado). Decisiones nuevas en spec §11.5.
+- Lección de coste: el corte 2 se alargó por falso positivo de linceo (barra de Astro dev), premisa errónea del orquestador (encoger retrato) y revisiones completas tras cada ajuste. Próximos cortes: menos rondas de agentes, ajustes pequeños directos.
+
 ## Siguiente paso
 0. Piero revisa los supuestos de §11.5 → `/minerva` por cortes (empezar por el corte 1: datos y diálogo).
 1. Piero: conectar el repo en Cloudflare Pages (raíz `web`, build `npm ci && npm run build`, salida `dist`, Node 24). Después, borrar la app antigua de Streamlit Cloud (share.streamlit.io → app → Delete).

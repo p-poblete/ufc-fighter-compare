@@ -235,9 +235,9 @@ button { font: inherit; color: inherit; }
 .mini .tot > * { box-shadow: 0 -1px 0 rgb(255 255 255 / 0.16) !important; }
 
 /* ---------- fight.dialog ---------- */
-.dlg { width: min(560px, calc(100% - 32px)); max-height: calc(100% - 48px); padding: 22px; border: 0; border-radius: 20px; background: #15171b; color: var(--text); box-shadow: 0 30px 80px rgb(0 0 0 / 0.7); }
+.dlg { width: min(720px, calc(100% - 32px)); max-height: calc(100% - 48px); padding: 22px; border: 0; border-radius: 20px; background: #15171b; color: var(--text); box-shadow: 0 30px 80px rgb(0 0 0 / 0.7); }
 .dlg::backdrop { background: rgb(0 0 0 / 0.6); backdrop-filter: blur(3px); }
-.dlg[open] { display: grid; gap: 18px; animation: dlg-in 180ms var(--ease); }
+.dlg[open] { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 18px; animation: dlg-in 180ms var(--ease); }
 @keyframes dlg-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
 .dlg__head { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; }
 .dlg__head h2 { font: 800 26px/1.05 var(--display); font-stretch: 80%; }
@@ -248,7 +248,9 @@ button { font: inherit; color: inherit; }
 .dlg__facts div { background: rgb(255 255 255 / 0.04); border-radius: 10px; padding: 9px 12px; }
 .dlg__facts dt { color: var(--faint); font-size: 12px; }
 .dlg__facts dd { font-weight: 650; }
+.dstats-wrap { overflow-y: auto; min-height: 0; }
 .dstats { width: 100%; border-collapse: collapse; }
+.dstats thead th { position: sticky; top: 0; background: #15171b; }
 .dstats th, .dstats td { padding: 8px 0; }
 .dstats thead th { font: 800 18px var(--display); font-stretch: 80%; }
 .dstats thead th:first-child { color: var(--c-ink); text-align: left; } .dstats thead th:last-child { color: var(--text); text-align: right; }
@@ -772,12 +774,13 @@ body[data-glow="none"]::before { background: none; }
 .style > .panel__head--bare .icon-btn { margin-left: auto; }
 .style__missing { margin-right: 0; }
 
-/* Champion mark: top-left corner of the portrait, gold */
-.id--square .champ { position: absolute; top: 12px; left: 12px; z-index: 2; width: 30px; height: 30px; color: #f2c14e;
-  background: rgb(8 9 12 / 0.55); backdrop-filter: blur(8px); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 0 0 1px rgb(242 193 78 / 0.45); }
+/* Belts: stacked top-left of the portrait, one per division; gold champion, silver interim, grey former */
+.id--square .belts { position: absolute; top: 12px; left: 12px; z-index: 2; display: flex; flex-direction: column; gap: 6px; }
+.id--square .champ { width: 30px; height: 30px; color: var(--belt); background: rgb(8 9 12 / 0.55); backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 0 0 1px color-mix(in srgb, var(--belt) 45%, transparent); }
+.champ--champion { --belt: #f2c14e; } .champ--interim { --belt: #c9d1d9; } .champ--former { --belt: #b0905a; }
 .id--square .champ .ico { width: 20px; height: 20px; }
-.id--square .champ .badge__tip { bottom: auto; top: calc(100% + 8px); left: 0; right: auto; }
-.col--b .id--square .champ .badge__tip { left: 0; right: auto; }
+.id--square .champ .badge__tip { bottom: auto; top: 50%; transform: translateY(-50%); left: calc(100% + 8px); right: auto; width: max-content; max-width: 220px; }
 .id--square .warn { top: 50px; }
 
 /* Record squares: UFC fights glow in the corner's colour */
