@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gzip
 import json
 import re
 from dataclasses import dataclass, field
@@ -15,6 +16,7 @@ PERCENT_COLUMNS = ["str_acc", "str_def", "td_acc", "td_def"]
 VOLUME_TOLERANCE = 0.995
 MIN_DATE = date(2010, 1, 1)
 MAX_FIGHTER_BYTES = 50_000
+MAX_DIRECTORY_GZIP = 300_000
 
 
 @dataclass
@@ -46,6 +48,7 @@ def validate(
     featured: list[str],
     today: date | None = None,
     champions: pd.DataFrame | None = None,
+    directory: list[dict] | None = None,
 ) -> Report:
     report = Report()
     err = report.errors.append
@@ -115,6 +118,13 @@ def validate(
             size = len(json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
             if size > MAX_FIGHTER_BYTES:
                 err(f"fighters/{slug}.json: {size} bytes > {MAX_FIGHTER_BYTES}")
+
+    if directory is not None:
+        if [r["s"] for r in directory] != index_slugs:
+            err("directory.json: entries differ from index.json (slugs or order)")
+        size = len(gzip.compress(json.dumps(directory, ensure_ascii=False, separators=(",", ":")).encode("utf-8"), 9))
+        if size > MAX_DIRECTORY_GZIP:
+            err(f"directory.json: {size} bytes gzip > {MAX_DIRECTORY_GZIP}")
 
     if champions is not None:
         check_champions(champions, known, set(fights["weight_class"].dropna()), err)

@@ -37,6 +37,7 @@ def main(argv: list[str] | None = None) -> int:
     champions = export.load_champions(CHAMPIONS)
     index, meta, payloads = export.build_payloads(clean.fights, fighters, global_pct, division_pct, champions)
 
+    directory = export.build_directory(index, payloads)
     report = validate.validate(
         clean.fights,
         fighters,
@@ -47,6 +48,7 @@ def main(argv: list[str] | None = None) -> int:
         previous_meta,
         validate.config_slugs(WEB_CONFIG),
         champions=champions,
+        directory=directory,
     )
     for warning in report.warnings:
         print(f"WARNING {warning}")
@@ -61,7 +63,7 @@ def main(argv: list[str] | None = None) -> int:
     fighters.to_parquet(PROCESSED / "fighters.parquet", index=False)
     clean.slugs.to_csv(slugs_path, index=False)
     clean.unmatched.to_csv(PROCESSED / "unmatched.csv", index=False, date_format="%Y-%m-%d")
-    export.write_payloads(WEB_DATA, index, meta, payloads)
+    export.write_payloads(WEB_DATA, index, meta, payloads, directory)
     print(
         f"OK: {meta['fights']} fights, {meta['fighters']} fighters, data through {meta['data_through']}; "
         f"{len(clean.unmatched)} rows in unmatched.csv"

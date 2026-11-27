@@ -1,68 +1,247 @@
 ---
-// Fighters directory: every fighter in index.json, filterable in the page, each linking to its profile.
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+// Fighters directory: filters and a carousel of cards, loaded from directory.json in the browser (spec 11.1 #4).
 import Base from "../../layouts/Base.astro";
-import type { IndexEntry } from "../../lib/data";
-import { normalize } from "../../lib/search";
-
-const index: IndexEntry[] = JSON.parse(await readFile(join(process.cwd(), "public/data/index.json"), "utf-8"));
-const rows = [...index].sort((x, y) => y.last_fight.localeCompare(x.last_fight));
-const divisions = [...new Set(index.map((e) => e.weight_class).filter((d): d is string => !!d))].sort();
 ---
 
-<Base title="Fighters · UFC Fighter Compare" description="Every UFC fighter since 2010: search, filter by division and open a profile." glow="none">
+<Base title="Fighters · UFC Fighter Compare" description="Every UFC fighter since 2010: filter by division, style and specialty, and open a profile." glow="none">
   <main class="wide dir">
     <header class="dir__head">
       <h1 class="display">Fighters</h1>
-      <p class="muted"><span id="dir-count">{rows.length.toLocaleString("en-US")}</span> fighters with a UFC fight since 2010, most recently active first.</p>
+      <p class="muted"><span id="dir-count" aria-live="polite">Fighters</span> with a UFC fight since 2010.</p>
     </header>
-    <div class="dir__filters panel" role="search">
-      <label class="sr" for="dir-q">Search fighters</label>
-      <input id="dir-q" class="dir__input" type="search" placeholder="Search by name or nickname" autocomplete="off" spellcheck="false" />
+    <form class="dir__filters panel" role="search" id="dir-form" aria-label="Filter fighters" onsubmit="return false">
+      <label class="sr" for="dir-q">Search by name</label>
+      <input id="dir-q" class="dir__input" type="search" placeholder="Search by name" autocomplete="off" spellcheck="false" />
       <select id="dir-g" aria-label="Gender"><option value="">All fighters</option><option value="M">Men</option><option value="F">Women</option></select>
-      <select id="dir-d" aria-label="Division"><option value="">All divisions</option>{divisions.map((d) => <option value={d}>{d}</option>)}</select>
-      <label class="dir__active"><input type="checkbox" id="dir-a" /> Active in the last 2 years</label>
-    </div>
-    <div class="panel dir__table">
-      <table>
-        <thead><tr><th scope="col">Fighter</th><th scope="col">Division</th><th scope="col" class="num">Record</th><th scope="col" class="num">Last UFC fight</th><th scope="col"><span class="sr">Actions</span></th></tr></thead>
-        <tbody id="dir-body">
-          {rows.map((e) => (
-            <tr data-k={normalize(`${e.name} ${e.nickname ?? ""}`)} data-g={e.gender ?? ""} data-d={e.weight_class ?? ""} data-l={e.last_fight}>
-              <th scope="row"><a href={`/fighters/${e.slug}/`}>{e.name}</a>{e.nickname && <span class="muted"> “{e.nickname}”</span>}</th>
-              <td>{e.weight_class ?? "—"}</td>
-              <td class="num">{e.record}</td>
-              <td class="num">{e.last_fight}</td>
-              <td class="num"><a class="ghost ghost--sm" href={`/?a=${e.slug}`}>Compare</a></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <p class="nodata" id="dir-none" hidden>No fighter matches these filters.</p>
-    </div>
+      <select id="dir-d" aria-label="Division"><option value="">All divisions</option></select>
+      <select id="dir-a" aria-label="Archetype"><option value="">All archetypes</option></select>
+      <select id="dir-b" aria-label="Belt"><option value="">No belt filter</option></select>
+      <select id="dir-m" aria-label="Minimum UFC fights"><option value="0">Any number of fights</option></select>
+      <select id="dir-s" aria-label="Sort by"></select>
+      <button type="button" class="dir__spec dir__active" id="dir-active" aria-pressed="false" title="Fought in the 2 years before the latest fight in the data">Active (last 2 years)</button>
+      <fieldset class="dir__specs"><legend>Fighting base</legend><div id="dir-discs" class="dir__specs-row"></div></fieldset>
+      <fieldset class="dir__specs"><legend>Specialties (all selected must apply)</legend><div id="dir-specs" class="dir__specs-row"></div></fieldset>
+      <button type="button" class="ghost dir__clear" id="dir-clear" hidden>Clear filters</button>
+    </form>
+    <section class="car" aria-roledescription="carousel" aria-label="Fighters">
+      <ul class="car__track" id="car-track" tabindex="0" aria-label="Fighters. Use the left and right arrow keys to scroll."></ul>
+      <p class="car__msg panel" id="car-msg" role="status">Loading fighters…</p>
+      <div class="car__ctl" id="car-ctl" hidden>
+        <button type="button" class="car__btn" id="car-prev" aria-label="Previous fighters" aria-controls="car-track">‹</button>
+        <div class="car__bar" id="car-bar" role="progressbar" aria-label="Carousel position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="car-fill"></span></div>
+        <button type="button" class="car__btn" id="car-next" aria-label="Next fighters" aria-controls="car-track">›</button>
+      </div>
+    </section>
   </main>
   <script>
-    import { normalize } from "../../lib/search";
+    import { loadDirectory } from "../../lib/data";
+    import type { DirectoryEntry } from "../../lib/data";
+    import { BELTS, EMPTY, MINS, PAGE, SORTS, isFiltered, optionsOf, parseState, serializeState, view } from "../../lib/directory";
+    import type { DirState } from "../../lib/directory";
+    import { fitBadges } from "../../lib/fit";
+    import { ARCHETYPES, FACT_ICONS, SPECIALTIES, svgIcon } from "../../lib/icons";
+    import { badges, championMark, portrait } from "../../lib/render";
+    import { esc } from "../../lib/format";
     import { initTools } from "../../lib/tools";
     initTools();
-    const q = document.getElementById("dir-q") as HTMLInputElement;
-    const g = document.getElementById("dir-g") as HTMLSelectElement;
-    const d = document.getElementById("dir-d") as HTMLSelectElement;
-    const act = document.getElementById("dir-a") as HTMLInputElement;
-    const rows = [...document.querySelectorAll<HTMLTableRowElement>("#dir-body tr")];
-    const cut = new Date(Date.now() - 2 * 365.25 * 864e5).toISOString().slice(0, 10);
-    const apply = () => {
-      const k = normalize(q.value);
-      let n = 0;
-      for (const r of rows) {
-        const show = (!k || r.dataset.k!.includes(k)) && (!g.value || r.dataset.g === g.value) && (!d.value || r.dataset.d === d.value) && (!act.checked || r.dataset.l! >= cut);
-        r.hidden = !show;
-        if (show) n++;
+
+    const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+    const q = $<HTMLInputElement>("dir-q");
+    const selG = $<HTMLSelectElement>("dir-g"), selD = $<HTMLSelectElement>("dir-d"), selA = $<HTMLSelectElement>("dir-a");
+    const selB = $<HTMLSelectElement>("dir-b"), selM = $<HTMLSelectElement>("dir-m"), discs = $("dir-discs"), active = $<HTMLButtonElement>("dir-active"), selS = $<HTMLSelectElement>("dir-s");
+    const specs = $("dir-specs"), clear = $<HTMLButtonElement>("dir-clear"), count = $("dir-count");
+    const track = $<HTMLUListElement>("car-track"), msg = $("car-msg"), ctl = $("car-ctl");
+    const prev = $<HTMLButtonElement>("car-prev"), next = $<HTMLButtonElement>("car-next");
+    const bar = $("car-bar"), fill = $("car-fill");
+
+    let all: DirectoryEntry[] = [];
+    let state: DirState = { ...EMPTY };
+    let rows: DirectoryEntry[] = [];
+    let shown = 0;
+    let io: IntersectionObserver | null = null;
+
+    const dash = "—";
+    const stat = (v: number | undefined, d: number, suffix = "") => (v == null ? dash : `${v.toFixed(d)}${suffix}`);
+
+    function card(e: DirectoryEntry): string {
+      const photo = e.p ? { url: e.p.u, width: e.p.w, height: e.p.h, author: e.p.a, license: e.p.l, license_url: e.p.lu, page: e.p.pg } : null;
+      const style = badges({ archetype: e.a ?? null, discipline: e.di ?? null, specialties: e.sp ?? [] } as never, true, true);
+      return `<li class="dcard panel" data-tone="solo" data-accent="${esc(e.a ?? "none")}" aria-label="${esc(e.n)}">
+        <div class="id--square dcard__photo">${portrait({ name: e.n, photo })}${championMark({ belts: e.belts })}</div>
+        <div class="dcard__body">
+          <h3 class="dcard__name"><a href="/fighters/${esc(e.s)}/">${esc(e.n)}</a></h3>
+          <p class="dcard__sub"><span>${esc(e.d ?? "No division")}</span><span class="dcard__rec">${esc(e.r)}</span></p>
+          ${style}
+          <dl class="dcard__stats">
+            <div><dt>SLpM</dt><dd>${stat(e.sl, 2)}</dd></div>
+            <div><dt>TDAvg</dt><dd>${stat(e.td, 2)}</dd></div>
+            <div><dt>Finish</dt><dd>${stat(e.fr == null ? undefined : Math.round(e.fr), 0, "%")}</dd></div>
+          </dl>
+        </div>
+      </li>`;
+    }
+
+    const sentinel = () => track.querySelector<HTMLElement>(".car__more");
+
+    function more() {
+      if (shown >= rows.length) return;
+      sentinel()?.remove();
+      const from = shown;
+      shown = Math.min(rows.length, shown + PAGE);
+      const frag = document.createElement("template");
+      frag.innerHTML = rows.slice(from, shown).map(card).join("");
+      const added = [...frag.content.children] as HTMLElement[];
+      track.append(frag.content);
+      for (const c of added) fitBadges(c);
+      if (shown < rows.length) {
+        const li = document.createElement("li");
+        li.className = "car__more";
+        li.innerHTML = `<button type="button" class="ghost">Show more<small>${rows.length - shown} left</small></button>`;
+        li.querySelector("button")!.addEventListener("click", more);
+        track.append(li);
+        io?.observe(li);
       }
-      document.getElementById("dir-count")!.textContent = n.toLocaleString("en-US");
-      document.getElementById("dir-none")!.hidden = n > 0;
-    };
-    for (const el of [q, g, d, act]) el.addEventListener("input", apply);
+      progress();
+    }
+
+    function render() {
+      rows = view(all, state);
+      shown = 0;
+      track.replaceChildren();
+      track.scrollLeft = 0;
+      count.textContent = `${rows.length.toLocaleString("en-US")} ${rows.length === 1 ? "fighter" : "fighters"}`;
+      clear.hidden = !isFiltered(state);
+      if (!rows.length) {
+        msg.hidden = false;
+        msg.innerHTML = `<span>No fighters match these filters</span><button type="button" class="cta" id="car-reset">Clear filters</button>`;
+        $("car-reset").addEventListener("click", reset);
+        ctl.hidden = true;
+        return;
+      }
+      msg.hidden = true;
+      ctl.hidden = false;
+      more();
+    }
+
+    function progress() {
+      const max = track.scrollWidth - track.clientWidth;
+      const p = max > 0 ? Math.min(1, Math.max(0, track.scrollLeft / max)) : 0;
+      fill.style.width = `${Math.max(6, p * 100)}%`;
+      bar.setAttribute("aria-valuenow", String(Math.round(p * 100)));
+      prev.disabled = track.scrollLeft <= 1;
+      next.disabled = max <= 1 || (track.scrollLeft >= max - 1 && shown >= rows.length);
+    }
+
+    function step(dir: 1 | -1) {
+      const c = track.querySelector<HTMLElement>(".dcard");
+      const w = c ? c.getBoundingClientRect().width + parseFloat(getComputedStyle(track).columnGap || "0") : track.clientWidth;
+      track.scrollBy({ left: dir * w, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+      // Reaching the end by arrow also asks for the next page.
+      if (dir === 1 && shown < rows.length && track.scrollLeft + track.clientWidth + w >= track.scrollWidth - 40) more();
+    }
+    prev.addEventListener("click", () => step(-1));
+    next.addEventListener("click", () => step(1));
+    // The whole card opens the profile; its own links and badges keep their behaviour.
+    track.addEventListener("click", (ev) => {
+      const t = ev.target as HTMLElement;
+      if (t.closest("a, button, .badge")) return;
+      t.closest<HTMLElement>(".dcard")?.querySelector<HTMLAnchorElement>(".dcard__name a")?.click();
+    });
+    track.addEventListener("scroll", progress, { passive: true });
+    track.addEventListener("keydown", (ev) => {
+      if (ev.altKey || ev.ctrlKey || ev.metaKey || (ev.key !== "ArrowRight" && ev.key !== "ArrowLeft")) return;
+      if ((ev.target as HTMLElement).closest("input, select, textarea")) return;
+      ev.preventDefault();
+      step(ev.key === "ArrowRight" ? 1 : -1);
+    });
+    addEventListener("resize", () => {
+      progress();
+      fitBadges(track);
+    });
+
+    function write(replace = true) {
+      const url = `${location.pathname}${serializeState(state)}`;
+      if (url !== location.pathname + location.search) history[replace ? "replaceState" : "pushState"](null, "", url);
+    }
+    function sync() {
+      q.value = state.q;
+      selG.value = state.gender;
+      selD.value = state.division;
+      selA.value = state.archetype;
+      selB.value = state.belt;
+      selM.value = String(state.min);
+      active.setAttribute("aria-pressed", String(state.active));
+      discs.querySelectorAll<HTMLButtonElement>("button").forEach((b) => b.setAttribute("aria-pressed", String(state.discipline === b.dataset.k)));
+      selS.value = state.sort;
+      specs.querySelectorAll<HTMLButtonElement>("button").forEach((b) => b.setAttribute("aria-pressed", String(state.spec.includes(b.dataset.k!))));
+    }
+    function change(patch: Partial<DirState>) {
+      state = { ...state, ...patch };
+      write();
+      sync();
+      render();
+    }
+    function reset() {
+      change({ ...EMPTY });
+      q.focus();
+    }
+    clear.addEventListener("click", reset);
+
+    const opt = (v: string, label: string) => `<option value="${esc(v)}">${esc(label)}</option>`;
+    q.addEventListener("input", () => change({ q: q.value }));
+    selG.addEventListener("change", () => change({ gender: selG.value }));
+    selD.addEventListener("change", () => change({ division: selD.value }));
+    selA.addEventListener("change", () => change({ archetype: selA.value }));
+    selB.addEventListener("change", () => change({ belt: selB.value }));
+    selM.addEventListener("change", () => change({ min: Number(selM.value) }));
+    active.addEventListener("click", () => change({ active: !state.active }));
+    discs.addEventListener("click", (ev) => {
+      const b = (ev.target as HTMLElement).closest<HTMLButtonElement>("button[data-k]");
+      if (b) change({ discipline: state.discipline === b.dataset.k ? "" : b.dataset.k! });
+    });
+    selB.insertAdjacentHTML("beforeend", BELTS.map(([k, l]) => opt(k, l)).join(""));
+    selM.insertAdjacentHTML("beforeend", MINS.map((n) => opt(String(n), `${n}+ UFC fights`)).join(""));
+    selS.addEventListener("change", () => change({ sort: selS.value as DirState["sort"] }));
+    selS.innerHTML = SORTS.map(([k, l]) => opt(k, l)).join("");
+    specs.innerHTML = Object.entries(SPECIALTIES)
+      .map(([k, b]) => `<button type="button" class="dir__spec" data-k="${k}" aria-pressed="false" title="${esc(b.rule)}">${svgIcon(b.path)}<span>${esc(b.label)}</span></button>`)
+      .join("");
+    specs.addEventListener("click", (ev) => {
+      const b = (ev.target as HTMLElement).closest<HTMLButtonElement>("button[data-k]");
+      if (!b) return;
+      const k = b.dataset.k!;
+      change({ spec: state.spec.includes(k) ? state.spec.filter((x) => x !== k) : [...state.spec, k] });
+    });
+    addEventListener("popstate", () => {
+      state = parseState(new URLSearchParams(location.search), options);
+      sync();
+      render();
+    });
+
+    // Load the next 24 cards when the end of the track gets close.
+    if ("IntersectionObserver" in window) {
+      io = new IntersectionObserver((es) => es.some((x) => x.isIntersecting) && more(), { root: track, rootMargin: "0px 600px 0px 0px" });
+    }
+
+    let options = optionsOf([], Object.keys(ARCHETYPES), Object.keys(SPECIALTIES));
+    loadDirectory()
+      .then((data) => {
+        all = data;
+        options = optionsOf(data, Object.keys(ARCHETYPES), Object.keys(SPECIALTIES));
+        selD.insertAdjacentHTML("beforeend", options.divisions.map((d) => opt(d, d)).join(""));
+        selA.insertAdjacentHTML("beforeend", options.archetypes.map((a) => opt(a, a)).join(""));
+        discs.innerHTML = options.disciplines
+          .map((d) => `<button type="button" class="dir__spec" data-k="${esc(d)}" aria-pressed="false">${svgIcon(FACT_ICONS.discipline)}<span>${esc(d)}</span></button>`)
+          .join("");
+        state = parseState(new URLSearchParams(location.search), options);
+        sync();
+        render();
+        document.fonts?.ready.then(() => fitBadges(track));
+      })
+      .catch(() => {
+        count.textContent = "Fighters";
+        msg.innerHTML = `<span>The fighters could not be loaded.</span><button type="button" class="cta" id="car-retry">Try again</button>`;
+        $("car-retry").addEventListener("click", () => location.reload());
+      });
   </script>
 </Base>

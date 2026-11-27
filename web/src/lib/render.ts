@@ -25,7 +25,7 @@ export const METRICS: [Metric, string][] = [
   ["sub_avg", "Submissions / 15 min"],
 ];
 export const ODDS_TYPES: OddsType[] = ["Heavy favorite", "Favorite", "Pick'em", "Underdog", "Heavy underdog"];
-const RESULT: Record<Fight["result"], string> = { W: "Win", L: "Loss", D: "Draw", NC: "No contest" };
+export const RESULT: Record<Fight["result"], string> = { W: "Win", L: "Loss", D: "Draw", NC: "No contest" };
 
 // ---------- figures ----------
 export function age(f: Fighter, today?: Date): number | null {
@@ -107,7 +107,7 @@ export const archetypeChip = (x: string | null) =>
 /** Specialty icons on one row: every one is rendered and `fitBadges()` (lib/fit.ts) keeps as many as the row
  *  holds, folding the rest into a "+N" badge that lists them. Without script, up to 4 show (a lone 4th in place of "+1"). */
 const SHOWN_SPECIALTIES = 3;
-export function badges(f: Fighter): string {
+export function badges(f: Pick<Fighter, "archetype" | "discipline" | "specialties">, withDiscipline = true, discIcon = false): string {
   const keys = (f.specialties ?? []).filter((k) => SPECIALTIES[k]);
   const shown = keys.length <= SHOWN_SPECIALTIES + 1 ? keys.length : SHOWN_SPECIALTIES;
   const spec = keys
@@ -119,8 +119,8 @@ export function badges(f: Fighter): string {
         .map((k, i) => `<span data-spec-tip="${i}"${i < shown ? " hidden" : ""}><b>${esc(SPECIALTIES[k].label)}</b><span class="tip__rule">${esc(SPECIALTIES[k].rule)}</span></span>`)
         .join("")}</span></span>`
     : "";
-  const disc = f.discipline
-    ? badge("disc", f.discipline, "Listed style on UFC.com (via TidyTuesday/{fightr})", esc(f.discipline))
+  const disc = withDiscipline && f.discipline
+    ? badge("disc", f.discipline, "Listed style on UFC.com (via TidyTuesday/{fightr})", `${discIcon ? svgIcon(FACT_ICONS.discipline) : ""}${discIcon ? `<span>${esc(f.discipline)}</span>` : esc(f.discipline)}`)
     : "";
   return `<div class="badges">${archetypeChip(f.archetype)}${disc}${spec}${more}</div>`;
 }
@@ -128,7 +128,7 @@ export function badges(f: Fighter): string {
 // ---------- corner.* (one fighter, against their edge) ----------
 /** corner.identity. Physical facts only when no duel.matchup shows them (profile, or one corner empty). */
 /** The square's background: the Commons photo when there is one (credit behind a © on hover/focus), else the monogram. */
-function portrait(f: Fighter): string {
+export function portrait(f: Pick<Fighter, "name" | "photo">): string {
   const p = f.photo;
   if (!p) return `<div class="portrait" aria-hidden="true"><span>${esc(initials(f.name))}</span></div>`;
   const lic = p.license_url ? `<a href="${esc(p.license_url)}" rel="license noopener" target="_blank">${esc(p.license)}</a>` : esc(p.license);
@@ -139,7 +139,7 @@ function portrait(f: Fighter): string {
 const BELT_LABEL = { champion: "Champion", interim: "Interim champion", former: "Former champion" } as const;
 
 /** Belts stacked at the portrait's top-left corner, one per division: gold (champion), silver (interim) or grey (former). */
-function championMark(f: Fighter): string {
+export function championMark(f: Pick<Fighter, "belts">): string {
   if (!f.belts?.length) return "";
   const items = f.belts
     .map((b) => {

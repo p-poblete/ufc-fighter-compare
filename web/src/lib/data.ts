@@ -55,6 +55,29 @@ export interface Fighter {
   fights: Fight[];
 }
 
+/** One entry of directory.json (pipeline/export.py build_directory); null fields are omitted. Same order as index.json. */
+export interface DirectoryEntry {
+  s: string; // slug
+  n: string; // name
+  g?: Gender;
+  d?: string; // division
+  r: string; // record "W-L-D", as index.json
+  a?: string; // archetype
+  sp?: string[]; // specialties
+  di?: string; // discipline
+  p?: { u: string; w: number; h: number; a: string; l: string; lu: string; pg: string }; // photo with Commons credit
+  belts: Belt[];
+  sl?: number; // SLpM
+  td?: number; // TDAvg
+  fr?: number; // finish % of UFC wins
+  ix?: number; // composite index (mean of the 8 percentiles, 1 decimal)
+  nf: number; // UFC fights
+  lf: string; // last fight, ISO date
+  rf: [result: "W" | "L" | "D" | "NC", date: string, opponent: string, method: string][]; // last 5 UFC fights, newest first
+  w: number; // UFC wins since 2010
+  wp?: number; // UFC win % since 2010 (wins / (W+L+D))
+}
+
 export interface Belt {
   division: string;
   kind: "champion" | "interim" | "former";
@@ -154,4 +177,11 @@ export function loadFighter(slug: string): Promise<Fighter> {
     cache.set(slug, p);
   }
   return p;
+}
+
+/** Fighters directory (only /fighters/ loads it; index.json is unchanged). */
+export async function loadDirectory(): Promise<DirectoryEntry[]> {
+  const res = await fetch(`${base}/directory.json`);
+  if (!res.ok) throw new Error(`directory.json: HTTP ${res.status}`);
+  return res.json();
 }

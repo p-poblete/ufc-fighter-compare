@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import math
-import shutil
 from datetime import date
 from pathlib import Path
 
@@ -195,16 +194,90 @@ def build_payloads(
     return index, meta, payloads
 
 
+def _mean_percentile(pct: dict | None) -> float | None:
+    """Composite index: mean of the 8 stored percentiles (SApM is already stored as 100 - p, as in the radar)."""
+    if not pct:
+        return None
+    return round(sum(pct[m] for m in CAREER_METRICS) / len(CAREER_METRICS), 1)
+
+
+def build_directory(index: list[dict], payloads: dict[str, dict]) -> list[dict]:
+    """Carousel directory (spec 11.1 row 4): one short-key object per index.json entry, same order. Nulls omitted.
+
+    s slug, n name, g gender, d division, r record (as index.json), a archetype, sp specialties, di discipline,
+    p photo {u, w, h, a author, l license, lu license url, pg Commons page}, belts [{division, kind}],
+    sl SLpM, td TDAvg, fr finish % (KO/TKO+SUB of UFC wins),
+    ix composite index, nf UFC fights, lf last fight, rf last 5 UFC fights newest first [result, date, opponent,
+    method], w UFC wins since 2010, wp UFC win % since 2010 (wins / (W+L+D); NC excluded).
+    """
+    out = []
+    for entry in index:
+        f = payloads[entry["slug"]]
+        pct = f["percentiles"]
+        own = (pct["division"] or pct["global"]) if pct else None
+        wins, rec = f["ufc_record"]["W"], f["ufc_record"]
+        decided = wins + rec["L"] + rec["D"]
+        career = f["career"] or {}
+        photo = f["photo"]
+        finishes = f["wins_by"]["KO/TKO"] + f["wins_by"]["SUB"]
+        row = {
+            "s": entry["slug"],
+            "n": entry["name"],
+            "g": entry["gender"],
+            "d": entry["weight_class"],
+            "r": entry["record"],
+            "a": f["archetype"],
+            "sp": f["specialties"] or None,
+            "di": f["discipline"],
+            "p": {
+                "u": photo["url"],
+                "w": photo["width"],
+                "h": photo["height"],
+                "a": photo["author"],
+                "l": photo["license"],
+                "lu": photo["license_url"],
+                "pg": photo["page"],
+            }
+            if photo
+            else None,
+            "belts": f["belts"],
+            "sl": clean(career.get("slpm")),
+            "td": clean(career.get("td_avg")),
+            "fr": round(finishes / wins * 100, 1) if wins else None,
+            "ix": _mean_percentile(own),
+            "nf": f["ufc_fights"],
+            "lf": f["last_fight"],
+            "rf": [[x["result"], x["date"], x["opponent"], x["method"]] for x in f["fights"][:5]],
+            "w": wins,
+            "wp": round(wins / decided * 100, 1) if decided else None,
+        }
+        out.append({k: v for k, v in row.items() if v is not None})
+    return out
+
+
 def _dump(obj) -> str:
     return json.dumps(obj, ensure_ascii=False, separators=(",", ":"), allow_nan=False) + "\n"
 
 
-def write_payloads(out_dir: Path, index: list[dict], meta: dict, payloads: dict[str, dict]) -> None:
+def _write_if_changed(path: Path, text: str) -> None:
+    if not path.exists() or path.read_text(encoding="utf-8") != text:
+        path.write_text(text, encoding="utf-8")
+
+
+def write_payloads(
+    out_dir: Path, index: list[dict], meta: dict, payloads: dict[str, dict], directory: list[dict] | None = None
+) -> None:
+    # Update in place: deleting and recreating the whole folder makes the dev server's watcher lose
+    # some files (404 until restart). Only changed files are rewritten and stale ones removed.
     fighters_dir = out_dir / "fighters"
-    if fighters_dir.exists():
-        shutil.rmtree(fighters_dir)
-    fighters_dir.mkdir(parents=True)
-    (out_dir / "index.json").write_text(_dump(index), encoding="utf-8")
-    (out_dir / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    fighters_dir.mkdir(parents=True, exist_ok=True)
+    _write_if_changed(out_dir / "index.json", _dump(index))
+    if directory is not None:
+        _write_if_changed(out_dir / "directory.json", _dump(directory))
+    _write_if_changed(out_dir / "meta.json", json.dumps(meta, ensure_ascii=False, indent=2) + "\n")
     for slug, payload in payloads.items():
-        (fighters_dir / f"{slug}.json").write_text(_dump(payload), encoding="utf-8")
+        _write_if_changed(fighters_dir / f"{slug}.json", _dump(payload))
+    keep = {f"{slug}.json" for slug in payloads}
+    for stale in fighters_dir.glob("*.json"):
+        if stale.name not in keep:
+            stale.unlink()

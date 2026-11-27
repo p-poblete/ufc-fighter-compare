@@ -170,3 +170,47 @@ def test_config_slugs(tmp_path):
     cfg.write_text("export const FEATURED = { a: \"jose-aldo\", b: 'conor-mcgregor' };\n")
     assert validate.config_slugs(cfg) == ["jose-aldo", "conor-mcgregor"]
     assert validate.config_slugs(tmp_path / "missing.ts") == []
+
+
+# --- directory.json (spec 11.1 row 4) --------------------------------------------------------
+
+
+def _load(name):
+    return json.loads((WEB_DATA / name).read_text(encoding="utf-8"))
+
+
+@needs_build
+def test_directory_one_entry_per_index_fighter():
+    index, directory = _load("index.json"), _load("directory.json")
+    assert [r["s"] for r in directory] == [r["slug"] for r in index]
+    for entry, row in zip(directory, index, strict=True):
+        assert entry["n"] == row["name"] and entry["r"] == row["record"]
+        assert len(entry["rf"]) <= 5
+
+
+@needs_build
+def test_directory_index_is_mean_of_the_eight_percentiles():
+    for entry in _load("directory.json"):
+        pct = _load(f"fighters/{entry['s']}.json")["percentiles"]
+        own = (pct["division"] or pct["global"]) if pct else None
+        if own is None:
+            assert "ix" not in entry
+        else:
+            assert len(own) == 8
+            assert entry["ix"] == pytest.approx(sum(own.values()) / 8, abs=0.051)
+
+
+@needs_build
+def test_directory_gzip_under_limit():
+    import gzip
+
+    assert len(gzip.compress((WEB_DATA / "directory.json").read_bytes(), 9)) < validate.MAX_DIRECTORY_GZIP
+
+
+@needs_build
+def test_directory_belts_follow_the_contract():
+    for entry in _load("directory.json"):
+        fighter = _load(f"fighters/{entry['s']}.json")
+        assert entry["belts"] == fighter["belts"]
+        for belt in entry["belts"]:
+            assert set(belt) == {"division", "kind"} and belt["kind"] in {"champion", "interim", "former"}
