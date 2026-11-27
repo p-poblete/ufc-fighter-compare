@@ -1,0 +1,51 @@
+---
+// The fighter picker of the home page (gender and division filters plus the search box); also used by /groups/.
+interface Props {
+  side: string;
+  label: string;
+  men: string[];
+  women: string[];
+  placeholder?: string;
+}
+const { side, label, men, women, placeholder = "Search" } = Astro.props;
+---
+
+<div class="pick" data-side={side}>
+  <div class="dd" data-dd="gender" data-value="">
+    <button type="button" class="dd__btn" aria-haspopup="listbox" aria-expanded="false" aria-label={`${label}: gender`}><span>All</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" /></svg></button>
+    <div class="dd__menu" role="listbox" hidden>
+      <button type="button" role="option" data-v="" aria-selected="true">All</button>
+      <button type="button" role="option" data-v="M" aria-selected="false">Men</button>
+      <button type="button" role="option" data-v="F" aria-selected="false">Women</button>
+    </div>
+  </div>
+  <div class="dd" data-dd="division" data-value="">
+    <button type="button" class="dd__btn" aria-haspopup="listbox" aria-expanded="false" aria-label={`${label}: division`}><span>All divisions</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" /></svg></button>
+    <div class="dd__menu dd__menu--wide" role="listbox" hidden>
+      <button type="button" role="option" data-v="" aria-selected="true">All divisions</button>
+      <p class="dd__group">Men</p>
+      {men.map((d) => <button type="button" role="option" data-v={d} aria-selected="false">{d}</button>)}
+      <p class="dd__group">Women</p>
+      {women.map((d) => <button type="button" role="option" data-v={d} aria-selected="false">{d.replace("Women's ", "")}</button>)}
+    </div>
+  </div>
+  <div class="combo">
+    <label for={`q-${side}`} class="sr">{label}: search a fighter</label>
+    <input
+      id={`q-${side}`}
+      class="combo__input"
+      type="search"
+      role="combobox"
+      aria-autocomplete="list"
+      aria-expanded="false"
+      aria-controls={`lb-${side}`}
+      autocomplete="off"
+      spellcheck="false"
+      placeholder={placeholder}
+    />
+    <button type="button" class="pick__go" aria-label={`${label}: search with these filters`}>
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M9 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12zm4.5-1.5L17 17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
+    </button>
+    <ul id={`lb-${side}`} class="combo__list" role="listbox" aria-label={`${label} suggestions`} hidden></ul>
+  </div>
+</div>

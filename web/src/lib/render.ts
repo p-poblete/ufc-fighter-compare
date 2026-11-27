@@ -316,7 +316,7 @@ export function matchup(a: Fighter, b: Fighter, today?: Date): string {
   return mod("duel.matchup", "", body, { cls: "mu", label: "Figures and tale of the tape" });
 }
 
-const RAW: Record<Metric, (x: number) => string> = {
+export const RAW: Record<Metric, (x: number) => string> = {
   slpm: (x) => x.toFixed(2), str_acc: (x) => `${Math.round(x)}%`, sapm: (x) => x.toFixed(2), str_def: (x) => `${Math.round(x)}%`,
   td_avg: (x) => x.toFixed(2), td_acc: (x) => `${Math.round(x)}%`, td_def: (x) => `${Math.round(x)}%`, sub_avg: (x) => x.toFixed(1),
 };

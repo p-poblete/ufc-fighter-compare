@@ -231,6 +231,51 @@ function radar(el: HTMLElement, entries: Entry[], layer: string) {
   setActive(null);
 }
 
+/** Radar for a group: one polygon per entry (colour by list position), 0-100 percentiles; the table is the read-out. */
+export interface PolyEntry {
+  name: string;
+  color: string;
+  values: number[]; // one percentile per METRICS row
+}
+export function drawGroupRadar(el: HTMLElement, polys: PolyEntry[]): void {
+  const chart = instance(el);
+  chart.setOption(
+    {
+      textStyle: font,
+      radar: {
+        indicator: METRICS.map(([m]) => ({ name: SHORT[m], max: 100 })),
+        radius: el.clientWidth < 480 ? "58%" : "66%",
+        center: ["50%", "50%"],
+        splitNumber: 4,
+        axisNameGap: 8,
+        axisName: { ...font, fontSize: el.clientWidth < 480 ? 11 : 12, color: MUTED },
+        splitLine: { lineStyle: { color: LINE } },
+        splitArea: { show: false },
+        axisLine: { lineStyle: { color: LINE } },
+      },
+      series: polys.map((p) => ({
+        type: "radar" as const,
+        name: p.name,
+        silent: true,
+        symbolSize: 5,
+        data: [
+          {
+            value: p.values.map((v) => Math.round(v)),
+            lineStyle: { color: p.color, width: 2.5 },
+            itemStyle: { color: p.color },
+            areaStyle: { color: p.color, opacity: 0.1 },
+          },
+        ],
+      })),
+    },
+    true,
+  );
+  if (!observed.has(el)) {
+    observed.add(el);
+    resizer.observe(el);
+  }
+}
+
 // ---------- fights.performance ----------
 export type PerfMetric = "slpm" | "acc" | "td" | "sub";
 const PERF: Record<PerfMetric, { label: string; unit: string; digits: number; value: (x: Fight) => number | null }> = {

@@ -472,8 +472,8 @@ section[id] { scroll-margin-top: 84px; }
   .tool--search span, .tool--search kbd { display: none; }
 }
 @media (max-width: 760px) {
-  .topbar__in { grid-template-columns: 1fr; gap: 8px; }
-  .nav { margin-left: 0; overflow-x: auto; }
+  .topbar__in { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .nav { margin-left: 0; overflow-x: auto; justify-self: stretch; min-width: 0; }
   .tools { flex-wrap: wrap; }
   .dir__filters { grid-template-columns: 1fr; }
   .method { grid-template-columns: 1fr; }
@@ -942,3 +942,35 @@ body[data-glow="none"]::before { background: none; }
 @media (max-width: 759px) { .car { --n: 2.2; --k: 2; } }
 @media (max-width: 479px) { .car { --n: 1.2; --k: 1; } .dir__head .display { font-size: 44px; } }
 @media (prefers-reduced-motion: reduce) { .car__bar span { transition: none; } }
+
+/* ---------- /groups/ (spec 11.1 #3): Okabe-Ito colours by list position, never the corner colours ---------- */
+.grp { padding-block: 24px 48px; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--gap); }
+.grp__add { max-width: 640px; }
+.grp__add > .pick { z-index: 25; }
+.pick.is-off { opacity: 0.55; }
+.grp__notes { display: grid; gap: 4px; }
+.grp__notes:empty { display: none; }
+.grp__legend { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
+.grp__item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--panel-2); box-shadow: inset 3px 0 0 var(--gc); min-width: 0; }
+.grp__who { display: grid; flex: 1; min-width: 0; }
+.grp__who b { overflow-wrap: anywhere; }
+.grp__dot { display: inline-block; width: 10px; height: 10px; flex: none; border-radius: 50%; background: var(--gc); margin-right: 6px; }
+.grp__item .grp__dot { margin: 0; }
+.grp__rm { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-size: 22px; line-height: 1; cursor: pointer; }
+.grp__rm:hover { background: rgb(255 255 255 / 0.1); color: var(--text); }
+.grp > * { min-width: 0; }
+.grp__scroll { overflow-x: auto; min-width: 0; max-width: 100%; contain: paint; }
+.grp__table { width: 100%; border-collapse: collapse; min-width: 480px; }
+.grp__table th, .grp__table td { padding: 10px 12px; text-align: left; vertical-align: top; }
+.grp__table thead th { font-weight: 700; white-space: nowrap; }
+.grp__table tbody th { color: var(--muted); font-weight: 400; font-size: 13px; }
+.grp__table tbody tr + tr > * { box-shadow: 0 -1px 0 var(--line); }
+.grp__val { display: flex; align-items: center; gap: 6px; font: 600 15px var(--ui); }
+.grp__table .is-best .grp__val { font-weight: 800; }
+.grp__pt { width: 8px; height: 8px; border-radius: 50%; background: var(--gc); flex: none; }
+.grp__pct { color: var(--faint); font-size: 12px; }
+.grp__bar { display: block; height: 3px; margin-top: 4px; border-radius: 2px; background: rgb(255 255 255 / 0.1); }
+.grp__bar i { display: block; height: 100%; border-radius: 2px; background: var(--gc); }
+.palette__group { display: block; width: 100%; padding: 12px 20px; border: 0; border-top: 1px solid var(--line); background: transparent; color: var(--muted); font: 600 13px var(--ui); text-align: left; cursor: pointer; }
+.palette__group:hover { color: var(--text); background: rgb(255 255 255 / 0.05); }
+@media (max-width: 760px) { .tool--group span { display: none; } }

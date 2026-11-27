@@ -10,6 +10,8 @@ export interface ToolHooks {
   pick?: (side: "a" | "b", slug: string) => void;
   /** Compare page: build the share image. */
   exportImage?: () => Promise<Blob | null>;
+  /** URL of "Compare as group" (the current sides on the compare page); default `/groups/?f=`; null hides the option (on /groups/). */
+  group?: () => string | null;
 }
 
 interface Recent {
@@ -174,10 +176,19 @@ function initPalette(hooks: ToolHooks) {
   dlg.setAttribute("aria-label", "Quick search");
   dlg.innerHTML = `<input class="palette__input" type="search" role="combobox" aria-expanded="true" aria-controls="pal-list" aria-autocomplete="list" placeholder="Search a fighter…" autocomplete="off" spellcheck="false">
     <ul class="palette__list" id="pal-list" role="listbox"></ul>
-    <p class="palette__keys">${hooks.pick ? "<kbd>Enter</kbd> red corner · <kbd>Shift</kbd>+<kbd>Enter</kbd> blue corner · " : "<kbd>Enter</kbd> compare · "}<kbd>Ctrl</kbd>+<kbd>Enter</kbd> profile · <kbd>Esc</kbd> close</p>`;
+    <p class="palette__keys">${hooks.pick ? "<kbd>Enter</kbd> red corner · <kbd>Shift</kbd>+<kbd>Enter</kbd> blue corner · " : "<kbd>Enter</kbd> compare · "}<kbd>Ctrl</kbd>+<kbd>Enter</kbd> profile · <kbd>Esc</kbd> close</p>
+    <button type="button" class="palette__group" data-group hidden>Compare as group</button>`;
   document.body.append(dlg);
   const input = dlg.querySelector<HTMLInputElement>("input")!;
   const list = dlg.querySelector<HTMLUListElement>("ul")!;
+  const groupBtn = dlg.querySelector<HTMLButtonElement>("[data-group]")!;
+  groupBtn.hidden = hooks.group?.() === null;
+  groupBtn.addEventListener("click", () => {
+    const url = hooks.group?.();
+    if (url === null) return;
+    dlg.close();
+    location.href = url ?? "/groups/?f=";
+  });
   let items: Searchable[] | null = null;
   let results: IndexEntry[] = [];
   let active = 0;
