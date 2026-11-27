@@ -12,8 +12,10 @@ interface Props {
   title: string;
   description: string;
   glow?: "pair" | "solo" | "none";
+  /** Profile accent: the fighter's archetype (Striker, Grappler, Balanced) or "none" for the orange default. */
+  accent?: string;
 }
-const { title, description, glow = "pair" } = Astro.props;
+const { title, description, glow = "pair", accent } = Astro.props;
 const path = Astro.url.pathname;
 const nav = [
   { href: "/", label: "Compare", on: path === "/" },
@@ -35,7 +37,7 @@ const meta: Meta = JSON.parse(await readFile(join(process.cwd(), "public/data/me
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <slot name="head" />
   </head>
-  <body data-glow={glow}>
+  <body data-glow={glow} data-accent={accent}>
     <header class="topbar">
       <div class="wide topbar__in">
         <a class="brand" href="/" aria-label="Fighter Compare, home">

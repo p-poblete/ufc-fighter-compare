@@ -3,7 +3,7 @@
 import type { Fight, FightStats, Fighter, Method, Metric, OddsType } from "./data";
 import { DASH, ageFrom, dateLong, esc, feetInches, initials, lastName } from "./format";
 import { settings } from "./settings";
-import { ARCHETYPES, BELT, SPECIALTIES, svgIcon } from "./icons";
+import { ARCHETYPES, BELT, FACT_ICONS, FLIP, SPECIALTIES, svgIcon } from "./icons";
 
 export type Tone = "a" | "b" | "solo";
 
@@ -104,18 +104,19 @@ const badge = (cls: string, label: string, rule: string, face: string) =>
   `<span class="badge ${cls}" tabindex="0" role="img" aria-label="${esc(`${label}: ${rule}`)}">${face}<span class="badge__tip"><b>${esc(label)}</b>${esc(rule)}</span></span>`;
 export const archetypeChip = (x: string | null) =>
   x && ARCHETYPES[x] ? badge(`chip chip--label chip--${x.toLowerCase()}`, x, ARCHETYPES[x].rule, `${svgIcon(ARCHETYPES[x].path)}<span>${esc(x)}</span>`) : "";
-/** Specialty icons shown before the rest fold into a "+N" badge that lists them. */
+/** Specialty icons on one row: every one is rendered and `fitBadges()` (lib/fit.ts) keeps as many as the row
+ *  holds, folding the rest into a "+N" badge that lists them. Without script, up to 4 show (a lone 4th in place of "+1"). */
 const SHOWN_SPECIALTIES = 3;
 export function badges(f: Fighter): string {
   const keys = (f.specialties ?? []).filter((k) => SPECIALTIES[k]);
+  const shown = keys.length <= SHOWN_SPECIALTIES + 1 ? keys.length : SHOWN_SPECIALTIES;
   const spec = keys
-    .slice(0, SHOWN_SPECIALTIES)
-    .map((k) => badge("spec-badge", SPECIALTIES[k].label, SPECIALTIES[k].rule, svgIcon(SPECIALTIES[k].path)))
+    .map((k, i) => badge("spec-badge", SPECIALTIES[k].label, SPECIALTIES[k].rule, svgIcon(SPECIALTIES[k].path)).replace('<span class="badge', `<span${i >= shown ? " hidden" : ""} data-spec="${i}" class="badge`))
     .join("");
-  const rest = keys.slice(SHOWN_SPECIALTIES);
-  const more = rest.length
-    ? `<span class="badge spec-badge spec-badge--more" tabindex="0" role="img" aria-label="${esc(`More specialties: ${rest.map((k) => SPECIALTIES[k].label).join(", ")}`)}">+${rest.length}<span class="badge__tip">${rest
-        .map((k) => `<b>${esc(SPECIALTIES[k].label)}</b><span class="tip__rule">${esc(SPECIALTIES[k].rule)}</span>`)
+  const rest = keys.length - shown;
+  const more = keys.length
+    ? `<span class="badge spec-badge spec-badge--more" data-more tabindex="0" role="img"${rest ? "" : " hidden"} aria-label="${esc(`More specialties: ${keys.slice(shown).map((k) => SPECIALTIES[k].label).join(", ")}`)}">+${rest}<span class="badge__tip">${keys
+        .map((k, i) => `<span data-spec-tip="${i}"${i < shown ? " hidden" : ""}><b>${esc(SPECIALTIES[k].label)}</b><span class="tip__rule">${esc(SPECIALTIES[k].rule)}</span></span>`)
         .join("")}</span></span>`
     : "";
   const disc = f.discipline
@@ -171,18 +172,51 @@ export function identity(f: Fighter | null, tone: Tone, warning: string | null =
         f.stance ? esc(f.stance) : null,
       ].filter(Boolean)
     : [];
-  return mod(
-    "corner.identity",
-    "",
-    `${portrait(f)}${championMark(f)}
-     <div class="id__text">
-       <h2 class="id__name">${name}</h2>
-       ${sub ? `<p class="id__sub">${sub}</p>` : ""}
-       ${facts.length ? `<p class="id__facts">${facts.join(" · ")}</p>` : ""}
-       ${badges(f)}
-     </div>${warn}`,
-    { cls: "id id--square", tone, label: f.name },
-  );
+  const front = `<div class="face face--front" data-face="front">${portrait(f)}${championMark(f)}
+       <div class="id__text">
+         <h2 class="id__name">${name}</h2>
+         ${sub ? `<p class="id__sub">${sub}</p>` : ""}
+         ${facts.length ? `<p class="id__facts">${facts.join(" · ")}</p>` : ""}
+         ${badges(f)}
+       </div>${warn}</div>`;
+  const back = `<div class="face face--back" data-face="back" inert>${identityBack(f)}</div>`;
+  const flip = `<button type="button" class="flip-btn" data-flip aria-pressed="false" aria-label="Fighter details (flip)">${svgIcon(FLIP)}</button>`;
+  return mod("corner.identity", "", `<div class="flip"><div class="flip__in">${front}${back}</div></div>${flip}`, { cls: "id id--square", tone, label: f.name });
+}
+
+/** Reverse of corner.identity (spec 11.1 #8). Same look as the face and no scrolling: on top the style, one row per group
+ *  (archetype and discipline, belts, specialties; every rule in a tooltip), below the data in two columns with an icon each.
+ *  The same data on a profile and in a comparison (Piero, 2026-11-27). */
+function identityBack(f: Fighter): string {
+  const tip = (label: string, rule: string, cls: string, face: string) =>
+    `<span class="badge ${cls}" tabindex="0" role="img" aria-label="${esc(`${label}: ${rule}`)}">${face}<span class="badge__tip"><b>${esc(label)}</b>${esc(rule)}</span></span>`;
+  const short = (iso: string) => dateLong(iso).replace(/(\w{3})\w*(?= \d{4}$)/, "$1");
+  // Style on top, one row per group: archetype and discipline, then belts, then specialty icons (name and rule in the tooltip).
+  const keys = (f.specialties ?? []).filter((k) => SPECIALTIES[k]);
+  const line = (items: string[]) => (items.some(Boolean) ? `<div class="back__line">${items.join("")}</div>` : "");
+  const style = [
+    line([archetypeChip(f.archetype), f.discipline ? tip(f.discipline, "Listed style on UFC.com", "disc", esc(f.discipline)) : ""]),
+    line((f.belts ?? []).map((b) => tip(`${BELT_LABEL[b.kind]} · ${b.division}`, "UFC title", `back__belt champ--${b.kind}`, `${svgIcon(BELT)}<span>${esc(b.division)}</span>`))),
+    line(keys.map((k) => tip(SPECIALTIES[k].label, SPECIALTIES[k].rule, "spec-badge", svgIcon(SPECIALTIES[k].path)))),
+  ].join("");
+  // Details below: two columns, icon beside a small label and the value.
+  const cell = (icon: string, k: string, v: string, title = "") =>
+    `<div class="back__cell"${title ? ` title="${esc(title)}"` : ""}><dt>${svgIcon(icon)}<span>${k}</span></dt><dd>${v}</dd></div>`;
+  const years = age(f);
+  const oldest = f.fights.length ? f.fights[f.fights.length - 1] : null;
+  const newest = f.fights[0];
+  const facts = [
+    f.weight_class ? cell(FACT_ICONS.division, "Division", esc(f.weight_class)) : "",
+    years != null ? cell(FACT_ICONS.age, "Age", `${years}${f.dob ? ` <small>${short(f.dob)}</small>` : ""}`, f.dob ? `Born ${dateLong(f.dob)}` : "") : "",
+    f.height_cm != null ? cell(FACT_ICONS.height, "Height", fmtHeight(f.height_cm)) : "",
+    f.reach_cm != null ? cell(FACT_ICONS.reach, "Reach", fmtReach(f.reach_cm)) : "",
+    f.weight_lbs != null ? cell(FACT_ICONS.weight, "Weight", fmtWeight(f.weight_lbs)) : "",
+    f.stance ? cell(FACT_ICONS.stance, "Stance", esc(f.stance)) : "",
+    oldest ? cell(FACT_ICONS.first, "UFC debut", short(oldest.date), `First UFC fight in the data (since 2010): ${dateLong(oldest.date)}`) : "",
+    newest ? cell(FACT_ICONS.last, "Last fight", short(newest.date), `Last UFC fight: ${dateLong(newest.date)}`) : "",
+  ].join("");
+  return `<div class="id__back" role="region" aria-label="${esc(f.name)}: details">
+    <header class="back__head"><h2 class="back__name">${esc(f.name)}</h2>${f.nickname ? `<p class="back__nick">“${esc(f.nickname)}”</p>` : ""}</header>${style ? `<div class="back__style">${style}</div>` : ""}${facts ? `<dl class="back__facts">${facts}</dl>` : `<p class="nodata">No data</p>`}</div>`;
 }
 
 /** corner.record: record and streak, then every professional fight as a painted square (GitHub style).
@@ -348,6 +382,24 @@ const RANGES = [
 const rangeControl = () =>
   `<div class="seg" role="group" aria-label="Time span">${RANGES.map(([k, l], i) => `<button type="button" data-range="${k}" aria-pressed="${i === 0}">${l}</button>`).join("")}</div>`;
 
+/** Metric ids of the career chart (labels live in charts.ts next to their formulas). */
+export const CAREER_METRICS: [string, string][] = [
+  ["sig_landed", "Significant strikes landed"],
+  ["sig_absorbed", "Significant strikes absorbed"],
+  ["sig_acc", "Significant strike accuracy"],
+  ["str_landed", "Total strikes landed"],
+  ["str_absorbed", "Total strikes absorbed"],
+  ["kd", "Knockdowns"],
+  ["kd_against", "Knockdowns against"],
+  ["td", "Takedowns landed"],
+  ["td_acc", "Takedown accuracy"],
+  ["taken_down", "Times taken down"],
+  ["sub_att", "Submission attempts"],
+  ["clinch", "Clinch strikes landed"],
+  ["ground", "Ground strikes landed"],
+];
+const CAREER_OPTIONS = CAREER_METRICS.map(([k, l]) => `<option value="${k}">${l}</option>`).join("");
+
 export function fightRows(solo = false): string {
   const metrics = [
     ["slpm", "Strikes / min"],
@@ -358,14 +410,23 @@ export function fightRows(solo = false): string {
     .map(([k, l], i) => `<button type="button" data-metric="${k}" aria-pressed="${i === 0}">${l}</button>`)
     .join("");
   return (
-    mod(
-      "fights.performance",
-      "Performance by fight",
-      `<div class="seg" role="group" aria-label="Metric">${metrics}</div>
-       <div class="chart chart--wide" data-chart="perf" role="img" aria-label="Per-fight performance over time"></div>
-       <p class="desc">Each point is a fight: filled = win, ring = loss, diamond = draw or no contest. Dashed lines: each fighter's average in the span. Click a point, or point at a fight in the history, to see it.</p>`,
-      { cls: "row", aside: rangeControl() },
-    ) +
+    (solo
+      ? mod(
+          "fights.career",
+          "Career chart",
+          `<div class="career__pick"><label for="career-metric" class="muted">Metric</label><select id="career-metric" class="sel" data-career-metric>${CAREER_OPTIONS}</select></div>
+       <div class="chart chart--wide" data-chart="career" role="img" aria-label="Fight-by-fight career trend of the chosen metric"></div>
+       <p class="desc">Each point is a UFC fight, oldest to newest. Dashed line: the fighter's average over the fights with data. Fights without statistics, or without attempts for a rate, break the line. Click a point, or point at a fight in the history, to see it.</p>`,
+          { cls: "row" },
+        )
+      : mod(
+        "fights.performance",
+        "Performance by fight",
+        `<div class="seg" role="group" aria-label="Metric">${metrics}</div>
+         <div class="chart chart--wide" data-chart="perf" role="img" aria-label="Per-fight performance over time"></div>
+         <p class="desc">Each point is a fight: filled = win, ring = loss, diamond = draw or no contest. Dashed lines: each fighter's average in the span. Click a point, or point at a fight in the history, to see it.</p>`,
+        { cls: "row", aside: rangeControl() },
+      )) +
     mod(
       "fights.returns",
       "Betting returns",

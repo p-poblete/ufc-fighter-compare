@@ -7,6 +7,8 @@ import { pairQuery, readPair } from "./url-state";
 import { setupFightDialog } from "./dialog";
 import { exportCard } from "./card";
 import { initTools, pushRecent } from "./tools";
+import { initFlip } from "./flip";
+import { fitBadges } from "./fit";
 
 interface State {
   a: string | null;
@@ -30,6 +32,7 @@ export async function boot(): Promise<void> {
     return;
   }
   setupFightDialog();
+  initFlip();
   let current: [Fighter | null, Fighter | null] = [null, null];
   const bySlug = new Map(index.map((e) => [e.slug, e]));
   const items = prepare(index);
@@ -74,6 +77,7 @@ export async function boot(): Promise<void> {
     const mods = (side: Side) => [...$(`#col-${side}`).querySelectorAll<HTMLElement>(":scope > [data-module]")];
     const A = mods("a"), B = mods("b");
     [...A, ...B].forEach((m) => (m.style.minHeight = ""));
+    fitBadges();
     alignRadar();
     if (matchMedia("(max-width: 760px)").matches) return; // stacked on phones: nothing to mirror
     A.forEach((m, i) => {
@@ -84,6 +88,7 @@ export async function boot(): Promise<void> {
     });
   }
   addEventListener("resize", mirror);
+  document.fonts?.ready.then(mirror);
 
   /** Three columns: the radar (top) grows so the tape starts level with the records; the tape fills down to the histories. */
   function alignRadar(): void {

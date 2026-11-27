@@ -1,15 +1,15 @@
 // Client-only ECharts views: radar (duel.style), performance, betting returns and fight length.
 // Fight points are linked to the history rows: hovering a row highlights its points, clicking a
 // point opens fight.dialog (event "fight:open").
-import { BarChart, RadarChart, ScatterChart } from "echarts/charts";
+import { BarChart, LineChart, RadarChart, ScatterChart } from "echarts/charts";
 import { GridComponent, MarkLineComponent, RadarComponent, TooltipComponent } from "echarts/components";
 import * as echarts from "echarts/core";
 import { SVGRenderer } from "echarts/renderers";
-import type { Fight, Fighter, OddsType } from "./data";
+import type { Fight, FightStats, Fighter, OddsType } from "./data";
 import { dateLong, esc, lastName } from "./format";
-import { METRICS, ODDS_TYPES, clock, population } from "./render";
+import { CAREER_METRICS, METRICS, ODDS_TYPES, clock, population } from "./render";
 
-echarts.use([RadarChart, ScatterChart, BarChart, RadarComponent, GridComponent, TooltipComponent, MarkLineComponent, SVGRenderer]);
+echarts.use([LineChart, RadarChart, ScatterChart, BarChart, RadarComponent, GridComponent, TooltipComponent, MarkLineComponent, SVGRenderer]);
 
 export interface Entry {
   f: Fighter;
@@ -284,6 +284,89 @@ function perf(el: HTMLElement, entries: Entry[], metric: PerfMetric, range: Rang
   openOnClick(chart);
 }
 
+// ---------- fights.career (profile): one metric, fight by fight ----------
+const stat = (k: keyof FightStats) => (x: Fight) => (x.stats ? x.stats[k] : null);
+/** Accuracy needs attempts: a fight with none leaves a gap. */
+const ratio = (n: keyof FightStats, d: keyof FightStats) => (x: Fight) =>
+  x.stats && x.stats[n] != null && x.stats[d] ? (x.stats[n]! / x.stats[d]!) * 100 : null;
+const CAREER: Record<string, { unit: string; digits: number; value: (x: Fight) => number | null }> = {
+  sig_landed: { unit: "", digits: 0, value: stat("sig_landed") },
+  sig_absorbed: { unit: "", digits: 0, value: stat("sig_absorbed") },
+  sig_acc: { unit: "%", digits: 0, value: ratio("sig_landed", "sig_attempted") },
+  str_landed: { unit: "", digits: 0, value: stat("str_landed") },
+  str_absorbed: { unit: "", digits: 0, value: stat("str_absorbed") },
+  kd: { unit: "", digits: 0, value: stat("kd") },
+  kd_against: { unit: "", digits: 0, value: stat("kd_against") },
+  td: { unit: "", digits: 0, value: stat("td") },
+  td_acc: { unit: "%", digits: 0, value: ratio("td", "td_attempted") },
+  taken_down: { unit: "", digits: 0, value: stat("taken_down") },
+  sub_att: { unit: "", digits: 0, value: stat("sub_att") },
+  clinch: { unit: "", digits: 0, value: stat("clinch") },
+  ground: { unit: "", digits: 0, value: stat("ground") },
+};
+const shortDate = (iso: string) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-GB", { month: "short", year: "numeric", timeZone: "UTC" });
+};
+
+function career(el: HTMLElement, entry: Entry, metric: string, tone: string) {
+  const cfg = CAREER[metric] ?? CAREER.sig_landed;
+  const label = CAREER_METRICS.find(([k]) => k === metric)?.[1] ?? metric;
+  const fmt = (v: number) => `${v.toFixed(cfg.digits)}${cfg.unit}`;
+  const rows = entry.f.fights.map((x, i) => ({ x, i, v: cfg.value(x) })).reverse(); // oldest first
+  const vals = rows.filter((r) => r.v != null).map((r) => r.v!);
+  if (vals.length < 2) {
+    echarts.getInstanceByDom(el)?.dispose();
+    el.innerHTML = `<p class="nodata">No data · fewer than 2 UFC fights have this statistic</p>`;
+    return;
+  }
+  if (el.querySelector(".nodata")) el.innerHTML = "";
+  const avg = vals.reduce((t, v) => t + v, 0) / vals.length;
+  const color = entry.color;
+  const data = rows.map(({ x, i, v }) => ({ value: v, fight: x, slug: entry.f.slug, idx: i, tone, avg, symbol: symbolFor(x.result) }));
+  const series = [
+    {
+      type: "line" as const,
+      name: entry.f.name,
+      smooth: 0.3,
+      connectNulls: false,
+      symbolSize: 9,
+      cursor: "pointer",
+      itemStyle: { color },
+      lineStyle: { color, width: 2.5 },
+      areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: color + "59" }, { offset: 1, color: color + "00" }]) },
+      emphasis: { scale: false, focus: "none" as const, itemStyle: { borderColor: "#fff", borderWidth: 2.5 } },
+      markLine: avgLine("yAxis", avg, color, `avg ${fmt(avg)}`),
+      data,
+    },
+  ];
+  const chart = instance(el);
+  chart.setOption(
+    {
+      textStyle: font,
+      grid: { left: 48, right: 24, top: 24, bottom: 30 },
+      tooltip: {
+        ...tooltip,
+        trigger: "axis",
+        axisPointer: { type: "line", lineStyle: { color: LINE } },
+        formatter: (ps: { data: { fight: Fight; value: number | null; avg: number } }[]) => {
+          const d = ps[0]?.data;
+          if (!d) return "";
+          const { fight: x, value } = d;
+          const head = `<b>${esc(lastName(entry.f.name))}</b> vs ${esc(x.opponent)} · ${RESULT[x.result]}<br>${dateLong(x.date)} · ${esc(x.method_detail)}${x.round ? `, R${x.round} ${clock(x.round_time_s)}` : ""}<br>`;
+          return head + (value == null ? `${esc(label)}: no data` : `${esc(label)}: <b>${fmt(value)}</b> (${signedNum(value - d.avg, cfg.digits)} vs avg)`);
+        },
+      },
+      xAxis: { type: "category", boundaryGap: false, data: rows.map((r) => r.x.date), ...axis, axisLabel: { ...axis.axisLabel, formatter: shortDate, hideOverlap: true } },
+      yAxis: { type: "value", ...axis, min: 0, max: cfg.unit === "%" ? 100 : undefined },
+      series,
+    },
+    true,
+  );
+  register(chart, series);
+  openOnClick(chart);
+}
+
 // ---------- fights.returns ----------
 function oddsType(o: number): OddsType {
   if (o < 1.5) return "Heavy favorite";
@@ -441,6 +524,7 @@ function duration(el: HTMLElement, entries: Entry[], range: Range) {
 }
 
 const observed = new WeakSet<HTMLElement>();
+const drawers = new WeakMap<HTMLElement, () => void>();
 const resizer = new ResizeObserver((items) => {
   for (const it of items) echarts.getInstanceByDom(it.target as HTMLElement)?.resize();
 });
@@ -466,27 +550,31 @@ export function drawCharts(root: ParentNode, entries: Entry[], tones: string[] =
     let draw: () => void;
     if (kind === "radar") draw = () => radar(el, entries, pressed(panel, "data-layer", "both"));
     else if (kind === "perf") draw = () => perf(el, entries, pressed(panel, "data-metric", "slpm") as PerfMetric, range(), tones);
+    else if (kind === "career") draw = () => career(el, entries[0], panel.querySelector<HTMLSelectElement>("[data-career-metric]")?.value ?? "sig_landed", tones[0]);
     else if (kind === "roi") draw = () => roi(el, entries, range(), tones);
     else if (kind === "dur") draw = () => duration(el, entries, range());
     else continue;
+    drawers.set(el, draw);
     draw();
-    wire(panel, "data-range", draw);
-    if (kind === "perf") wire(panel, "data-metric", draw);
+    // Listeners and observers are attached once per element; they always call its latest draw.
+    if (observed.has(el)) continue;
+    observed.add(el);
+    resizer.observe(el);
+    const redraw = () => drawers.get(el)?.();
+    wire(panel, "data-range", redraw);
+    if (kind === "perf") wire(panel, "data-metric", redraw);
+    if (kind === "career") panel.querySelector("[data-career-metric]")?.addEventListener("change", redraw);
     if (kind === "radar") {
-      wire(panel, "data-layer", draw);
+      wire(panel, "data-layer", redraw);
       // The radius is set in pixels, so redraw when the block changes size (alignRadar stretches it).
       let w = el.clientWidth, h = el.clientHeight;
       new ResizeObserver(() => {
         if (Math.abs(el.clientWidth - w) > 8 || Math.abs(el.clientHeight - h) > 8) {
           w = el.clientWidth;
           h = el.clientHeight;
-          draw();
+          redraw();
         }
       }).observe(el);
-    }
-    if (!observed.has(el)) {
-      observed.add(el);
-      resizer.observe(el);
     }
   }
 }

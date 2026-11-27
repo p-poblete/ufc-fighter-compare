@@ -16,7 +16,7 @@ const f: Fighter = JSON.parse(await readFile(join(process.cwd(), "public/data/fi
 const desc = `${f.name}: ${recordText(f)}${f.weight_class ? `, ${f.weight_class}` : ""}. Style, finishes, betting returns and every UFC fight since 2010.`;
 ---
 
-<Base title={`${f.name} · UFC Fighter Compare`} description={desc} glow="solo">
+<Base title={`${f.name} · UFC Fighter Compare`} description={desc} glow="solo" accent={f.archetype ?? "none"}>
 
   <main class="wide profile" id="profile" data-slug={f.slug}>
     <h1 class="sr">{f.name}</h1>
@@ -38,12 +38,18 @@ const desc = `${f.name}: ${recordText(f)}${f.weight_class ? `, ${f.weight_class}
     import { loadFighter } from "../../lib/data";
     import { setupFightDialog } from "../../lib/dialog";
     import { initTools } from "../../lib/tools";
+    import { initFlip } from "../../lib/flip";
+    import { fitBadges } from "../../lib/fit";
     setupFightDialog();
     initTools();
+    initFlip();
+    fitBadges();
+    addEventListener("resize", () => fitBadges());
+    document.fonts?.ready.then(() => fitBadges());
     const root = document.getElementById("profile")!;
     loadFighter(root.dataset.slug!).then(async (f) => {
       const { drawCharts } = await import("../../lib/charts");
-      const draw = () => drawCharts(root.querySelector(".col--mid")!, [{ f, color: "#ff9f43" }], ["solo"]);
+      const draw = () => drawCharts(root.querySelector(".col--mid")!, [{ f, color: getComputedStyle(document.body).getPropertyValue("--solo").trim() || "#b4b8bf" }], ["solo"]);
       draw();
       document.addEventListener("settings:change", draw);
     });

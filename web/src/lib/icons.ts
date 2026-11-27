@@ -31,5 +31,22 @@ export const SPECIALTIES: Record<string, Badge> = {
 /** Championship belt: centre plate, side plates and strap. */
 export const BELT = "M2.5 9.5h4M17.5 9.5h4M2.5 14.5h4M17.5 14.5h4M6.5 7h11v10h-11zM12 14.6a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2z";
 
+/** Flip button: two arrows turning round. */
+export const FLIP = "M4 12a8 8 0 0 1 14-5.3M20 4v4h-4M20 12a8 8 0 0 1-14 5.3M4 20v-4h4";
+
+/** Strokes for the reverse of the identity block (same 24×24, 1.8 line as the badges). */
+export const FACT_ICONS = {
+  division: "M3.5 12h17M6 8v8M9 6v12M15 6v12M18 8v8",
+  age: "M12 11.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM5 20c.5-4 3.5-6 7-6s6.5 2 7 6",
+  height: "M8 3.5v17M5 3.5h6M5 20.5h6M16 6v12M13.5 8.5L16 6l2.5 2.5M13.5 15.5L16 18l2.5-2.5",
+  reach: "M3.5 12h17M3.5 8.5v7M20.5 8.5v7M8 9.5l-3.5 2.5L8 14.5M16 9.5l3.5 2.5-3.5 2.5",
+  weight: "M7 20.5h10l1.5-7.5a6.5 6.5 0 0 0-13 0zM9.5 7.2a2.5 2.5 0 0 1 5 0",
+  stance: "M12 3.5l7 2.5v5.5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z",
+  first: "M5.5 21V4M5.5 5h11l-2 3.5 2 3.5h-11",
+  last: "M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17zM12 7.5V12l3 2",
+  discipline: "M8 3.5l4 4 4-4M8 3.5L4.5 6v14.5h15V6L16 3.5M12 7.5v13M4.5 13h15",
+  specialties: "M12 3.5l2.3 5.2 5.7.5-4.3 3.8 1.3 5.5L12 15.6l-5 2.9 1.3-5.5L4 9.2l5.7-.5z",
+} as const;
+
 export const svgIcon = (path: string, cls = "ico") =>
   `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true"><path d="${path}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
