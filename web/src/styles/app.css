@@ -752,8 +752,13 @@ body[data-glow="none"]::before { background: none; }
 @media (min-width: 1181px) {
   .profile .col--mid { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
   .profile .col--mid:not(:has(.hist)) { grid-template-columns: minmax(0, 1fr); } /* no fights: the radar takes the width */
-  .profile .col--mid > :not(.style):not(.hist) { grid-column: 1 / -1; }
+  .profile .col--mid > :not(.style):not(.hist):not(.alike-panel) { grid-column: 1 / -1; }
   .profile .col--mid > .hist { contain: size; min-height: 260px; }
+  /* Fighters alike stacks under the history in the right column; the radar spans both, so the two blocks end level with it. */
+  .profile .col--mid:has(.hist) { grid-template-rows: minmax(0, 1fr) auto; }
+  .profile .col--mid:has(.hist) > .style { grid-row: span 2; }
+  .profile .col--mid:has(.hist) > .alike-panel { grid-column: 2; }
+  .profile .col--mid:not(:has(.hist)) > .alike-panel { grid-column: 1 / -1; }
 }
 
 /* First view: from 1181 x 900 everything but the three charts fits the window; if a pair does not fit, the page scrolls. */
@@ -1055,8 +1060,15 @@ body[data-glow="none"]::before { background: none; }
   .grp:has(#g-table-panel[hidden]) > .grp__half { grid-column: 1 / -1; }
 }
 
-/* Fighters alike (profile): rows reuse the fight-list rhythm; name left, ghost "Compare" right. */
-.alike { display: grid; gap: 2px; }
-.alike li { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
-.alike__name { font-weight: 650; text-decoration: none; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.alike__name:hover { text-decoration: underline; }
+/* Fighters alike (profile): the history's material. Same head, same columns (26px badge | name | action), same hover. */
+.alike-panel { gap: 8px; }
+/* Two columns (Piero, 2026-11-28) so the history keeps its height; each cell reads like a fight row: bold name, faint second line. */
+.alike { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 6px; }
+.alike li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 8px; align-items: center; height: 44px; padding-inline: 4px 2px; border-radius: 8px; min-width: 0; }
+.alike li:hover { background: rgb(255 255 255 / 0.06); }
+.alike__rank { background: rgb(255 255 255 / 0.06); color: var(--muted); font-size: 12px; }
+.alike__main { display: grid; min-width: 0; }
+.alike__name { font-weight: 650; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.alike__cmp { color: var(--faint); font-size: 12px; text-decoration: none; justify-self: start; }
+.alike__name:hover, .alike__cmp:hover { text-decoration: underline; }
+.alike__cmp:hover { color: var(--text); }

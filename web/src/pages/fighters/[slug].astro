@@ -27,10 +27,10 @@ const desc = `${f.name}: ${recordText(f)}${f.weight_class ? `, ${f.weight_class}
         <div><p class="display">{pctText(winRate(f))}</p><p class="muted">Win rate</p></div>
         <div><p class="display">{pctText(finishRate(f))}</p><p class="muted">Finish rate in the UFC</p></div>
       </section>
-      <Fragment set:html={finishes(f, "solo") + alike(f)} />
+      <Fragment set:html={finishes(f, "solo")} />
     </aside>
     <div class="col col--mid">
-      <Fragment set:html={style(f, null) + history(f, "solo") + fightRows(true)} />
+      <Fragment set:html={style(f, null) + history(f, "solo") + alike(f) + fightRows(true)} />
     </div>
   </main>
 

@@ -276,16 +276,23 @@ export function finishes(f: Fighter, tone: Tone, legend = true): string {
   return mod("corner.finishes", "", `<p class="desc">UFC since 2010</p>` + bar(f.wins_by, "Wins by method") + bar(f.losses_by, "Losses by method") + key, { tone, label: "How the fights end" });
 }
 
-/** profile.alike: the closest styles in the same division, each with its profile and a Compare link. */
+/** profile.alike: under the history and in its material: same small head, same row rhythm; rank badge, name to the profile, Compare. */
 export function alike(f: Fighter): string {
   const body = !f.similar
     ? noData("no division percentile")
     : !f.similar.length
       ? `<p class="nodata">No similar fighters in this division</p>`
       : `<ol class="alike">${f.similar
-          .map((s) => `<li><a class="alike__name" href="/fighters/${s.slug}/">${esc(s.name)}</a><a class="ghost ghost--sm" href="/?a=${f.slug}&amp;b=${s.slug}" aria-label="Compare ${esc(f.name)} with ${esc(s.name)}">Compare</a></li>`)
+          .map(
+            (s, i) =>
+              `<li><span class="res alike__rank" aria-hidden="true">${i + 1}</span><span class="alike__main"><a class="alike__name" href="/fighters/${s.slug}/" title="${esc(s.name)}">${esc(s.name)}</a><a class="alike__cmp" href="/?a=${f.slug}&amp;b=${s.slug}" aria-label="Compare ${esc(f.name)} with ${esc(s.name)}">Compare</a></span></li>`,
+          )
           .join("")}</ol>`;
-  return mod("profile.alike", "Fighters alike", `<p class="desc">Closest style in the division (the eight radar percentiles)</p>${body}`, { tone: "solo" });
+  return mod("profile.alike", "", `<p class="hist__head" title="Closest style in the division: the eight radar percentiles">Fighters alike · closest style in the division</p>${body}`, {
+    cls: "alike-panel",
+    label: "Fighters alike",
+    tone: "solo",
+  });
 }
 
 /** corner.history: every UFC fight, open, in a scrolling list that fills the rest of the column. */
