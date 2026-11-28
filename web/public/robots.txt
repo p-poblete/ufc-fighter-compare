@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ufc-fighter-compare.pages.dev/sitemap.xml

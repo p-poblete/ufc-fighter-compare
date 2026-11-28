@@ -23,6 +23,7 @@ import Base from "../../layouts/Base.astro";
       <fieldset class="dir__specs"><legend>Specialties (all selected must apply)</legend><div id="dir-specs" class="dir__specs-row"></div></fieldset>
       <button type="button" class="ghost dir__clear" id="dir-clear" hidden>Clear filters</button>
     </form>
+    <noscript><p class="car__msg panel">The directory needs JavaScript. Every profile is also listed in the <a href="/sitemap.xml">sitemap</a>, and the <a href="/">compare page</a> links to them.</p></noscript>
     <section class="car" aria-roledescription="carousel" aria-label="Fighters">
       <ul class="car__track" id="car-track" tabindex="0" aria-label="Fighters. Use the left and right arrow keys to scroll."></ul>
       <p class="car__msg panel" id="car-msg" role="status">Loading fighters…</p>
