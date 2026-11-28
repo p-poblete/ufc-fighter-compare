@@ -63,7 +63,7 @@ const meta: Meta = JSON.parse(await readFile(join(process.cwd(), "public/data/me
           <a href={repoUrl} class="nav__ext">Source <span aria-hidden="true">↗</span></a>
         </nav>
         <div class="tools" role="toolbar" aria-label="Tools">
-          <button type="button" class="tool tool--search" id="t-search" aria-label="Quick search (Ctrl+K)"><Fragment set:html={icon("M9 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12zm4.5-1.5L17 17")} /><span>Search</span><kbd>Ctrl K</kbd></button>
+          <button type="button" class="tool tool--search" id="t-search" aria-label="Quick search (Ctrl+K)"><Fragment set:html={icon("M9 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12zm4.5-1.5L17 17")} /><span>Search any fighter…</span><kbd>Ctrl K</kbd></button>
           <slot name="tools" />
           <div class="tool-wrap">
             <button type="button" class="tool" id="t-recent" aria-expanded="false" aria-controls="m-recent" title="Recent comparisons"><Fragment set:html={icon("M10 5v5l3 2M3.5 10a6.5 6.5 0 1 0 2-4.7M3 3v3h3")} /><span class="sr">Recent comparisons</span></button>

@@ -411,7 +411,7 @@ Origen: nota del vault `Proyectos/UFC/UFC - Pendientes.md`. Estado: **decisiones
 ### 12.3 Decisiones v0.9
 
 - [x] P1 Nombre · Piero · 2026-11-28: mismo nombre; logo nuevo con la skill `logo-design` y su proceso.
-- [x] P2 Barra · Piero · 2026-11-28: hoy compite con los elementos de la página y se ve sosa. Groups ya está en la navegación.
+- [x] P2 Barra · Piero · 2026-11-28: hoy compite con los elementos de la página y se ve sosa. Groups ya está en la navegación. Corrección (Piero, 2026-11-28): el problema es que está muy sosa. Propuesta elegida: **B · Cartelera** — fondo #08090b opaco con línea inferior; marca de 28 px con wordmark en Archivo condensado y mayúsculas; navegación en mayúsculas de 12 px (+0,12 em) separada por «·», activa con subrayado rojo; búsqueda como campo ancho (hasta 420 px) centrado en el hueco; resto de herramientas como iconos sin fondo a la derecha.
 - [x] P3 Tabla · Piero · 2026-11-28: como la de antes (v0.5), con más información: el contenido de la tarjeta, resumido.
 - [x] P4 Selector de gráficos · Piero · 2026-11-28: pestañas.
 - [x] P5 Línea · Piero · 2026-11-28: en todos los gráficos.
