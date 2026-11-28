@@ -78,5 +78,5 @@ Actualizado: 2026-11-27
 ## Siguiente paso
 1. Pasada estética de Piero (pendientes vistos: radar pequeño y bloques juntos en el PNG, © tapa +N en la identidad B, vacío alrededor del radar de grupos).
 2. Decidido 2026-11-27: Piero acepta el desfase de 13 px (CA15, 1181–1200×900); `/fighters/` → `sitemap.xml` (endpoint desde index.json) + `robots.txt` + aviso noscript.
-3. Push y Cloudflare Pages (raíz `web`, `npm ci && npm run build`, salida `dist`, Node 24); Lighthouse móvil sobre la demo (CA10). Después borrar la app de Streamlit Cloud.
+3. Cloudflare Pages conectado (despliega en cada push; v0.8 publicada en https://ufc-fighter-compare.pages.dev, comprobado 2026-11-27). Pendiente: Lighthouse móvil sobre la demo (CA10) y que Piero borre la app de Streamlit Cloud.
 4. Menores sin aplicar: `rf` de directory.json sin uso, mirror duplicado tras fonts.ready (app.ts:91/204), RESULT duplicado en charts.ts.
