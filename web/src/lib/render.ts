@@ -138,7 +138,7 @@ export function portrait(f: Pick<Fighter, "name" | "photo">): string {
 
 const BELT_LABEL = { champion: "Champion", interim: "Interim champion", former: "Former champion" } as const;
 
-/** Belts stacked at the portrait's top-left corner, one per division: gold (champion), silver (interim) or grey (former). */
+/** Belts stacked at the portrait's top-left corner, one per division: gold (champion), silver (interim) or old gold (former). */
 export function championMark(f: Pick<Fighter, "belts">): string {
   if (!f.belts?.length) return "";
   const items = f.belts

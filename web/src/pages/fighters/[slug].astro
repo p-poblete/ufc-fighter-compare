@@ -41,7 +41,8 @@ const desc = `${f.name}: ${recordText(f)}${f.weight_class ? `, ${f.weight_class}
     import { initFlip } from "../../lib/flip";
     import { fitBadges } from "../../lib/fit";
     setupFightDialog();
-    initTools();
+    // "Compare as group" from a profile starts the group with this fighter.
+    initTools({ group: () => `/groups/?f=${document.getElementById("profile")!.dataset.slug}` });
     initFlip();
     fitBadges();
     addEventListener("resize", () => fitBadges());

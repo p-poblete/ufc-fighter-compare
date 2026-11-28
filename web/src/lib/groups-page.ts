@@ -2,7 +2,7 @@
 import { loadFighter, loadIndex, type Fighter, type IndexEntry } from "./data";
 import { drawGroupRadar } from "./charts";
 import { esc, DASH } from "./format";
-import { GROUP_COLORS, MAX_GROUP, MIN_GROUP, NOTE_FULL, bestPerRow, groupPcts, groupPopulation, groupQuery, parseGroup } from "./groups";
+import { GROUP_COLORS, MAX_GROUP, MIN_GROUP, NOTE_FULL, NOTE_FEW, bestPerRow, groupPcts, groupPopulation, groupQuery, parseGroup } from "./groups";
 import { setupPicker } from "./picker";
 import { METRICS, RAW, recordText } from "./render";
 import { prepare } from "./search";
@@ -42,6 +42,7 @@ export async function boot(): Promise<void> {
     const full = fs.length >= MAX_GROUP;
     const notes = [...state.notes, ...transient];
     if (full && !notes.includes(NOTE_FULL)) notes.push(NOTE_FULL);
+    if (fs.length < MIN_GROUP && !notes.includes(NOTE_FEW)) notes.push(NOTE_FEW);
     $("#g-notes").innerHTML = notes.map((n) => `<li class="warn">${esc(n)}</li>`).join("");
     const pick = $(".pick");
     pick.classList.toggle("is-off", full);

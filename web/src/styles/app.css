@@ -41,7 +41,7 @@ body::before {
     linear-gradient(to left, rgb(62 140 240 / 0.22), rgb(62 140 240 / 0.07) 14%, transparent 34%);
 }
 body[data-glow="solo"]::before { background: linear-gradient(to right, color-mix(in srgb, var(--solo) 16%, transparent), color-mix(in srgb, var(--solo) 4%, transparent) 16%, transparent 36%); }
-/* Profile accent: the archetype's colour (spec 11.1 #10a); no archetype, orange. */
+/* Profile accent: the archetype's colour (spec 11.1 #10a); no archetype, neutral grey #b4b8bf. */
 body[data-accent="Striker"] { --solo: #d48a12; }
 body[data-accent="Grappler"] { --solo: #1f9e6b; }
 body[data-accent="Balanced"] { --solo: #7d63d8; }
