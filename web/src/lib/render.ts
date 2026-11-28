@@ -132,7 +132,7 @@ export function portrait(f: Pick<Fighter, "name" | "photo">): string {
   const p = f.photo;
   if (!p) return `<div class="portrait" aria-hidden="true"><span>${esc(initials(f.name))}</span></div>`;
   const lic = p.license_url ? `<a href="${esc(p.license_url)}" rel="license noopener" target="_blank">${esc(p.license)}</a>` : esc(p.license);
-  return `<div class="portrait portrait--photo"><img src="${esc(p.url)}" width="${p.width}" height="${p.height}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"></div>
+  return `<div class="portrait portrait--photo"><img src="${esc(p.url)}" width="${p.width}" height="${p.height}" alt="" loading="lazy" decoding="async" crossorigin="anonymous" referrerpolicy="no-referrer"></div>
     <span class="badge credit" tabindex="0" role="note" aria-label="Photo credit: ${esc(p.author ?? "unknown author")}, ${esc(p.license)}">©<span class="badge__tip"><b>Photo</b>${esc(p.author ?? "Unknown author")} · ${lic} · <a href="${esc(p.page)}" rel="noopener" target="_blank">Wikimedia Commons</a></span></span>`;
 }
 
@@ -330,6 +330,7 @@ export function style(a: Fighter | null, b: Fighter | null): string {
   // Same block, same size and place as the radar: only the body says "No data" (the page layout never changes).
   if (!pa && !pb) {
     return mod("duel.style", "", `<div class="style__body style__body--empty">${noData("fewer than 3 UFC fights or missing career stats")}</div>`, {
+      label: "Style radar",
       cls: solo ? "style style--solo" : "style",
       aside: `<button type="button" class="icon-btn" disabled aria-hidden="true" tabindex="-1" style="visibility:hidden"></button>`,
     });
@@ -358,6 +359,7 @@ export function style(a: Fighter | null, b: Fighter | null): string {
     `<div class="style__body"><div class="chart chart--radar" data-chart="radar" role="img" aria-label="Radar of the eight style percentiles"></div>
      <div class="spec spec--rows" id="spec-${solo ? "s" : "ab"}" hidden><div class="spec__list">${cells}</div></div></div>`,
     {
+      label: "Style radar",
       cls: solo ? "style style--solo" : "style",
       // Layer choice on the left, the metric sheet toggle on the right.
       aside: `${layers}${gapNote}<button type="button" class="icon-btn" data-toggle="spec-${solo ? "s" : "ab"}" aria-expanded="false" aria-controls="spec-${solo ? "s" : "ab"}" title="Show the 8 metrics"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5h12M4 10h12M4 15h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="sr">Show the 8 metrics</span></button>`,

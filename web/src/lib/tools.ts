@@ -1,5 +1,5 @@
-// Top bar tools on every page: quick search (Ctrl+K), recent comparisons, share, export image (compare
-// page only), and view settings (units, percentile base). Also the generic [data-toggle] disclosure.
+// Top bar tools on every page: quick search (Ctrl+K), recent comparisons, share, export image (compare,
+// profile and groups), and view settings (units, percentile base). Also the generic [data-toggle] disclosure.
 import { loadIndex, type IndexEntry } from "./data";
 import { esc } from "./format";
 import { prepare, search, type Searchable } from "./search";
@@ -8,8 +8,6 @@ import { loadSettings, setSetting, settings, type Base, type Units } from "./set
 export interface ToolHooks {
   /** Compare page: put a fighter in a corner without leaving. Elsewhere the palette navigates. */
   pick?: (side: "a" | "b", slug: string) => void;
-  /** Compare page: build the share image. */
-  exportImage?: () => Promise<Blob | null>;
   /** URL of "Compare as group" (the current sides on the compare page); default `/groups/?f=`; null hides the option (on /groups/). */
   group?: () => string | null;
 }
@@ -123,17 +121,18 @@ export function initTools(hooks: ToolHooks = {}): void {
     }
   });
 
-  // Export image.
+  // Export image: the select mode of lib/export.ts (and with it modern-screenshot) loads only when it is entered.
+  // It exists on the compare page, profiles and /groups/; not on /fighters/ or the method page.
   const exp = $("#t-export");
   if (exp) {
-    if (!hooks.exportImage) exp.hidden = true;
+    const p = location.pathname;
+    if (!(p === "/" || p.startsWith("/groups") || /^\/fighters\/[^/]+/.test(p))) exp.hidden = true;
     exp.addEventListener("click", async () => {
-      const blob = await hooks.exportImage?.();
-      if (!blob) return toast("Pick both fighters first");
-      const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: `${document.title.split(" · ")[0].replace(/\W+/g, "-").toLowerCase()}.png` });
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-      toast("Image saved");
+      try {
+        (await import("./export")).toggleSelect(exp);
+      } catch {
+        toast("Export could not load. Try again.");
+      }
     });
   }
 

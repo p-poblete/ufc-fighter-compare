@@ -6,7 +6,6 @@ import { setupPicker } from "./picker";
 import { groupQuery } from "./groups";
 import { pairQuery, readPair } from "./url-state";
 import { setupFightDialog } from "./dialog";
-import { exportCard } from "./card";
 import { initTools, pushRecent } from "./tools";
 import { initFlip } from "./flip";
 import { fitBadges } from "./fit";
@@ -162,7 +161,6 @@ export async function boot(): Promise<void> {
   initTools({
     pick: (side, slug) => choose(side, slug),
     group: groupUrl,
-    exportImage: async () => (current[0] && current[1] ? exportCard(current[0], current[1], $("#centre")) : null),
   });
   document.addEventListener("settings:change", () => void render());
 
