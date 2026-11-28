@@ -374,5 +374,6 @@ Origen: nota del vault `Proyectos/UFC/UFC - Revision 24_11_26.md`. Se llama v0.8
 - [x] Paleta de grupos · Piero · 2026-11-27: Okabe-Ito por posición: ámbar #E69F00, celeste #56B4E9, verde #00B98A, rosa #CC79A7.
 - [x] Tabla de grupos · Piero · 2026-11-27: cada celda con el valor real y una barra fina del percentil en el color del peleador; el mejor de la fila en negrita con un punto de su color.
 - [x] Librería de captura · Piero · 2026-11-27: modern-screenshot 4.7.0 (MIT), import dinámico al entrar en el modo seleccionar.
+- [x] CA15 · Piero · 2026-11-27: acepta el desfase de 13 px entre tape y récord a 1181–1200×900. Directorio sin JS: `sitemap.xml` con todos los perfiles, `robots.txt` y aviso noscript.
 - [ ] Por aprobar en su corte (lo propone el Elefante antes de aplicarlo): paleta exacta de los 4 colores de grupos, librería de captura, aspecto de los tres cinturones y diseño de la tabla de grupos y de las flechas del carrusel.
 - Supuestos del Elefante tras el pez dorado (Piero puede cambiarlos): grupos desde 2 peleadores (no 3) con tabla de métricas bajo el radar; entrada por buscador, «Add to group» y Ctrl+K; filtros del directorio en la URL; carga automática con «Show more»; PNG 1200 px ×2 con cabecera y pie; volteo en la comparación y en el perfil (Piero); el gráfico de carrera sustituye al de rendimiento del perfil.
