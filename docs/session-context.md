@@ -1,6 +1,6 @@
 # Contexto de sesión — ufc-fighter-compare
 
-Actualizado: 2026-11-24
+Actualizado: 2026-11-27
 
 ## Estado
 - Repo público https://github.com/p-poblete/ufc-fighter-compare. Spec v0.2 aprobada en `docs/spec.md`.
@@ -62,14 +62,21 @@ Actualizado: 2026-11-24
 ## v0.3 en borrador (2026-11-25)
 - Revisión de Piero (`UFC - Revision 24_11_26.md` en el vault) pasada a `docs/spec.md` §11: qué entra, qué queda para otro avance (calculadora de ROI, prime, métodos de toda la carrera, mapa de golpes y acciones por momento: sin datos), cortes y preguntas abiertas §11.4. Decisiones de §11.4 cerradas el 2026-11-25 (grupos: radar superpuesto 3–4 con colores dinámicos; tarjeta B con índice compuesto; campeón oro/plata/gris; exportar con casillas; volteo 3D). Pez dorado: ronda 1 NO LISTO, ronda 2 LISTO CON CAMBIOS; todo aplicado en spec §11 y registrado en §10. Spec renombrada a v0.8. Volteo en todo corner.identity; en la comparación el reverso omite lo del tale of the tape.
 
-## v0.8 con /minerva (2026-11-25)
-- Corte 1 (diálogo ampliado, cinturones oro/plata/dorado viejo #b0905a, `champions.csv` revisado, «UFC since 2010») APROBADO y en el índice, sin commit.
-- Corte 2 (portada: radar↔tape, primera vista ≥1181×900) sin indexar en web/src/{styles/app.css,lib/app.ts,lib/render.ts}: 7 iteraciones. Funciona salvo 13 px de desfase tape/récord a 1181–~1200×900 (tope de columna). Pendiente: Piero decide aceptar o ajustar márgenes; después argos + linceo + censor.
-- Estado detallado en `docs/minerva-estado.md` (no versionado). Decisiones nuevas en spec §11.5.
-- Lección de coste: el corte 2 se alargó por falso positivo de linceo (barra de Astro dev), premisa errónea del orquestador (encoger retrato) y revisiones completas tras cada ajuste. Próximos cortes: menos rondas de agentes, ajustes pequeños directos.
+## v0.8 cerrada con /minerva (2026-11-27)
+- Seis cortes con commit (1562fff, ea7456b, fd7753c, 18b1d21, 7fb65ec, 10b1d79) + menores de minos (dddfb53). Minos: APROBADO CON MENORES. Detalle en `docs/minerva-estado.md` (no versionado); decisiones en spec §11.5.
+- Corte 3 perfil: color de arquetipo (gris #b4b8bf sin él), volteo de identidad (`lib/flip.ts`), gráfico de carrera, `lib/fit.ts` (+N).
+- Corte 4 directorio: `directory.json` (pipeline, 232 KB gzip, con crédito de foto), carrusel en `/fighters/` (`lib/directory.ts`): tarjeta con acento de arquetipo, foto fundida, disciplina; filtros en la URL (+ active, belt, min); flechas a los lados y barra de progreso.
+- Corte 5 grupos: `/groups/` (`lib/groups.ts`, `groups-page.ts`, `picker.ts`, `components/Picker.astro`), paleta Okabe-Ito, tabla valor+barra.
+- Corte 6 exportar: `lib/export.ts` con modern-screenshot 4.7.0 (import dinámico); `lib/card.ts` retirado.
+- Bug arreglado: el servidor dev daba 404 en ~1/6 de los perfiles tras `pipeline.build` (rmtree de fighters/); `write_payloads` escribe en sitio solo lo cambiado.
+- Pruebas en navegador: Chromium headless de `~/.cache/ms-playwright/chromium_headless_shell-1243` por CDP con scripts Node en el scratchpad (Playwright MCP no conecta y los scripts de linceo fueron bloqueados). Linceo solo mira PNG ya generados.
+- registry.npmjs.org caído otra vez (27-nov): instalar desde registry.npmmirror.com y reescribir el lockfile a npmjs.
+
+## Verificaciones (2026-11-27)
+- pytest 102, ruff limpio, tsc, build 2.308 páginas. CDP: CA17, CA18, CA24 (PNG 2400 px, carga diferida), 360 px sin desborde en todas las páginas. Lighthouse sin ejecutar (npm caído; CA10 es sobre la demo publicada).
 
 ## Siguiente paso
-0. Piero revisa los supuestos de §11.5 → `/minerva` por cortes (empezar por el corte 1: datos y diálogo).
-1. Piero: conectar el repo en Cloudflare Pages (raíz `web`, build `npm ci && npm run build`, salida `dist`, Node 24). Después, borrar la app antigua de Streamlit Cloud (share.streamlit.io → app → Delete).
-2. Piero: confirmar decisiones v0.5 sin consultar (iconos de herramientas, menú View, imagen exportada, columnas del directorio, textos de Method).
-3. Corte 3: donas de victoria/derrota (radar y arquetipo ya hechos).
+1. Pasada estética de Piero (pendientes vistos: radar pequeño y bloques juntos en el PNG, © tapa +N en la identidad B, vacío alrededor del radar de grupos).
+2. Piero decide: desfase de 13 px tape/récord a 1181–1200×900 (CA15) y si `/fighters/` necesita sitemap o enlaces estáticos (hoy se pinta solo en el cliente).
+3. Push y Cloudflare Pages (raíz `web`, `npm ci && npm run build`, salida `dist`, Node 24); Lighthouse móvil sobre la demo (CA10). Después borrar la app de Streamlit Cloud.
+4. Menores sin aplicar: `rf` de directory.json sin uso, mirror duplicado tras fonts.ready (app.ts:91/204), RESULT duplicado en charts.ts.
