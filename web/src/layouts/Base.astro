@@ -17,6 +17,7 @@ interface Props {
 }
 const { title, description, glow = "pair", accent } = Astro.props;
 const path = Astro.url.pathname;
+const canonical = new URL(path, Astro.site).href;
 const nav = [
   { href: "/", label: "Compare", on: path === "/" },
   { href: "/fighters/", label: "Fighters", on: path.startsWith("/fighters") },
@@ -33,8 +34,17 @@ const meta: Meta = JSON.parse(await readFile(join(process.cwd(), "public/data/me
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#0b0c0e" />
-    <title>{title}</title>
+    <title>{title.trim()}</title>
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="UFC Fighter Compare" />
+    <meta property="og:title" content={title.trim()} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title.trim()} />
+    <meta name="twitter:description" content={description} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <slot name="head" />
   </head>
