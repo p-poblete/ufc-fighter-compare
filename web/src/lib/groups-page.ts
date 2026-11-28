@@ -1,6 +1,7 @@
 // Client script of /groups/: list in the URL (?f=), picker, legend, radar and table (docs/spec.md §11.1 #3).
 import { loadFighter, loadIndex, type Fighter, type IndexEntry } from "./data";
-import { drawGroupRadar } from "./charts";
+import { drawCharts, drawGroupRadar, syncBlockFromUrl } from "./charts";
+import { setupFightDialog } from "./dialog";
 import { esc, DASH } from "./format";
 import { GROUP_COLORS, MAX_GROUP, MIN_GROUP, NOTE_FULL, NOTE_FEW, bestPerRow, groupPcts, groupPopulation, groupQuery, parseGroup } from "./groups";
 import { setupPicker } from "./picker";
@@ -14,6 +15,7 @@ const NO_DATA = "fewer than 3 UFC fights or missing career stats";
 
 export async function boot(): Promise<void> {
   initTools({ group: () => null });
+  setupFightDialog();
   let index: IndexEntry[];
   try {
     index = await loadIndex();
@@ -25,7 +27,8 @@ export async function boot(): Promise<void> {
   const parse = () => parseGroup(new URLSearchParams(location.search).get("f"), (s) => bySlug.has(s));
   let state = parse();
   // Clean URL: the shown list is the canonical one (duplicates, unknown and extra slugs dropped); the notices stay on screen.
-  if (location.search !== groupQuery(state.slugs)) history.replaceState(null, "", `${location.pathname}${groupQuery(state.slugs)}`);
+  const query = (slugs: string[]) => groupQuery(slugs, new URLSearchParams(location.search));
+  if (location.search !== query(state.slugs)) history.replaceState(null, "", `${location.pathname}${query(state.slugs)}`);
   let transient: string[] = [];
   let renderId = 0;
 
@@ -75,6 +78,11 @@ export async function boot(): Promise<void> {
     );
     radar.setAttribute("aria-label", ready ? `Radar of the eight style percentiles for ${fs.map((f) => f.name).join(", ")}` : "Empty radar: add at least 2 fighters");
 
+    // Chart block (needs two fighters; the dialog opens from a point in the fighter's colour)
+    const block = $("#g-charts");
+    block.hidden = !ready;
+    if (ready) drawCharts($("#app"), fs.map((f, i) => ({ f, color: color(i) })), fs.map(() => "solo"));
+
     // Table
     const panel = $("#g-table-panel");
     panel.hidden = !ready;
@@ -104,7 +112,7 @@ export async function boot(): Promise<void> {
   function commit(slugs: string[], note: string[] = []): Promise<void> {
     state = { slugs, notes: [] };
     transient = note;
-    history.pushState(null, "", `${location.pathname}${groupQuery(slugs)}`);
+    history.pushState(null, "", `${location.pathname}${query(slugs)}`);
     return render();
   }
 
@@ -136,6 +144,7 @@ export async function boot(): Promise<void> {
   addEventListener("popstate", () => {
     state = parse();
     transient = [];
+    syncBlockFromUrl(document);
     void render();
   });
   document.addEventListener("settings:change", () => void render());

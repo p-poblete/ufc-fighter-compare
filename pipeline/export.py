@@ -204,7 +204,8 @@ def _mean_percentile(pct: dict | None) -> float | None:
 def build_directory(index: list[dict], payloads: dict[str, dict]) -> list[dict]:
     """Carousel directory (spec 11.1 row 4): one short-key object per index.json entry, same order. Nulls omitted.
 
-    s slug, n name, g gender, d division, r record (as index.json), a archetype, sp specialties, di discipline,
+    s slug, n name, k nickname (absent without one), g gender, d division, r record (as index.json), a archetype,
+    sp specialties, di discipline,
     p photo {u, w, h, a author, l license, lu license url, pg Commons page}, belts [{division, kind}],
     sl SLpM, td TDAvg, fr finish % (KO/TKO+SUB of UFC wins),
     ix composite index, nf UFC fights, lf last fight, rf last 5 UFC fights newest first [result, date, opponent,
@@ -223,6 +224,7 @@ def build_directory(index: list[dict], payloads: dict[str, dict]) -> list[dict]:
         row = {
             "s": entry["slug"],
             "n": entry["name"],
+            "k": entry["nickname"],
             "g": entry["gender"],
             "d": entry["weight_class"],
             "r": entry["record"],

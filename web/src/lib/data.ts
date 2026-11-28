@@ -59,6 +59,7 @@ export interface Fighter {
 export interface DirectoryEntry {
   s: string; // slug
   n: string; // name
+  k?: string; // nickname
   g?: Gender;
   d?: string; // division
   r: string; // record "W-L-D", as index.json

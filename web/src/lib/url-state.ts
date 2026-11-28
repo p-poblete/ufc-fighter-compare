@@ -36,10 +36,15 @@ export function readPair(
 }
 
 /** Query string for a pair; empty sides are left out. */
-export function pairQuery(a: string | null, b: string | null): string {
+export function pairQuery(a: string | null, b: string | null, keep?: URLSearchParams): string {
   const params = new URLSearchParams();
   if (a) params.set("a", a);
   if (b) params.set("b", b);
+  // The chart block's tab and mode (spec §12.1 #5, #7) survive a change of pair.
+  for (const k of ["chart", "mode"]) {
+    const v = keep?.get(k);
+    if (v) params.set(k, v);
+  }
   const qs = params.toString();
   return qs ? `?${qs}` : "?";
 }

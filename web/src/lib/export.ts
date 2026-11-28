@@ -13,9 +13,11 @@ let active: { cancel: (restore?: boolean) => void; busy: () => boolean } | null 
 const blocks = (main: Element): HTMLElement[] =>
   [...main.querySelectorAll<HTMLElement>(".panel")].filter((p) => !p.hidden && !p.parentElement?.closest(".panel") && !p.closest("[hidden]"));
 
+/** The tabbed chart block counts as one and is named after its active tab. */
+const tabTitle = (p: HTMLElement): string | undefined => p.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')?.dataset.title;
 const blockName = (p: HTMLElement): string =>
-  p.querySelector(":scope > .panel__head h2")?.textContent?.trim() || p.getAttribute("aria-label") || p.dataset.module || "Block";
-const blockKey = (p: HTMLElement): string => `${p.dataset.module ?? ""}|${p.dataset.tone ?? ""}|${blockName(p)}`;
+  tabTitle(p) || p.querySelector(":scope > .panel__head h2")?.textContent?.trim() || p.getAttribute("aria-label") || p.dataset.module || "Block";
+const blockKey = (p: HTMLElement): string => `${p.dataset.module ?? ""}|${p.dataset.tone ?? ""}|${tabTitle(p) ? p.getAttribute("aria-label") : blockName(p)}`;
 
 /** File name by view: compare, profile or group (spec §11.1 #9). */
 function fileName(main: HTMLElement): string {
@@ -99,6 +101,13 @@ function flatten(clone: HTMLElement): void {
 
 /** Interactive controls that mean nothing in an image: drop them, keeping the active choice as text. */
 function simplify(clone: HTMLElement): void {
+  // Tabbed chart block: only the active view travels, and the tab's name becomes the block's title.
+  const title = tabTitle(clone);
+  if (title) {
+    clone.querySelectorAll('[role="tabpanel"][hidden], [data-ctl][hidden], [data-desc][hidden]').forEach((e) => e.remove());
+    const tablist = clone.querySelector('[role="tablist"]');
+    if (tablist) tablist.replaceWith(Object.assign(document.createElement("h2"), { textContent: title }));
+  }
   clone.querySelectorAll(".grp__rm, .flip-btn, button.icon-btn, [data-flip], [data-toggle]").forEach((e) => e.remove());
   const text = (el: Element, t: string) => {
     if (!t) return el.remove();
@@ -136,7 +145,7 @@ function wrapped(block: HTMLElement, main: Element): HTMLElement {
 /** Pushes each chart into `made` as it is created, so the caller can dispose them even if a later one throws. */
 function redrawCharts(source: HTMLElement[], stage: HTMLElement, made: echarts.ECharts[]): void {
   const SEL = "[data-chart], #g-radar";
-  const originals = source.flatMap((b) => [...b.querySelectorAll<HTMLElement>(SEL)]);
+  const originals = source.flatMap((b) => [...b.querySelectorAll<HTMLElement>(SEL)].filter((o) => !o.closest("[hidden]"))); // hidden views are not in the copy
   const copies = [...stage.querySelectorAll<HTMLElement>(SEL)];
   copies.forEach((copy, i) => {
     const live = originals[i] && echarts.getInstanceByDom(originals[i]);

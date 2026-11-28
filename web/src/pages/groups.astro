@@ -4,6 +4,7 @@ import { join } from "node:path";
 import Base from "../layouts/Base.astro";
 import Picker from "../components/Picker.astro";
 import type { IndexEntry } from "../lib/data";
+import { fightRows } from "../lib/render";
 
 const index: IndexEntry[] = JSON.parse(await readFile(join(process.cwd(), "public/data/index.json"), "utf-8"));
 const ORDER = [
@@ -31,15 +32,16 @@ const women = all.filter((d) => d.startsWith("Women's")).sort((x, y) => rank(x) 
       <div class="panel__head"><h2 id="g-h1">Fighters</h2><span class="panel__aside" id="g-pop"></span></div>
       <ul id="g-legend" class="grp__legend"></ul>
     </section>
-    <section class="panel" aria-labelledby="g-h2">
+    <section class="panel grp__half grp__radar" aria-labelledby="g-h2">
       <div class="panel__head"><h2 id="g-h2">Style radar</h2></div>
       <div id="g-radar" class="chart chart--radar" role="img" aria-label="Empty radar: add at least 2 fighters"></div>
     </section>
-    <section class="panel" id="g-table-panel" aria-labelledby="g-h3" hidden>
+    <section class="panel grp__half" id="g-table-panel" aria-labelledby="g-h3" hidden>
       <div class="panel__head"><h2 id="g-h3">The eight metrics</h2></div>
       <div class="grp__scroll" tabindex="0" role="region" aria-label="Metrics table, scrolls sideways on narrow screens"><table id="g-table" class="grp__table"></table></div>
       <p class="foot">P is the percentile (100 is best; strikes absorbed are inverted). The bar is the percentile; the dot marks the best in each row, ties included.</p>
     </section>
+    <Fragment set:html={fightRows("group").replace("<section ", "<section hidden ")} />
     <p id="live" class="sr" aria-live="polite"></p>
   </main>
   <script>

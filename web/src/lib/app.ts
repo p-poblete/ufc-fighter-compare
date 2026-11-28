@@ -167,7 +167,7 @@ export async function boot(): Promise<void> {
   function commit(next: State, push = true): void {
     state = next;
     if (push) {
-      const url = `${location.pathname}${pairQuery(state.a, state.b)}`;
+      const url = `${location.pathname}${pairQuery(state.a, state.b, new URLSearchParams(location.search))}`;
       history.pushState(null, "", url);
     }
     void render();

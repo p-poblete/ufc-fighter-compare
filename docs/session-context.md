@@ -81,3 +81,8 @@ Actualizado: 2026-11-27
 3. Cloudflare Pages conectado (despliega en cada push; v0.8 publicada en https://ufc-fighter-compare.pages.dev, comprobado 2026-11-27). Pendiente: Lighthouse móvil sobre la demo (CA10) y que Piero borre la app de Streamlit Cloud.
 3b. SEO (2026-11-28): canonical sin query + Open Graph/Twitter sin imagen (5be089c), enlace a la demo en README y homepage del repo, verificación de Search Console por archivo y meta (65752b2). Propiedad verificada y `sitemap.xml` enviado. Pendiente: «Solicitar indexación» de portada, `/fighters/` y 2–3 perfiles (Google no lo permitió aún; reintentar), Bing Webmaster (importar desde GSC), og:image (decisión de Piero). Ojo: Cloudflare redirige `*.html` a la ruta sin extensión (308).
 4. Menores sin aplicar: `rf` de directory.json sin uso, mirror duplicado tras fonts.ready (app.ts:91/204), RESULT duplicado en charts.ts.
+
+## v0.9 en borrador (2026-11-28)
+- Pendientes del vault (`UFC - Pendientes.md`) pasados a spec §12: 8 puntos, CA28–CA35, 6 cortes. Pez dorado ronda 1: NO LISTO por las decisiones abiertas; sus 12 hallazgos aplicados en §12 y registrados en §10.
+- Piero respondió P1–P8 (2026-11-28; §12.3): mismo nombre con logo nuevo (`logo-design`), barra sosa que compite con la página, tabla como la v0.5 con datos de la tarjeta, pestañas, línea en todos, Fighters alike (5, misma división), grupos con más gráficos (Methods nuevo). Ronda 2 de pez dorado: LISTO CON CAMBIOS, aplicada.
+- Siguiente: `/minerva` sobre §12 (cortes 1→2→3, luego 4, 5, 6).

@@ -150,6 +150,16 @@ export function championMark(f: Pick<Fighter, "belts">): string {
   return `<div class="belts">${items}</div>`;
 }
 
+/** Belt icons for a table cell: same icon and colours as the portrait mark, label as accessible name and title, no tooltip. */
+export function beltIcons(belts: { division: string; kind: keyof typeof BELT_LABEL }[]): string {
+  return belts
+    .map((b) => {
+      const text = `${BELT_LABEL[b.kind]} · ${b.division}`;
+      return `<span class="belt-ico champ--${b.kind}" role="img" aria-label="${esc(text)}" title="${esc(text)}">${svgIcon(BELT)}</span>`;
+    })
+    .join("");
+}
+
 export function identity(f: Fighter | null, tone: Tone, warning: string | null = null, withFacts = false): string {
   const warn = warning ? `<p class="warn" role="status">${esc(warning)}</p>` : "";
   const corner = ""; // the colour and the side already say which corner
@@ -402,7 +412,27 @@ export const CAREER_METRICS: [string, string][] = [
 ];
 const CAREER_OPTIONS = CAREER_METRICS.map(([k, l]) => `<option value="${k}">${l}</option>`).join("");
 
-export function fightRows(solo = false): string {
+/** Views of the chart block: id, tab label and the title the export gives the image (spec §12.1 #5, #7). */
+export const CHART_VIEWS = {
+  solo: [["career", "Career", "Career chart"], ["returns", "Returns", "Betting returns"], ["length", "Length", "Fight length"]],
+  duel: [["performance", "Performance", "Performance by fight"], ["returns", "Returns", "Betting returns"], ["length", "Length", "Fight length"]],
+  group: [["performance", "Performance", "Performance by fight"], ["returns", "Betting returns", "Betting returns"], ["length", "Fight length", "Fight length"], ["methods", "Methods", "How the fights end"]],
+} as const;
+const MODES = [["points", "Points"], ["line", "Line"]] as const;
+/** The same description in both modes; the block shows the one for the chosen mode. */
+const descs = (points: string, line: string) =>
+  `<p class="desc" data-desc="points">${points}</p><p class="desc" data-desc="line" hidden>${line}</p>`;
+
+/**
+ * One block with tabs for the per-fight charts (ARIA tabs; lib/charts.ts wires them). A single Time span and a single
+ * Points/Line switch serve every view; the views that do not use a control hide it (it keeps its value).
+ * `data-uses` on each view lists the shared controls it needs.
+ */
+export function fightRows(kind: boolean | "group" = false): string {
+  const group = kind === "group";
+  const solo = kind === true;
+  const views = group ? CHART_VIEWS.group : solo ? CHART_VIEWS.solo : CHART_VIEWS.duel;
+  const defMode = solo ? "line" : "points";
   const metrics = [
     ["slpm", "Strikes / min"],
     ["acc", "Accuracy"],
@@ -411,44 +441,55 @@ export function fightRows(solo = false): string {
   ]
     .map(([k, l], i) => `<button type="button" data-metric="${k}" aria-pressed="${i === 0}">${l}</button>`)
     .join("");
-  return (
-    (solo
-      ? mod(
-          "fights.career",
-          "Career chart",
-          `<div class="career__pick"><label for="career-metric" class="muted">Metric</label><select id="career-metric" class="sel" data-career-metric>${CAREER_OPTIONS}</select></div>
+  const who = solo ? "the fighter" : "each fighter";
+  // In a group the side tables (ROI by odds type, length figures) are left out: the metrics table already lists four columns.
+  const side = (slot: string) => (group ? "" : `<div class="ret__side" data-slot="${slot}"></div>`);
+  const ret = group ? "" : " ret";
+  const body: Record<string, string> = {
+    career: `<div class="career__pick"><label for="career-metric" class="muted">Metric</label><select id="career-metric" class="sel" data-career-metric>${CAREER_OPTIONS}</select></div>
        <div class="chart chart--wide" data-chart="career" role="img" aria-label="Fight-by-fight career trend of the chosen metric"></div>
-       <p class="desc">Each point is a UFC fight, oldest to newest. Dashed line: the fighter's average over the fights with data. Fights without statistics, or without attempts for a rate, break the line. Click a point, or point at a fight in the history, to see it.</p>`,
-          { cls: "row" },
-        )
-      : mod(
-        "fights.performance",
-        "Performance by fight",
-        `<div class="seg" role="group" aria-label="Metric">${metrics}</div>
+       ${descs(
+         "Each point is a UFC fight, oldest to newest. Dashed line: the fighter's average over the fights with data. Fights without statistics, or without attempts for a rate, have no point. Click a point, or point at a fight in the history, to see it.",
+         "Each point is a UFC fight, oldest to newest. Dashed line: the fighter's average over the fights with data. Fights without statistics, or without attempts for a rate, break the line. Click a point, or point at a fight in the history, to see it.",
+       )}`,
+    performance: `<div class="seg" role="group" aria-label="Metric">${metrics}</div>
          <div class="chart chart--wide" data-chart="perf" role="img" aria-label="Per-fight performance over time"></div>
-         <p class="desc">Each point is a fight: filled = win, ring = loss, diamond = draw or no contest. Dashed lines: each fighter's average in the span. Click a point, or point at a fight in the history, to see it.</p>`,
-        { cls: "row", aside: rangeControl() },
-      )) +
-    mod(
-      "fights.returns",
-      "Betting returns",
-      `<div class="ret">
-         <div class="chart chart--wide" data-chart="roi" role="img" aria-label="Net return of a 100 bet on each fight, by odds type"></div>
-         <div class="ret__side" data-slot="roi-table"></div>
+         ${descs(
+           "Each point is a fight: filled = win, ring = loss, diamond = draw or no contest. Dashed lines: each fighter's average in the span. Click a point, or point at a fight in the history, to see it.",
+           "One line per fighter, fight by fight over time; a fight without data leaves a gap. Filled = win, ring = loss, diamond = draw or no contest. Dashed lines: each fighter's average in the span. Click a point, or point at a fight in the history, to see it.",
+         )}`,
+    returns: `<div class="${ret.trim()}">
+         <div class="chart chart--wide" data-chart="roi" role="img" aria-label="Net return of a 100 bet on each fight"></div>
+         ${side("roi-table")}
        </div>
-       <p class="desc">Net result of backing ${solo ? "the fighter" : "each fighter"} with 100 at the decimal odds of every priced fight. Dashed lines: average return per fight. * fewer than 5 fights.</p>`,
-      { cls: "row", aside: rangeControl() },
-    ) +
-    mod(
-      "fights.length",
-      "Fight length",
-      `<div class="ret">
+       ${descs(
+         `Net result of backing ${who} with 100 at the decimal odds of every priced fight, by odds type. Dashed lines: average return per fight. * fewer than 5 fights.`,
+         `Running total of backing ${who} with 100 at the decimal odds of every priced fight, fight by fight over time. Above the line at 0 is profit overall. The table counts every priced fight in the span. * fewer than 5 fights.`,
+       )}`,
+    length: `<div class="${ret.trim()}">
          <div class="chart chart--wide" data-chart="dur" role="img" aria-label="Distribution of fight length in minutes"></div>
-         <div class="ret__side" data-slot="dur-table"></div>
-       </div>`,
-      { cls: "row", aside: rangeControl() },
-    )
-  );
+         ${side("dur-table")}
+       </div>
+       ${descs(
+         "How many fights ended in each five-minute stretch, per fighter. Dashed lines: average length.",
+         "The same counts joined into one line per fighter, so the shape of each fighter's fight lengths can be compared. Dashed lines: average length.",
+       )}`,
+    methods: `<div class="chart chart--methods" data-chart="methods" role="img" aria-label="Wins and losses of each fighter by method"></div>
+       <p class="legend legend--steps" aria-hidden="true">${METHODS.map(([, l], i) => `<span><i class="m${i}"></i>${l}</span>`).join("")}</p>
+       <p class="desc">Each fighter has two bars over the whole UFC career, wins above and losses below, split by how the fight ended. The shade of the fighter's colour gives the method (brightest KO/TKO, then submission, then decision); grey is other results. Numbers count fights.</p>`,
+  };
+  const uses: Record<string, string> = { career: "mode", performance: "range mode", returns: "range mode", length: "range mode", methods: "" };
+  const tabs = views
+    .map(([id, label, title], i) => `<button type="button" role="tab" id="ct-${id}" data-tab="${id}" data-title="${title}" aria-controls="cv-${id}" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}">${label}</button>`)
+    .join("");
+  const panels = views
+    .map(([id], i) => `<div role="tabpanel" id="cv-${id}" data-view="${id}" data-uses="${uses[id]}" aria-labelledby="ct-${id}"${i ? " hidden" : ""}>${body[id]}</div>`)
+    .join("");
+  const mode = `<div class="seg" role="group" aria-label="Chart style" data-ctl="mode">${MODES.map(([k, l]) => `<button type="button" data-mode="${k}" aria-pressed="${k === defMode}">${l}</button>`).join("")}</div>`;
+  return `<section class="panel row" data-module="fights.charts"${group ? ' id="g-charts"' : ""} data-tabs data-default-mode="${defMode}" aria-label="Charts">
+    <header class="panel__head"><div class="seg" role="tablist" aria-label="Chart">${tabs}</div><div>${rangeControl().replace('class="seg"', 'class="seg" data-ctl="range"')}${mode}</div></header>
+    ${panels}
+  </section>`;
 }
 
 export function fightCharts(a: Fighter | null, b: Fighter | null): string {

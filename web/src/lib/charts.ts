@@ -7,7 +7,7 @@ import * as echarts from "echarts/core";
 import { SVGRenderer } from "echarts/renderers";
 import type { Fight, FightStats, Fighter, OddsType } from "./data";
 import { dateLong, esc, lastName } from "./format";
-import { CAREER_METRICS, METRICS, ODDS_TYPES, clock, population } from "./render";
+import { CAREER_METRICS, METHODS, METRICS, ODDS_TYPES, clock, population } from "./render";
 
 echarts.use([LineChart, RadarChart, ScatterChart, BarChart, RadarComponent, GridComponent, TooltipComponent, MarkLineComponent, SVGRenderer]);
 
@@ -16,6 +16,7 @@ export interface Entry {
   color: string;
 }
 type Range = "all" | "5y" | "3y" | "10";
+export type Mode = "points" | "line";
 type Chart = ReturnType<typeof echarts.init>;
 
 const INK = "#f5f6f8";
@@ -87,8 +88,8 @@ function register(chart: Chart, series: { data: { slug: string; idx: number }[] 
 function openOnClick(chart: Chart) {
   chart.off("click");
   chart.on("click", (p) => {
-    const d = p.data as { slug?: string; idx?: number; tone?: string } | undefined;
-    if (d?.slug != null && d.idx != null) document.dispatchEvent(new CustomEvent("fight:open", { detail: { slug: d.slug, i: d.idx, tone: d.tone } }));
+    const d = p.data as { slug?: string; idx?: number; tone?: string; color?: string } | undefined;
+    if (d?.slug != null && d.idx != null) document.dispatchEvent(new CustomEvent("fight:open", { detail: { slug: d.slug, i: d.idx, tone: d.tone, color: d.tone === "solo" ? d.color : undefined } }));
   });
 }
 let linked = false;
@@ -237,14 +238,18 @@ export interface PolyEntry {
   color: string;
   values: number[]; // one percentile per METRICS row
 }
+const lastPolys = new WeakMap<HTMLElement, PolyEntry[]>();
 export function drawGroupRadar(el: HTMLElement, polys: PolyEntry[]): void {
+  lastPolys.set(el, polys);
   const chart = instance(el);
+  // Pixel radius from the box (room left for the axis names), as on the home radar.
+  const radius = Math.max(50, Math.min(el.clientHeight / 2 - 34, el.clientWidth / 2 - (el.clientWidth < 480 ? 96 : 118)));
   chart.setOption(
     {
       textStyle: font,
       radar: {
         indicator: METRICS.map(([m]) => ({ name: SHORT[m], max: 100 })),
-        radius: el.clientWidth < 480 ? "58%" : "66%",
+        radius,
         center: ["50%", "50%"],
         splitNumber: 4,
         axisNameGap: 8,
@@ -273,6 +278,15 @@ export function drawGroupRadar(el: HTMLElement, polys: PolyEntry[]): void {
   if (!observed.has(el)) {
     observed.add(el);
     resizer.observe(el);
+    // The radius is in pixels: redraw when the box changes size.
+    let w = el.clientWidth, h = el.clientHeight;
+    new ResizeObserver(() => {
+      if (Math.abs(el.clientWidth - w) > 8 || Math.abs(el.clientHeight - h) > 8) {
+        w = el.clientWidth;
+        h = el.clientHeight;
+        drawGroupRadar(el, lastPolys.get(el) ?? []);
+      }
+    }).observe(el);
   }
 }
 
@@ -285,24 +299,27 @@ const PERF: Record<PerfMetric, { label: string; unit: string; digits: number; va
   sub: { label: "Submission attempts", unit: "", digits: 0, value: (x) => (x.stats ? x.stats.sub_att : null) },
 };
 
-function perf(el: HTMLElement, entries: Entry[], metric: PerfMetric, range: Range, tones: string[]) {
+function perf(el: HTMLElement, entries: Entry[], metric: PerfMetric, range: Range, tones: string[], mode: Mode) {
   const cfg = PERF[metric];
   const fmt = (v: number) => `${v.toFixed(cfg.digits)}${cfg.unit}`;
   const series = entries.map((e, s) => {
-    const pts = inRange(e.f.fights, range)
-      .map(({ x, i }) => ({ x, i, v: cfg.value(x) }))
-      .filter((d) => d.v != null);
-    const avg = pts.length ? pts.reduce((t, d) => t + d.v!, 0) / pts.length : null;
+    const line = mode === "line";
+    // Points drop the fights without data; the line keeps them as gaps, oldest first.
+    const all = inRange(e.f.fights, range).map(({ x, i }) => ({ x, i, v: cfg.value(x) }));
+    const pts = line ? [...all].reverse() : all.filter((d) => d.v != null);
+    const vals = pts.filter((d) => d.v != null);
+    const avg = vals.length ? vals.reduce((t, d) => t + d.v!, 0) / vals.length : null;
     return {
-      type: "scatter" as const,
+      type: (line ? "line" : "scatter") as "line" | "scatter",
       name: e.f.name,
       itemStyle: { color: e.color },
-      symbolSize: POINT,
+      ...(line ? { lineStyle: { color: e.color, width: 2 }, connectNulls: false } : {}),
+      symbolSize: line ? 11 : POINT,
       emphasis,
       cursor: "pointer",
       avg,
       markLine: avg == null ? undefined : avgLine("yAxis", avg, e.color, `${lastName(e.f.name)} avg ${fmt(avg)}`),
-      data: pts.map(({ x, i, v }) => ({ value: [x.date, v], symbol: symbolFor(x.result), fight: x, fighter: e.f.name, slug: e.f.slug, idx: i, tone: tones[s], avg })),
+      data: pts.map(({ x, i, v }) => ({ value: [x.date, v], symbol: symbolFor(x.result), fight: x, fighter: e.f.name, slug: e.f.slug, idx: i, tone: tones[s], color: e.color, avg })),
     };
   });
   const chart = instance(el);
@@ -354,7 +371,7 @@ const shortDate = (iso: string) => {
   return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-GB", { month: "short", year: "numeric", timeZone: "UTC" });
 };
 
-function career(el: HTMLElement, entry: Entry, metric: string, tone: string) {
+function career(el: HTMLElement, entry: Entry, metric: string, tone: string, mode: Mode) {
   const cfg = CAREER[metric] ?? CAREER.sig_landed;
   const label = CAREER_METRICS.find(([k]) => k === metric)?.[1] ?? metric;
   const fmt = (v: number) => `${v.toFixed(cfg.digits)}${cfg.unit}`;
@@ -368,7 +385,7 @@ function career(el: HTMLElement, entry: Entry, metric: string, tone: string) {
   if (el.querySelector(".nodata")) el.innerHTML = "";
   const avg = vals.reduce((t, v) => t + v, 0) / vals.length;
   const color = entry.color;
-  const data = rows.map(({ x, i, v }) => ({ value: v, fight: x, slug: entry.f.slug, idx: i, tone, avg, symbol: symbolFor(x.result) }));
+  const data = rows.map(({ x, i, v }) => ({ value: v, fight: x, slug: entry.f.slug, idx: i, tone, color, avg, symbol: symbolFor(x.result) }));
   const series = [
     {
       type: "line" as const,
@@ -378,8 +395,9 @@ function career(el: HTMLElement, entry: Entry, metric: string, tone: string) {
       symbolSize: 9,
       cursor: "pointer",
       itemStyle: { color },
-      lineStyle: { color, width: 2.5 },
-      areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: color + "59" }, { offset: 1, color: color + "00" }]) },
+      // Points: the same series without its line and fill.
+      lineStyle: mode === "line" ? { color, width: 2.5 } : { color, width: 0, opacity: 0 },
+      areaStyle: mode === "line" ? { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: color + "59" }, { offset: 1, color: color + "00" }]) } : undefined,
       emphasis: { scale: false, focus: "none" as const, itemStyle: { borderColor: "#fff", borderWidth: 2.5 } },
       markLine: avgLine("yAxis", avg, color, `avg ${fmt(avg)}`),
       data,
@@ -422,8 +440,51 @@ function oddsType(o: number): OddsType {
 }
 const stakeReturn = (x: Fight, stake: number) => (x.result === "W" ? stake * (x.odds! - 1) : x.result === "L" ? -stake : 0);
 
-function roi(el: HTMLElement, entries: Entry[], range: Range, tones: string[]) {
-  const offsets = entries.length > 1 ? [-0.17, 0.17] : [0];
+/** Betting returns as a line: running net result of a 100 bet on every priced fight, by date; break-even at 0. */
+function roiLine(entries: Entry[], priced: { x: Fight; i: number }[][], tones: string[]) {
+  const series = entries.map((e, s) => {
+    let total = 0;
+    const data = [...priced[s]].reverse().map(({ x, i }) => {
+      const net = stakeReturn(x, 100);
+      total += net;
+      return { value: [x.date, Math.round(total)], symbol: symbolFor(x.result), fight: x, fighter: e.f.name, slug: e.f.slug, idx: i, tone: tones[s], color: e.color, net };
+    });
+    return {
+      type: "line" as const,
+      name: e.f.name,
+      itemStyle: { color: e.color },
+      lineStyle: { color: e.color, width: 2 },
+      symbolSize: 11,
+      emphasis,
+      cursor: "pointer",
+      data,
+    };
+  });
+  const option = {
+    textStyle: font,
+    grid: { left: 56, right: 24, top: 24, bottom: 30 },
+    tooltip: {
+      ...tooltip,
+      trigger: "item",
+      formatter: (p: { data: { fight: Fight; fighter: string; value: [string, number]; net: number } }) => {
+        const { fight: x, fighter, value, net } = p.data;
+        return `<b>${esc(lastName(fighter))}</b> vs ${esc(x.opponent)} · ${RESULT[x.result]}<br>${dateLong(x.date)} · ${oddsType(x.odds!)} at ${x.odds!.toFixed(2)}<br>This fight: <b>${signedNum(net)}</b> · running total: <b>${signedNum(value[1])}</b><br><span style="color:${FAINT}">Click for the full fight</span>`;
+      },
+    },
+    xAxis: { type: "time" as const, ...axis },
+    yAxis: { type: "value" as const, ...axis, name: "running net on 100 bets", nameLocation: "end" as const, nameTextStyle: { ...font, color: FAINT, align: "left" as const } },
+    series: [
+      ...series,
+      { type: "scatter" as const, data: [], silent: true, markLine: { silent: true, symbol: "none", lineStyle: { color: MUTED, type: "solid" as const, width: 1, opacity: 0.35 }, label: { show: true, formatter: "break-even", color: FAINT, opacity: 0.7, fontSize: 11, position: "insideEndTop" as const }, data: [{ yAxis: 0 }] } },
+    ],
+  };
+  return { option, series };
+}
+
+function roi(el: HTMLElement, entries: Entry[], range: Range, tones: string[], mode: Mode) {
+  // Rows of the odds types hold one dot column per fighter, spread around the row centre (2 fighters: ±0.17).
+  const step = Math.min(0.34, 0.72 / entries.length);
+  const offsets = entries.map((_, s) => (entries.length > 1 ? (s - (entries.length - 1) / 2) * step : 0));
   const priced = entries.map((e) => inRange(e.f.fights, range).filter(({ x }) => x.odds));
   const series = entries.map((e, s) => {
     const avg = priced[s].length ? priced[s].reduce((t, { x }) => t + stakeReturn(x, 100), 0) / priced[s].length : null;
@@ -443,14 +504,16 @@ function roi(el: HTMLElement, entries: Entry[], range: Range, tones: string[]) {
         slug: e.f.slug,
         idx: i,
         tone: tones[s],
+        color: e.color,
       })),
     };
   });
+  const line = mode === "line" ? roiLine(entries, priced, tones) : null;
   const chart = instance(el);
   chart.setOption(
-    {
+    line ? line.option : {
       textStyle: font,
-      grid: { left: 110, right: 24, top: 44, bottom: 40 },
+      grid: { left: 110, right: 24, top: Math.max(44, 16 + 14 * entries.length), bottom: 40 },
       tooltip: {
         ...tooltip,
         trigger: "item",
@@ -473,7 +536,7 @@ function roi(el: HTMLElement, entries: Entry[], range: Range, tones: string[]) {
     },
     true,
   );
-  register(chart, series);
+  register(chart, line ? line.series : series);
   openOnClick(chart);
 
   const slot = el.closest(".panel")?.querySelector<HTMLElement>('[data-slot="roi-table"]');
@@ -502,12 +565,26 @@ function roi(el: HTMLElement, entries: Entry[], range: Range, tones: string[]) {
 // ---------- fights.length ----------
 const BINS = [0, 5, 10, 15, 20, 25];
 
-function duration(el: HTMLElement, entries: Entry[], range: Range) {
+function duration(el: HTMLElement, entries: Entry[], range: Range, mode: Mode) {
   const sets = entries.map((e) => inRange(e.f.fights, range).map(({ x }) => x).filter((x) => x.fight_time_s != null));
   const bars = entries.map((e, s) => {
     const fs = sets[s];
     // Right-closed bins like the pipeline: a 15:00 decision belongs to 10–15.
     const counts = BINS.slice(0, -1).map((lo, i) => fs.filter((x) => { const m = x.fight_time_s! / 60; return (i === 0 ? m >= lo : m > lo) && m <= BINS[i + 1]; }).length);
+    const data = counts.map((c, i) => ({ value: c, bin: i, total: fs.length }));
+    // Line: a frequency polygon over the same bins; a fighter with no fights in the span has no series.
+    if (mode === "line") {
+      return {
+        type: "line" as const,
+        name: e.f.name,
+        symbolSize: 9,
+        itemStyle: { color: e.color },
+        lineStyle: { color: e.color, width: 2.5 },
+        areaStyle: { color: e.color, opacity: 0.08 },
+        emphasis: { scale: false, itemStyle: { borderColor: "#fff", borderWidth: 2 } },
+        data: fs.length ? data : [],
+      };
+    }
     return {
       type: "bar" as const,
       name: e.f.name,
@@ -515,7 +592,7 @@ function duration(el: HTMLElement, entries: Entry[], range: Range) {
       barGap: "12%",
       itemStyle: { color: e.color, borderRadius: [4, 4, 0, 0] },
       emphasis: { itemStyle: { color: e.color, borderColor: "#fff", borderWidth: 2 } },
-      data: counts.map((c, i) => ({ value: c, bin: i, total: fs.length })),
+      data,
     };
   });
   // Averages ride on a hidden 0–25 value axis laid exactly over the five round-long categories.
@@ -527,7 +604,7 @@ function duration(el: HTMLElement, entries: Entry[], range: Range) {
   instance(el).setOption(
     {
       textStyle: font,
-      grid: { left: 36, right: 24, top: 44, bottom: 40 },
+      grid: { left: 36, right: 24, top: Math.max(44, 16 + 14 * entries.length), bottom: 40 },
       tooltip: {
         ...tooltip,
         trigger: "item",
@@ -568,6 +645,64 @@ function duration(el: HTMLElement, entries: Entry[], range: Range) {
   }
 }
 
+// ---------- fights.methods (groups): wins and losses by method, stacked horizontally ----------
+/** `color` mixed with the card ink by `pct` percent, like the .m1/.m2 steps in app.css. */
+function shade(color: string, pct: number): string {
+  const mix = (c: number, k: number) => Math.round(c * (pct / 100) + k * (1 - pct / 100));
+  const n = parseInt(color.slice(1), 16);
+  return `rgb(${mix((n >> 16) & 255, 0x1c)} ${mix((n >> 8) & 255, 0x1e)} ${mix(n & 255, 0x22)})`;
+}
+function methods(el: HTMLElement, entries: Entry[]) {
+  // Two rows per fighter (wins above, losses below); the fighter's colour carries the identity, its shade the method.
+  const rows = entries.flatMap((e) => [{ e, kind: "Wins", by: e.f.wins_by }, { e, kind: "Losses", by: e.f.losses_by }]);
+  const tint = (c: string, i: number) => (i === 0 ? c : i === 1 ? shade(c, 58) : i === 2 ? shade(c, 30) : "#6b7080");
+  const series = METHODS.map(([k, label], i) => ({
+    type: "bar" as const,
+    name: label,
+    stack: "m",
+    barWidth: 16,
+    emphasis: { itemStyle: { borderColor: "#fff", borderWidth: 2 } },
+    label: { show: true, color: "#fff", fontWeight: 800, fontSize: 12, fontFamily: font.fontFamily, formatter: (p: { value: number }) => (p.value ? String(p.value) : "") },
+    itemStyle: { borderColor: "#15171b", borderWidth: 1 },
+    data: rows.map((r) => ({ value: r.by[k], kind: r.kind, fighter: r.e.f.name, total: METHODS.reduce((t, [m]) => t + r.by[m], 0), itemStyle: { color: tint(r.e.color, i) } })),
+  }));
+  // A pair of rows per fighter with a gap between pairs: category spacing alone does not separate them, the name does.
+  const h = 40 + rows.length * 30;
+  el.style.height = `${h}px`;
+  instance(el).setOption(
+    {
+      textStyle: font,
+      grid: { left: 150, right: 24, top: 8, bottom: 8 },
+      tooltip: {
+        ...tooltip,
+        trigger: "item",
+        formatter: (p: { seriesName: string; data: { value: number; kind: string; fighter: string; total: number } }) => {
+          const { value, kind, fighter, total } = p.data;
+          return `<b>${esc(lastName(fighter))}</b> · ${kind.toLowerCase()} by ${p.seriesName.toLowerCase()}<br><b>${value}</b> of ${total} ${kind.toLowerCase()}${total ? ` (${Math.round((value / total) * 100)}%)` : ""}`;
+        },
+      },
+      xAxis: { type: "value", ...axis, minInterval: 1, splitLine: { show: true, lineStyle: { color: LINE } } },
+      yAxis: {
+        type: "category",
+        inverse: true,
+        data: rows.map((r) => `${entries.indexOf(r.e)}|${r.e.f.name}|${r.kind}`),
+        ...axis,
+        axisLine: { show: false },
+        splitLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: {
+          ...axis.axisLabel,
+          interval: 0,
+          formatter: (v: string) => { const [i, n, k] = v.split("|"); return k === "Wins" ? `{n${i}|${lastName(n)}} {k|${k}}` : `{k|${k}}`; },
+          rich: { k: { color: MUTED, fontSize: 12, fontFamily: font.fontFamily }, ...Object.fromEntries(entries.map((e, i) => [`n${i}`, { color: e.color, fontWeight: 700, fontSize: 12, fontFamily: font.fontFamily }])) },
+        },
+      },
+      series,
+    },
+    true,
+  );
+}
+
 const observed = new WeakSet<HTMLElement>();
 const drawers = new WeakMap<HTMLElement, () => void>();
 const resizer = new ResizeObserver((items) => {
@@ -584,21 +719,103 @@ function wire(panel: Element, attr: string, redraw: () => void) {
   );
 }
 
+// ---------- tabbed chart block (fights.charts): ARIA tabs, one Time span and one Points/Line switch ----------
+const setParam = (k: string, v: string) => {
+  try {
+    const u = new URL(location.href);
+    u.searchParams.set(k, v);
+    // URLSearchParams escapes the commas of ?f=a,b,c; keep the readable form the rest of the site writes.
+    history.replaceState(history.state, "", `${u.pathname}${u.search.replace(/%2C/gi, ",")}${u.hash}`);
+  } catch { /* the URL is a convenience */ }
+};
+/** Draws the charts of the visible view (hidden ones are drawn when they are shown) and gives them their size. */
+function redrawVisible(block: HTMLElement) {
+  for (const el of block.querySelectorAll<HTMLElement>("[data-chart]")) {
+    if (el.closest("[hidden]")) continue;
+    drawers.get(el)?.();
+    echarts.getInstanceByDom(el)?.resize();
+  }
+}
+function selectTab(block: HTMLElement, tab: HTMLElement, opts: { focus?: boolean; url?: boolean; redraw?: boolean }) {
+  const id = tab.dataset.tab;
+  block.querySelectorAll<HTMLElement>('[role="tab"]').forEach((t) => {
+    t.setAttribute("aria-selected", String(t === tab));
+    t.tabIndex = t === tab ? 0 : -1;
+  });
+  let uses = "";
+  block.querySelectorAll<HTMLElement>('[role="tabpanel"]').forEach((v) => {
+    v.hidden = v.dataset.view !== id;
+    if (!v.hidden) uses = v.dataset.uses ?? "";
+  });
+  // Controls the view does not use are hidden; they keep their value.
+  block.querySelectorAll<HTMLElement>("[data-ctl]").forEach((c) => (c.hidden = !uses.split(" ").includes(c.dataset.ctl!)));
+  if (opts.focus) tab.focus();
+  if (opts.url) setParam("chart", id!);
+  if (opts.redraw) redrawVisible(block);
+}
+function applyMode(block: HTMLElement, mode: Mode) {
+  block.querySelectorAll<HTMLElement>("[data-mode]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === mode)));
+  block.querySelectorAll<HTMLElement>("[data-desc]").forEach((d) => (d.hidden = d.dataset.desc !== mode));
+}
+/** Applies ?chart= and ?mode= (invalid → defaults) to the block. */
+function readUrl(block: HTMLElement, redraw: boolean) {
+  const q = new URLSearchParams(location.search);
+  const tabs = [...block.querySelectorAll<HTMLElement>('[role="tab"]')];
+  const m = q.get("mode");
+  applyMode(block, m === "points" || m === "line" ? m : (block.dataset.defaultMode as Mode));
+  selectTab(block, tabs.find((t) => t.dataset.tab === q.get("chart")) ?? tabs[0], { redraw });
+}
+/** Re-reads the URL after Back/Forward (the block was wired already). */
+export function syncBlockFromUrl(root: ParentNode): void {
+  root.querySelectorAll<HTMLElement>("[data-tabs][data-ready]").forEach((b) => readUrl(b, true));
+}
+/** Reads ?chart= and ?mode= (invalid → defaults) and wires tabs and switch, once per block. */
+function initBlock(block: HTMLElement) {
+  if (block.dataset.ready) return;
+  block.dataset.ready = "1";
+  readUrl(block, false);
+  const tabs = [...block.querySelectorAll<HTMLElement>('[role="tab"]')];
+  tabs.forEach((t, i) => {
+    t.addEventListener("click", () => selectTab(block, t, { url: true, redraw: true }));
+    t.addEventListener("keydown", (ev) => {
+      const to = ev.key === "ArrowRight" ? (i + 1) % tabs.length : ev.key === "ArrowLeft" ? (i + tabs.length - 1) % tabs.length : ev.key === "Home" ? 0 : ev.key === "End" ? tabs.length - 1 : -1;
+      if (to < 0) return;
+      ev.preventDefault();
+      selectTab(block, tabs[to], { focus: true, url: true, redraw: true });
+    });
+  });
+  block.querySelectorAll<HTMLElement>("[data-mode]").forEach((b) =>
+    b.addEventListener("click", () => {
+      applyMode(block, b.dataset.mode as Mode);
+      setParam("mode", b.dataset.mode!);
+      redrawVisible(block);
+    }),
+  );
+}
+
 /** Draw every [data-chart] inside root. `tones` names each entry's corner for the fight dialog. */
 export function drawCharts(root: ParentNode, entries: Entry[], tones: string[] = ["a", "b"]): void {
   if (!entries.length) return;
   linkHistoryRows();
+  root.querySelectorAll<HTMLElement>("[data-tabs]").forEach(initBlock);
   for (const el of root.querySelectorAll<HTMLElement>("[data-chart]")) {
     const kind = el.dataset.chart;
     const panel = el.closest(".panel")!;
     const range = () => pressed(panel, "data-range", "all") as Range;
+    const mode = () => pressed(panel, "data-mode", "points") as Mode;
     let draw: () => void;
     if (kind === "radar") draw = () => radar(el, entries, pressed(panel, "data-layer", "both"));
-    else if (kind === "perf") draw = () => perf(el, entries, pressed(panel, "data-metric", "slpm") as PerfMetric, range(), tones);
-    else if (kind === "career") draw = () => career(el, entries[0], panel.querySelector<HTMLSelectElement>("[data-career-metric]")?.value ?? "sig_landed", tones[0]);
-    else if (kind === "roi") draw = () => roi(el, entries, range(), tones);
-    else if (kind === "dur") draw = () => duration(el, entries, range());
+    else if (kind === "perf") draw = () => perf(el, entries, pressed(panel, "data-metric", "slpm") as PerfMetric, range(), tones, mode());
+    else if (kind === "career") draw = () => career(el, entries[0], panel.querySelector<HTMLSelectElement>("[data-career-metric]")?.value ?? "sig_landed", tones[0], mode());
+    else if (kind === "roi") draw = () => roi(el, entries, range(), tones, mode());
+    else if (kind === "dur") draw = () => duration(el, entries, range(), mode());
+    else if (kind === "methods") draw = () => methods(el, entries);
     else continue;
+    // A view in a hidden tab is drawn when it is shown: ECharts would measure 0 px.
+    if (el.closest("[data-tabs]")) {
+      const inner = draw;
+      draw = () => { if (!el.closest("[hidden]")) inner(); };
+    }
     drawers.set(el, draw);
     draw();
     // Listeners and observers are attached once per element; they always call its latest draw.

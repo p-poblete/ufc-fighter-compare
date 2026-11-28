@@ -33,6 +33,14 @@ import Base from "../../layouts/Base.astro";
         <button type="button" class="car__btn" id="car-next" aria-label="Next fighters" aria-controls="car-track">›</button>
       </div>
     </section>
+    <section class="panel dir__table" id="dir-table" aria-label="Fighters table" hidden>
+      <div class="dir__scroll" tabindex="0" role="region" aria-label="Fighters table, scrolls sideways on narrow screens">
+        <table>
+          <thead><tr><th scope="col">Fighter</th><th scope="col">Division</th><th scope="col">Archetype</th><th scope="col">Discipline</th><th scope="col">Belt</th><th scope="col" class="num">Index</th><th scope="col" class="num">Record</th><th scope="col" class="num">Last UFC fight</th><th scope="col"><span class="sr">Actions</span></th></tr></thead>
+          <tbody id="dir-body"></tbody>
+        </table>
+      </div>
+    </section>
   </main>
   <script>
     import { loadDirectory } from "../../lib/data";
@@ -41,7 +49,7 @@ import Base from "../../layouts/Base.astro";
     import type { DirState } from "../../lib/directory";
     import { fitBadges } from "../../lib/fit";
     import { ARCHETYPES, FACT_ICONS, SPECIALTIES, svgIcon } from "../../lib/icons";
-    import { badges, championMark, portrait } from "../../lib/render";
+    import { badges, beltIcons, championMark, portrait } from "../../lib/render";
     import { esc } from "../../lib/format";
     import { initTools } from "../../lib/tools";
     initTools();
@@ -53,6 +61,7 @@ import Base from "../../layouts/Base.astro";
     const specs = $("dir-specs"), clear = $<HTMLButtonElement>("dir-clear"), count = $("dir-count");
     const track = $<HTMLUListElement>("car-track"), msg = $("car-msg"), ctl = $("car-ctl");
     const prev = $<HTMLButtonElement>("car-prev"), next = $<HTMLButtonElement>("car-next");
+    const tableBox = $("dir-table"), body = $("dir-body");
     const bar = $("car-bar"), fill = $("car-fill");
 
     let all: DirectoryEntry[] = [];
@@ -80,6 +89,30 @@ import Base from "../../layouts/Base.astro";
           </dl>
         </div>
       </li>`;
+    }
+
+    // The table lists the same filtered rows in the same order, painted CHUNK rows per frame so no task is long.
+    const CHUNK = 100;
+    let paint = 0;
+    function tr(e: DirectoryEntry): string {
+      const arch = e.a ? `<span class="dtab__arch dtab__arch--${esc(e.a.toLowerCase())}">${esc(e.a)}</span>` : dash;
+      return `<tr><th scope="row"><a href="/fighters/${esc(e.s)}/">${esc(e.n)}</a>${e.k ? `<span class="muted"> “${esc(e.k)}”</span>` : ""}</th>
+        <td>${esc(e.d ?? dash)}</td><td>${arch}</td><td>${esc(e.di ?? dash)}</td><td>${beltIcons(e.belts) || dash}</td>
+        <td class="num">${e.ix == null ? dash : e.ix.toFixed(1)}</td><td class="num">${esc(e.r)}</td><td class="num">${esc(e.lf)}</td>
+        <td class="num"><a class="ghost ghost--sm" href="/?a=${esc(e.s)}">Compare</a></td></tr>`;
+    }
+    function renderTable() {
+      const my = ++paint;
+      body.replaceChildren();
+      tableBox.hidden = !rows.length;
+      let at = 0;
+      const next = () => {
+        if (my !== paint) return;
+        body.insertAdjacentHTML("beforeend", rows.slice(at, at + CHUNK).map(tr).join(""));
+        at += CHUNK;
+        if (at < rows.length) requestAnimationFrame(next);
+      };
+      next();
     }
 
     const sentinel = () => track.querySelector<HTMLElement>(".car__more");
@@ -112,6 +145,7 @@ import Base from "../../layouts/Base.astro";
       track.scrollLeft = 0;
       count.textContent = `${rows.length.toLocaleString("en-US")} ${rows.length === 1 ? "fighter" : "fighters"}`;
       clear.hidden = !isFiltered(state);
+      renderTable();
       if (!rows.length) {
         msg.hidden = false;
         msg.innerHTML = `<span>No fighters match these filters</span><button type="button" class="cta" id="car-reset">Clear filters</button>`;

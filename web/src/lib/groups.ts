@@ -33,8 +33,15 @@ export function parseGroup(raw: string | null, exists: (slug: string) => boolean
   return { slugs, notes };
 }
 
-/** Query string of a group; an empty list gives `?f=`. */
-export const groupQuery = (slugs: string[]): string => `?f=${slugs.join(",")}`;
+/** Query string of a group; an empty list gives `?f=`. `keep` carries the chart block's tab and mode (spec §12.1 #1), when valid. */
+export function groupQuery(slugs: string[], keep?: URLSearchParams): string {
+  let qs = `?f=${slugs.join(",")}`;
+  const chart = keep?.get("chart");
+  const mode = keep?.get("mode");
+  if (chart && ["performance", "returns", "length", "methods"].includes(chart)) qs += `&chart=${chart}`;
+  if (mode === "points" || mode === "line") qs += `&mode=${mode}`;
+  return qs;
+}
 
 export type Population = "division" | "global";
 export type Pcts = Record<Metric, number>;

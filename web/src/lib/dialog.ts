@@ -19,11 +19,11 @@ export function setupFightDialog(): void {
   });
   // Chart points ask for the same dialog.
   document.addEventListener("fight:open", (ev) => {
-    const d = (ev as CustomEvent<{ slug: string; i: number; tone?: string }>).detail;
-    void open(d.slug, d.i, d.tone ?? "solo");
+    const d = (ev as CustomEvent<{ slug: string; i: number; tone?: string; color?: string }>).detail;
+    void open(d.slug, d.i, d.tone ?? "solo", d.color);
   });
 
-  async function open(slug: string, i: number, tone: string) {
+  async function open(slug: string, i: number, tone: string, color?: string) {
     const f = await loadFighter(slug);
     const x = f.fights[i];
     if (!x) return;
@@ -35,6 +35,9 @@ export function setupFightDialog(): void {
       /* the opponent's side stays as dashes */
     }
     dlg.dataset.tone = tone;
+    // A fighter in a group brings their own colour as the accent of the "solo" tone.
+    if (color) dlg.style.setProperty("--solo", color);
+    else dlg.style.removeProperty("--solo");
     dlg.innerHTML = fightDetail(f, x, opp);
     dlg.showModal();
     dlg.querySelector<HTMLElement>("[data-close]")?.focus();

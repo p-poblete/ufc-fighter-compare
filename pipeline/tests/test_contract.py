@@ -201,6 +201,17 @@ def test_directory_index_is_mean_of_the_eight_percentiles():
 
 
 @needs_build
+def test_directory_nickname_present_or_absent():
+    index = {r["slug"]: r for r in _load("index.json")}
+    seen = set()
+    for entry in _load("directory.json"):
+        nick = _load(f"fighters/{entry['s']}.json")["nickname"]
+        assert entry.get("k") == nick and (nick is None) == ("k" not in entry)
+        seen.add(nick is None)
+    assert seen == {True, False} and index
+
+
+@needs_build
 def test_directory_gzip_under_limit():
     import gzip
 
