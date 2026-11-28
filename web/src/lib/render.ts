@@ -276,6 +276,18 @@ export function finishes(f: Fighter, tone: Tone, legend = true): string {
   return mod("corner.finishes", "", `<p class="desc">UFC since 2010</p>` + bar(f.wins_by, "Wins by method") + bar(f.losses_by, "Losses by method") + key, { tone, label: "How the fights end" });
 }
 
+/** profile.alike: the closest styles in the same division, each with its profile and a Compare link. */
+export function alike(f: Fighter): string {
+  const body = !f.similar
+    ? noData("no division percentile")
+    : !f.similar.length
+      ? `<p class="nodata">No similar fighters in this division</p>`
+      : `<ol class="alike">${f.similar
+          .map((s) => `<li><a class="alike__name" href="/fighters/${s.slug}/">${esc(s.name)}</a><a class="ghost ghost--sm" href="/?a=${f.slug}&amp;b=${s.slug}" aria-label="Compare ${esc(f.name)} with ${esc(s.name)}">Compare</a></li>`)
+          .join("")}</ol>`;
+  return mod("profile.alike", "Fighters alike", `<p class="desc">Closest style in the division (the eight radar percentiles)</p>${body}`, { tone: "solo" });
+}
+
 /** corner.history: every UFC fight, open, in a scrolling list that fills the rest of the column. */
 export function history(f: Fighter, tone: Tone = "solo"): string {
   if (!f.fights.length) return "";

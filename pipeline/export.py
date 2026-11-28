@@ -123,6 +123,33 @@ def _own_pct(idx, division_pct: pd.DataFrame, global_pct: pd.DataFrame):
     return global_pct.loc[idx] if idx in global_pct.index else None
 
 
+SIMILAR_COUNT = 5
+
+
+def similar_fighters(fighters: pd.DataFrame, division_pct: pd.DataFrame) -> dict[str, list[dict]]:
+    """{slug: up to 5 {slug, name}} of the closest style in the same gender and division.
+
+    Distance: euclidean over the 8 stored division percentiles. Order: distance, UFC fights desc, slug.
+    Only fighters with a division percentile (population) get an entry; no global fallback.
+    """
+    rows = fighters.loc[fighters.index.intersection(division_pct.index)]
+    out: dict[str, list[dict]] = {}
+    for _, group in rows.groupby(["gender", "weight_class"], dropna=True):
+        vecs = division_pct.loc[group.index, CAREER_METRICS].astype(float)
+        slugs = group["fighter_slug"].tolist()
+        names = group["fighter"].tolist()
+        fights = group["ufc_fights"].astype(int).tolist()
+        mat = vecs.to_numpy()
+        for i, slug in enumerate(slugs):
+            ranked = sorted(
+                (math.sqrt(float(((mat[i] - mat[j]) ** 2).sum())), -fights[j], slugs[j], names[j])
+                for j in range(len(slugs))
+                if j != i
+            )
+            out[slug] = [{"slug": s, "name": n} for _, _, s, n in ranked[:SIMILAR_COUNT]]
+    return out
+
+
 def build_payloads(
     fights: pd.DataFrame,
     fighters: pd.DataFrame,
@@ -184,6 +211,8 @@ def build_payloads(
             "duration": metrics.durations(own),
             "fights": _fight_rows(own),
         }
+    for slug, similar in similar_fighters(fighters, division_pct).items():
+        payloads[slug]["similar"] = similar
     index.sort(key=lambda r: r["slug"])
     meta = {
         "data_through": clean(fights["date"].max()),

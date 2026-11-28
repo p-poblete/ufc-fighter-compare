@@ -1054,3 +1054,9 @@ body[data-glow="none"]::before { background: none; }
   .grp:has(#g-table-panel[hidden]) .grp__radar .chart--radar { height: 420px; flex: none; }
   .grp:has(#g-table-panel[hidden]) > .grp__half { grid-column: 1 / -1; }
 }
+
+/* Fighters alike (profile): rows reuse the fight-list rhythm; name left, ghost "Compare" right. */
+.alike { display: grid; gap: 2px; }
+.alike li { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.alike__name { font-weight: 650; text-decoration: none; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.alike__name:hover { text-decoration: underline; }

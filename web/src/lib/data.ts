@@ -53,6 +53,9 @@ export interface Fighter {
   odds: Odds;
   duration: Duration;
   fights: Fight[];
+  /** Up to 5 closest styles in the same gender and division, nearest first (pipeline/export.py similar_fighters).
+   *  Names travel with the slug so the profile needs no index.json. Absent: no division percentile (shows "No data"); []: no candidates. */
+  similar?: { slug: string; name: string }[];
 }
 
 /** One entry of directory.json (pipeline/export.py build_directory); null fields are omitted. Same order as index.json. */

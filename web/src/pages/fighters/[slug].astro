@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import Base from "../../layouts/Base.astro";
 import type { Fighter, IndexEntry } from "../../lib/data";
-import { finishRate, finishes, recordText, fightRows, history, identity, pctText, record, style, winRate } from "../../lib/render";
+import { alike, finishRate, finishes, recordText, fightRows, history, identity, pctText, record, style, winRate } from "../../lib/render";
 
 export async function getStaticPaths() {
   const index: IndexEntry[] = JSON.parse(await readFile(join(process.cwd(), "public/data/index.json"), "utf-8"));
@@ -27,7 +27,7 @@ const desc = `${f.name}: ${recordText(f)}${f.weight_class ? `, ${f.weight_class}
         <div><p class="display">{pctText(winRate(f))}</p><p class="muted">Win rate</p></div>
         <div><p class="display">{pctText(finishRate(f))}</p><p class="muted">Finish rate in the UFC</p></div>
       </section>
-      <Fragment set:html={finishes(f, "solo")} />
+      <Fragment set:html={finishes(f, "solo") + alike(f)} />
     </aside>
     <div class="col col--mid">
       <Fragment set:html={style(f, null) + history(f, "solo") + fightRows(true)} />

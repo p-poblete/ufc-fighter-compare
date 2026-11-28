@@ -85,4 +85,6 @@ Actualizado: 2026-11-27
 ## v0.9 en borrador (2026-11-28)
 - Pendientes del vault (`UFC - Pendientes.md`) pasados a spec §12: 8 puntos, CA28–CA35, 6 cortes. Pez dorado ronda 1: NO LISTO por las decisiones abiertas; sus 12 hallazgos aplicados en §12 y registrados en §10.
 - Piero respondió P1–P8 (2026-11-28; §12.3): mismo nombre con logo nuevo (`logo-design`), barra sosa que compite con la página, tabla como la v0.5 con datos de la tarjeta, pestañas, línea en todos, Fighters alike (5, misma división), grupos con más gráficos (Methods nuevo). Ronda 2 de pez dorado: LISTO CON CAMBIOS, aplicada.
-- Siguiente: `/minerva` sobre §12 (cortes 1→2→3, luego 4, 5, 6).
+- Cortes 1–4 en 7e257c1 y corte 5 (Fighters alike, `similar` en el pipeline; módulo bajo «How the fights end», sitio aprobado por Piero) en commit propio. Censor: 1–4 LISTO CON CAMBIOS menores, 5 LISTO. Verificado: pytest 108, ruff, tsc, build 2.308 páginas, ficha máx. 25 KB.
+- Menores abiertos: «Last UFC fight» de la tabla del directorio en ISO (decisión de formato de Piero); Methods de grupos de 280 px con 4 peleadores a 360 px; CA32/CA33 sin comprobar a ojo (Playwright MCP no conectó).
+- Siguiente: comprobación visual de cortes 1–5, corte 6 (logo con `logo-design` + barra, requiere propuestas aprobadas) y `minos` final.
