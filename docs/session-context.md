@@ -88,4 +88,5 @@ Actualizado: 2026-11-27
 - Cortes 1–4 en 7e257c1 y corte 5 (Fighters alike, `similar` en el pipeline; módulo bajo «How the fights end», sitio aprobado por Piero) en commit propio. Censor: 1–4 LISTO CON CAMBIOS menores, 5 LISTO. Verificado: pytest 108, ruff, tsc, build 2.308 páginas, ficha máx. 25 KB.
 - Menores abiertos: «Last UFC fight» de la tabla del directorio en ISO (decisión de formato de Piero); Methods de grupos de 280 px con 4 peleadores a 360 px; CA32/CA33 sin comprobar a ojo (Playwright MCP no conectó).
 - Corte 6 cerrado: logo octógono partido D1 (2f07f7e); perfil con Fighters alike bajo el historial (ad7d355); barra «Cartelera» elegida por Piero (B; P2 = estaba muy sosa; presencia: dejar como está) en 763ea5c. Comprobación visual de cortes 1–5: Piero OK. Menor: la búsqueda se centra entre nav e iconos, no en el hueco exacto.
-- Siguiente: `minos` final sobre la v0.9 y push.
+- Minos (2 rondas): APROBADO CON MENORES tras arreglar CA29 (logo en el PNG) y registrar D1 (Piero asume el octógono). Push hecho.
+- Menores abiertos: `esc` en slugs de href (render.ts:288), `lf` ISO en la tabla del directorio (formato: Piero), descripción de Length «per fighter» en el perfil (render.ts:493), `tabindex="0"` en tabpanels, marcar CA28–CA35, PNG exportado sin mirar con el logo.
