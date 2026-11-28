@@ -1053,7 +1053,8 @@ body[data-glow="none"]::before { background: none; }
 /* The square identity keeps its page size and is centred instead of spanning 1200 px (it would be 1200 px tall). */
 .xstage .id--square { width: 440px; max-width: 100%; align-self: center !important; }
 .xstage__head { display: grid; gap: 4px; margin-bottom: 8px; }
-.xstage__brand { margin: 0; color: var(--muted); font: 650 13px var(--ui); letter-spacing: 0.04em; text-transform: uppercase; }
+.xstage__brand .brand__mark { width: 18px; height: 18px; flex: none; }
+.xstage__brand { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--muted); font: 650 13px var(--ui); letter-spacing: 0.04em; text-transform: uppercase; }
 .xstage__title { margin: 0; font: 800 36px/1.1 var(--display); letter-spacing: -0.01em; }
 .xstage__foot { display: flex !important; justify-content: space-between; gap: 24px; margin-top: 8px; color: var(--muted); font-size: 12px; }
 .xstage__foot span:last-child { margin-left: auto; text-align: right; overflow-wrap: anywhere; }

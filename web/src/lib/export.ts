@@ -211,7 +211,8 @@ async function render(main: HTMLElement, chosen: HTMLElement[]): Promise<Blob> {
   const date = document.querySelector(".footer time")?.textContent?.trim() ?? "";
   const head = document.createElement("header");
   head.className = "xstage__head";
-  head.innerHTML = `<p class="xstage__brand">ufc-fighter-compare</p>`;
+  const mark = document.querySelector(".brand__mark")?.outerHTML ?? "";
+  head.innerHTML = `<p class="xstage__brand">${mark}ufc-fighter-compare</p>`;
   const h1 = document.createElement("h1");
   h1.className = "xstage__title";
   h1.textContent = main.querySelector("h1")?.textContent?.trim() || document.title.split(" · ")[0];
